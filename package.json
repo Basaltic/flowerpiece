@@ -1,6 +1,6 @@
 {
   "name": "piecetable",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "",
   "keywords": [],
   "main": "dist/piecetable.umd.js",
@@ -62,10 +62,10 @@
     ],
     "coverageThreshold": {
       "global": {
-        "branches": 90,
-        "functions": 95,
-        "lines": 95,
-        "statements": 95
+        "branches": 70,
+        "functions": 80,
+        "lines": 80,
+        "statements": 80
       }
     },
     "collectCoverageFrom": [
