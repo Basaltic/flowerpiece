@@ -75,7 +75,7 @@ it('rbTree: 随机操作', () => {
   expect(lineTxt5).toBe(' Another Examplemmmmmm')
 
   const offset = tree.getOffsetAt(2, 1, lineTxt2.length)
-  console.log(offset)
+  log(offset)
 })
 
 it('rbTree: 快速顺序插入', () => {
