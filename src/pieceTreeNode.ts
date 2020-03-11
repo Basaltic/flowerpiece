@@ -112,49 +112,60 @@ export default class PieceTreeNode {
    * 以本节点为根节点，查询子树，寻找符合的节点
    *
    * 如果偏移处于 节点 x的末尾，节点y 的开头，那么返回的是节点 y
+   * If offset is less then 0, return leftest
+   *
    *
    * @param offset 在整个文本中的偏移位置
    */
-  find(offset: number, startOffset: number): NodePosition | null {
-    // 1. 左子树的文字大小 大于了 偏移，继续往左找
+  find(offset: number, startOffset: number = 0): NodePosition {
     if (this.leftSize > offset) {
       return this.left.find(offset, startOffset)
-    }
-    // 2. 左子树大小 + 本节点大小 大于等于 偏移，那么本节点就是要找的节点
-    else if (this.leftSize + this.piece.length >= offset) {
+    } else if (this.leftSize + this.piece.length >= offset) {
+      if (offset < 0) offset = 0
       return {
         node: this,
         reminder: offset - this.leftSize,
-        startOffset: startOffset + this.leftSize,
+        startOffset: startOffset + this.leftSize
       }
-    }
-    // 3. 往右侧找
-    else {
-      // 3.1 减去左侧子树大小
+    } else if (this.right.isNil) {
+      return {
+        node: this,
+        reminder: this.piece.length,
+        startOffset: startOffset + this.leftSize
+      }
+    } else {
       offset -= this.leftSize + this.piece.length
       startOffset += this.leftSize + this.piece.length
-      return this.right ? this.right.find(offset, startOffset) : null
+      return this.right.find(offset, startOffset)
     }
   }
 
   /**
    * 找到某个换行标记所在的节点
-   * @param lineFeedCnt
+   * @param lineNumber
    */
-  findByLineCnt(lineFeedCnt: number, startOffset: number = 0): LineNodePosition {
-    if (this.leftLineFeeds >= lineFeedCnt) {
-      return this.left ? this.left.findByLineCnt(lineFeedCnt) : this.left
-    } else if (this.leftLineFeeds + this.piece.lineFeedCnt >= lineFeedCnt) {
+  findByLineNumber(lineNumber: number, startOffset: number = 0): LineNodePosition {
+    if (this.leftLineFeeds >= lineNumber) {
+      return this.left.findByLineNumber(lineNumber)
+    } else if (this.leftLineFeeds + this.piece.lineFeedCnt >= lineNumber) {
+      lineNumber -= this.leftLineFeeds
       return {
         node: this,
-        remindLineCnt: lineFeedCnt,
-        startOffset: startOffset + this.leftSize,
+        remindLineCnt: lineNumber,
+        startOffset: startOffset + this.leftSize
+      }
+    } else if (this.right.isNil) {
+      lineNumber = 0
+      return {
+        node: this,
+        remindLineCnt: lineNumber,
+        startOffset: startOffset + this.leftSize
       }
     } else {
       startOffset += this.leftSize + this.piece.length
-      lineFeedCnt -= this.leftLineFeeds + this.piece.lineFeedCnt
+      lineNumber -= this.leftLineFeeds + this.piece.lineFeedCnt
 
-      return this.right.findByLineCnt(lineFeedCnt, startOffset)
+      return this.right.findByLineNumber(lineNumber, startOffset)
     }
   }
 
@@ -230,7 +241,8 @@ export default class PieceTreeNode {
       this.leftLineFeeds = 0
     } else {
       this.leftSize = this.left.leftSize + this.left.rightSize + this.left.piece.length
-      this.leftLineFeeds = this.left.leftLineFeeds + this.left.rightLineFeeds + this.left.piece.lineFeedCnt
+      this.leftLineFeeds =
+        this.left.leftLineFeeds + this.left.rightLineFeeds + this.left.piece.lineFeedCnt
     }
 
     if (this.right.isNil) {
@@ -238,7 +250,8 @@ export default class PieceTreeNode {
       this.rightLineFeeds = 0
     } else {
       this.rightSize = this.right.leftSize + this.right.rightSize + this.right.piece.length
-      this.rightLineFeeds = this.right.leftLineFeeds + this.right.rightLineFeeds + this.right.piece.lineFeedCnt
+      this.rightLineFeeds =
+        this.right.leftLineFeeds + this.right.rightLineFeeds + this.right.piece.lineFeedCnt
     }
   }
 
@@ -270,8 +283,7 @@ export default class PieceTreeNode {
 }
 
 // Sentinel Node Which Refers to Black Nil Node
-// 哨兵节点，所有指向空节点的指针都指向这个节点
-export const SENTINEL = new PieceTreeNode(new Piece(0, 0, 0, 0), NodeColor.BLACK)
+export const SENTINEL = new PieceTreeNode(new Piece(1, 1, 0, 0, 0), NodeColor.BLACK)
 
 /**
  * Create New Node

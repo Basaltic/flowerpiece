@@ -5,7 +5,7 @@ import PieceTreeNode from './pieceTreeNode'
  */
 export enum NodeColor {
   BLACK = 1,
-  RED = 2,
+  RED = 2
 }
 
 /**
@@ -24,4 +24,9 @@ export interface LineNodePosition {
   node: PieceTreeNode
   remindLineCnt: number
   startOffset: number
+}
+
+export interface ContentLoaction {
+  line: number
+  column: number
 }

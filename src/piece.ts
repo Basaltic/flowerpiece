@@ -28,3 +28,9 @@ export default class Piece {
     this.meta = meta
   }
 }
+
+export interface IPiece {
+  text: string
+  length: number
+  meta: PieceMeta
+}
