@@ -1,18 +1,18 @@
 {
-  "name": "piecetable",
-  "version": "1.0.0",
+  "name": "flowerpiece",
+  "version": "0.0.2",
   "description": "",
   "keywords": [],
-  "main": "dist/piecetable.umd.js",
-  "module": "dist/piecetable.es5.js",
-  "typings": "dist/types/piecetable.d.ts",
+  "main": "dist/flowerpiece.umd.js",
+  "module": "dist/flowerpiece.es5.js",
+  "typings": "dist/types/flowerpiece.d.ts",
   "files": [
     "dist"
   ],
   "author": "ray <lei91122@gmail.com>",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "https://github.com/Basaltic/flowerpiece.git"
   },
   "license": "MIT",
   "engines": {

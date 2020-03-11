@@ -1,3 +1,3 @@
-# Piece Table
+# Flower Piece
 
-A Piece Table Text Sequence Implementation. Use Red-black Tree to manage the pieces.
+A Piece Table Text Sequence Implementation
