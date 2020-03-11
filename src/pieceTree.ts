@@ -4,8 +4,6 @@ import PieceTreeBase from './pieceTreebase'
 import PieceTreeNode from './pieceTreeNode'
 import Change, { InsertChange, createInsertChange } from './change'
 
-export declare type MetaMerger = (target: any, source: any) => any
-
 const EOL = '\n'
 
 /**
