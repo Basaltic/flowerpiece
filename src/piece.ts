@@ -20,7 +20,13 @@ export default class Piece {
     return this.start + this.length
   }
 
-  constructor(bufferIndex: number, start: number, length: number, lineFeedCnt: number, meta: any) {
+  constructor(
+    bufferIndex: number,
+    start: number,
+    length: number,
+    lineFeedCnt: number,
+    meta: any = null
+  ) {
     this.bufferIndex = bufferIndex
     this.start = start
     this.length = length

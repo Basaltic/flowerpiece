@@ -1,12 +1,13 @@
-import { StringBuffer, PieceTree, computeLineFeedCnt } from '../src/pieceTree'
+import { PieceTree, computeLineFeedCnt } from '../src/pieceTree'
 import { createPieceTreeNode } from '../src/pieceTreeNode'
 import Piece from '../src/piece'
 
 it('rbTree: Rotate Test', () => {
-  const oriStrBuf = new StringBuffer('This is a example. \n Another Example')
-  const tree = new PieceTree(oriStrBuf)
+  const tree = new PieceTree()
 
   tree.buffers[0].buffer = '\n\n\n\n\n'
+
+  const root = createPieceTreeNode(new Piece(1, 0, 1, 1))
 
   const a = createPieceTreeNode(new Piece(1, 0, 1, 1))
   const x = createPieceTreeNode(new Piece(1, 1, 1, 1))
@@ -14,6 +15,7 @@ it('rbTree: Rotate Test', () => {
   const y = createPieceTreeNode(new Piece(1, 3, 1, 1))
   const c = createPieceTreeNode(new Piece(1, 4, 1, 1))
 
+  tree.root = root
   tree.root.left = x
   x.parent = tree.root
 
@@ -53,8 +55,8 @@ it('rbTree: Rotate Test', () => {
 })
 
 it('rbTree: Append Prepend Test', () => {
-  const oriStrBuf = new StringBuffer('This is a example. \n Another Example')
-  const tree = new PieceTree(oriStrBuf)
+  const tree = new PieceTree()
+  tree.root = createPieceTreeNode(new Piece(1, 0, 1, 1))
 
   const node = createPieceTreeNode(new Piece(1, 0, 1, 1))
   tree.root.append(node)
@@ -76,16 +78,16 @@ it('rbTree: Append Prepend Test', () => {
 })
 
 it('rbTree: Insert Fixup', () => {
-  const oriStrBuf = new StringBuffer('This is a example. \n Another Example')
-  const tree = new PieceTree(oriStrBuf)
+  const tree = new PieceTree()
+  tree.root = createPieceTreeNode(new Piece(1, 0, 1, 1))
 
   tree.buffers[0].buffer = '\n\n\n\n\n'
 
-  const a = createPieceTreeNode(new Piece(1, 0, 1, 1))
-  const x = createPieceTreeNode(new Piece(1, 1, 1, 1))
-  const b = createPieceTreeNode(new Piece(1, 2, 1, 1))
-  const y = createPieceTreeNode(new Piece(1, 3, 1, 1))
-  const c = createPieceTreeNode(new Piece(1, 4, 1, 1))
+  const a = createPieceTreeNode(new Piece(0, 1, 0, 1, 1))
+  const x = createPieceTreeNode(new Piece(0, 1, 1, 1, 1))
+  const b = createPieceTreeNode(new Piece(0, 1, 2, 1, 1))
+  const y = createPieceTreeNode(new Piece(0, 1, 3, 1, 1))
+  const c = createPieceTreeNode(new Piece(0, 1, 4, 1, 1))
 
   tree.root.append(a)
   tree.root.append(x)
