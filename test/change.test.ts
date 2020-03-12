@@ -2,7 +2,7 @@ import { PieceTree } from '../src/pieceTree'
 
 const log = console.log
 
-it('rbTree: redo undo 1', () => {
+it('flower piece: redo undo 1', () => {
   const tree = new PieceTree()
 
   tree.insert(0, 'test', {})

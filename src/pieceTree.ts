@@ -17,6 +17,9 @@ export class PieceTree extends PieceTreeBase {
     super()
   }
 
+  /**
+   * Redo the operation
+   */
   redo() {
     const change = this.changes[this.changeIndex]
     if (change) {
@@ -35,6 +38,9 @@ export class PieceTree extends PieceTreeBase {
     }
   }
 
+  /**
+   * Undo the operation
+   */
   undo() {
     const change = this.changes[this.changeIndex - 1]
     console.log(this.changeIndex, change, this.changes)
