@@ -1,14 +1,21 @@
 import { PieceMeta } from './Meta'
 import Piece from './piece'
 
-export default interface Change {
+export default interface IChange {
   type: 'insert' | 'delete' | 'format'
 }
+
+// export class Change {
+
+//   next: Change | null
+//   prev: Change | null
+
+// }
 
 /**
  * Represent the change of insert operation
  */
-export interface InsertChange extends Change {
+export interface InsertChange extends IChange {
   type: 'insert'
   startOffset: number
   length: number
@@ -20,7 +27,7 @@ export interface InsertChange extends Change {
 /**
  * Represent the change of delete operation
  */
-export interface DeleteChange extends Change {
+export interface DeleteChange extends IChange {
   type: 'delete'
   startOffset: number
   length: number
@@ -31,7 +38,7 @@ export interface DeleteChange extends Change {
 /**
  * Represent the change of format operation
  */
-export interface FormatChange extends Change {
+export interface FormatChange extends IChange {
   type: 'format'
   startOffset: number
   length: number

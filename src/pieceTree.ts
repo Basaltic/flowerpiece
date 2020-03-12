@@ -11,8 +11,8 @@ const EOL = '\n'
  * Piece Tree Implementation
  */
 export class PieceTree extends PieceTreeBase {
-  private changes: Change[] = []
-  private changeIndex: number = 0
+  private undoChanges: Change[] = []
+  private redoChanges: Change[] = []
 
   constructor() {
     super()
@@ -22,26 +22,24 @@ export class PieceTree extends PieceTreeBase {
    * Redo the operation
    */
   redo() {
-    const change = this.changes[this.changeIndex]
+    const change = this.redoChanges.pop()
     if (change) {
       switch (change.type) {
         case 'insert':
           const { startOffset: start, text, meta } = change as InsertChange
           const txt = this.getTextInBuffer(text[0], text[1], text[2])
           this.insert(start, txt, meta, true)
-          this.changeIndex += 1
-          return
+          break
         case 'delete':
           const deleteChange = change as DeleteChange
           this.delete(deleteChange.startOffset, deleteChange.length, true)
-          this.changeIndex += 1
-          return
+          break
         case 'format':
           const formatChange = change as FormatChange
           this.format(formatChange.startOffset, formatChange.length, formatChange.meta, true)
-          this.changeIndex += 1
-          return
+          break
       }
+      this.undoChanges.push(change)
     }
   }
 
@@ -49,24 +47,24 @@ export class PieceTree extends PieceTreeBase {
    * Undo the operation
    */
   undo() {
-    const change = this.changes[this.changeIndex - 1]
+    const change = this.undoChanges.pop()
     if (change) {
       switch (change.type) {
         case 'insert':
           const insertChange = change as InsertChange
           this.delete(insertChange.startOffset, insertChange.length, true)
-          this.changeIndex -= 1
-          return
+          break
         case 'delete':
           const deleteChange = change as DeleteChange
           const nodePosition = this.findByOffset(deleteChange.startOffset)
+
           // Start of node
           if (nodePosition.startOffset === deleteChange.startOffset) {
             let node = nodePosition.node.predecessor()
+
             if (node === SENTINEL) {
               for (const piece of deleteChange.pieces) {
                 this.insertFixedLeft(nodePosition.node, piece)
-                node = node.successor()
               }
             } else {
               for (const piece of deleteChange.pieces) {
@@ -84,9 +82,7 @@ export class PieceTree extends PieceTreeBase {
             }
           }
 
-          this.changeIndex -= 1
-
-          return
+          break
         case 'format':
           const formatChange = change as FormatChange
           if (formatChange.piecePatches.length > 0) {
@@ -94,9 +90,10 @@ export class PieceTree extends PieceTreeBase {
               this.format(patch.startOffset, patch.length, patch.meta, true)
             }
           }
-          this.changeIndex -= 1
-          return
+          break
       }
+
+      this.redoChanges.push(change)
     }
   }
 
@@ -177,8 +174,8 @@ export class PieceTree extends PieceTreeBase {
 
     if (!disableChange && text.length > 0) {
       const change: InsertChange = createInsertChange(offset, [0, addBuffer.length - text.length, text.length], meta)
-      this.changes.push(change)
-      this.changeIndex += 1
+      this.undoChanges.push(change)
+      this.redoChanges = []
     }
   }
 
@@ -197,8 +194,8 @@ export class PieceTree extends PieceTreeBase {
 
     if (!disableChange && pieceChange.length > 0) {
       const change: DeleteChange = createDeleteChange(start, length, pieceChange)
-      this.changes.push(change)
-      this.changeIndex += 1
+      this.undoChanges.push(change)
+      this.redoChanges = []
     }
   }
 
@@ -231,10 +228,10 @@ export class PieceTree extends PieceTreeBase {
         node.piece.length -= length
         node.piece.lineFeedCnt = this.recomputeLineFeedsCntInPiece(node.piece)
 
-        length = 0
-
         // record the delete change
         pieceChange.push(new Piece(node.piece.bufferIndex, originalStart, length, originalLineFeedCnt - node.piece.lineFeedCnt))
+
+        length = 0
       }
 
       this.deleteInner(start, length, start, node, pieceChange)
@@ -261,8 +258,8 @@ export class PieceTree extends PieceTreeBase {
 
     if (!disableChange) {
       const change: FormatChange = createFormatChange(startOffset, length, meta, pieceChange)
-      this.changes.push(change)
-      this.changeIndex += 1
+      this.undoChanges.push(change)
+      this.redoChanges = []
     }
   }
 

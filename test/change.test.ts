@@ -2,6 +2,7 @@ import { PieceTree } from '../src/flowerpiece'
 
 const log = console.log
 
+// insert undo redo test
 it('flower piece: redo undo insert', () => {
   const tree = new PieceTree()
 
@@ -17,6 +18,7 @@ it('flower piece: redo undo insert', () => {
   expect(txt).toBe('teist')
 })
 
+// Delete undo redo test
 it('flower piece: redo undo delete', () => {
   const tree = new PieceTree()
 
@@ -30,8 +32,24 @@ it('flower piece: redo undo delete', () => {
 
   tree.delete(1, 5)
   expect(tree.getAllText()).toBe('tt')
+
+  tree.undo()
+  expect(tree.getAllText()).toBe('teyxist')
+
+  tree.redo()
+  expect(tree.getAllText()).toBe('tt')
+
+  tree.undo()
+  expect(tree.getAllText()).toBe('teyxist')
+
+  tree.delete(0, 5)
+  expect(tree.getAllText()).toBe('st')
+
+  tree.undo()
+  expect(tree.getAllText()).toBe('teyxist')
 })
 
+// Format undo redo test
 it('flower piece: redo undo format', () => {
   const tree = new PieceTree()
 
@@ -63,4 +81,29 @@ it('flower piece: redo undo format', () => {
       if (piece.meta) expect(piece.meta.color).toBe('red')
     }
   })
+
+  // This should do nothing. same to above
+  tree.redo()
+  tree.forEachPiece((piece, text, index) => {
+    if (index > 0 && index < 6) {
+      if (piece.meta) expect(piece.meta.color).toBe('red')
+    }
+  })
+
+  tree.undo()
+  tree.forEachPiece((piece, text, index) => {
+    if (index > 0 && index < 6) {
+      if (piece.meta) expect(piece.meta.color).toBe(undefined)
+    }
+  })
+
+  // This should do nothing. same to above state
+  tree.undo()
+  tree.forEachPiece((piece, text, index) => {
+    if (index > 0 && index < 6) {
+      if (piece.meta) expect(piece.meta.color).toBe(undefined)
+    }
+  })
 })
+
+//

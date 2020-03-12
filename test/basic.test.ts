@@ -1,14 +1,14 @@
-import { PieceTree } from '../src/pieceTree'
+import { PieceTree } from '../src/flowerpiece'
 
 const log = console.log
 
-it('rbTree: Insert', () => {
+it('flower piece: Insert', () => {
   const tree = new PieceTree()
 
   // Format
 })
 
-it('rbTree: Format', () => {
+it('flower piece: Format', () => {
   const tree = new PieceTree()
 
   tree.insert(0, 'abc defg hijk \n', { color: 'red' })
