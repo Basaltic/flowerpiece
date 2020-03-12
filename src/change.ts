@@ -10,7 +10,7 @@ export default interface Change {
  */
 export interface InsertChange extends Change {
   type: 'insert'
-  start: number
+  startOffset: number
   length: number
   // [bufferIndex, start, length]
   text: number[]
@@ -22,7 +22,7 @@ export interface InsertChange extends Change {
  */
 export interface DeleteChange extends Change {
   type: 'delete'
-  start: number
+  startOffset: number
   length: number
   // Deleted part of piece, only the text string need to be stored. [bufferIndex, start, length]
   pieces: Piece[]
@@ -33,21 +33,26 @@ export interface DeleteChange extends Change {
  */
 export interface FormatChange extends Change {
   type: 'format'
-  start: number
+  startOffset: number
   length: number
   meta: PieceMeta
   // reverse meta change for every piece
-  pieceChange: Array<{
-    startOffset: number
-    length: number
-    meta: PieceMeta
-  }>
+  piecePatches: Array<{ startOffset: number; length: number; meta: PieceMeta }>
 }
 
 export function createInsertChange(startOffset: number, text: number[], meta: PieceMeta): InsertChange {
-  return { type: 'insert', start: startOffset, length: text[2], text, meta }
+  return { type: 'insert', startOffset, length: text[2], text, meta }
 }
 
 export function createDeleteChange(startOffset: number, length: number, pieces: Piece[]): DeleteChange {
-  return { type: 'delete', start: startOffset, length, pieces: pieces }
+  return { type: 'delete', startOffset, length, pieces: pieces }
+}
+
+export function createFormatChange(
+  startOffset: number,
+  length: number,
+  meta: PieceMeta,
+  piecePatches: Array<{ startOffset: number; length: number; meta: PieceMeta }>,
+): FormatChange {
+  return { type: 'format', startOffset, length, meta, piecePatches }
 }

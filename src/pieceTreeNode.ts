@@ -248,7 +248,7 @@ export default class PieceTreeNode {
 }
 
 // Sentinel Node Which Refers to Black Nil Node
-export const SENTINEL = new PieceTreeNode(new Piece(1, 1, 0, 0, 0), NodeColor.BLACK)
+export const SENTINEL = new PieceTreeNode(new Piece(1, 1, 0, 0, null), NodeColor.BLACK)
 
 /**
  * Create New Node

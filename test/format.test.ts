@@ -16,7 +16,7 @@ it('rbTree: Format', () => {
   tree.format(2, 2, { color: 'blue' })
 
   const line = tree.getLine(1)
-  expect(line[0].meta.color).toBe('red')
-  expect(line[1].meta.color).toBe('blue')
-  expect(line[2].meta.color).toBe('red')
+  if (line[0].meta) expect(line[0].meta.color).toBe('red')
+  if (line[1].meta) expect(line[1].meta.color).toBe('blue')
+  if (line[2].meta) expect(line[2].meta.color).toBe('red')
 })
