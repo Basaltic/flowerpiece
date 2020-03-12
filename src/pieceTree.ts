@@ -1,8 +1,8 @@
 import { LineNodePosition } from './common'
 import Piece, { IPiece } from './piece'
 import PieceTreeBase from './pieceTreebase'
-import PieceTreeNode from './pieceTreeNode'
-import Change, { InsertChange, createInsertChange } from './change'
+import PieceTreeNode, { SENTINEL } from './pieceTreeNode'
+import Change, { InsertChange, createInsertChange, DeleteChange, createDeleteChange } from './change'
 
 const EOL = '\n'
 
@@ -25,12 +25,15 @@ export class PieceTree extends PieceTreeBase {
     if (change) {
       switch (change.type) {
         case 'insert':
-          const { startOffset, text, meta } = change as InsertChange
+          const { start, text, meta } = change as InsertChange
           const txt = this.getTextInBuffer(text[0], text[1], text[2])
-          this.insert(startOffset, txt, meta)
+          this.insert(start, txt, meta, true)
           this.changeIndex += 1
           return
         case 'delete':
+          const deleteChange = change as DeleteChange
+          this.delete(deleteChange.start, deleteChange.length)
+          this.changeIndex += 1
           return
         case 'format':
           return
@@ -48,10 +51,36 @@ export class PieceTree extends PieceTreeBase {
       switch (change.type) {
         case 'insert':
           const insertChange = change as InsertChange
-          this.delete(insertChange.startOffset, insertChange.length)
+          this.delete(insertChange.start, insertChange.length, true)
           this.changeIndex -= 1
           return
         case 'delete':
+          const deleteChange = change as DeleteChange
+          const nodePosition = this.root.find(deleteChange.start)
+          // Start of node
+          if (nodePosition.startOffset === deleteChange.start) {
+            let node = nodePosition.node.predecessor()
+            if (node === SENTINEL) {
+              for (const piece of deleteChange.pieces) {
+                this.insertFixedLeft(nodePosition.node, piece)
+                node = node.successor()
+              }
+            } else {
+              for (const piece of deleteChange.pieces) {
+                this.insertFixedRight(node, piece)
+                node = node.successor()
+              }
+            }
+          }
+          // End of node
+          else if (nodePosition.reminder === nodePosition.node.piece.length) {
+            let node = nodePosition.node
+            for (const piece of deleteChange.pieces) {
+              this.insertFixedRight(node, piece)
+              node = node.successor()
+            }
+          }
+
           return
         case 'format':
           return
@@ -103,7 +132,7 @@ export class PieceTree extends PieceTreeBase {
         node.piece.start + reminder,
         node.piece.length - reminder,
         node.piece.lineFeedCnt - leftLineFeedCnt,
-        node.piece.meta
+        node.piece.meta,
       )
 
       node.piece.length = reminder
@@ -134,12 +163,8 @@ export class PieceTree extends PieceTreeBase {
       }
     }
 
-    if (!disableChange) {
-      const change: InsertChange = createInsertChange(
-        offset,
-        [0, addBuffer.length - text.length, text.length],
-        meta
-      )
+    if (!disableChange && text.length > 0) {
+      const change: InsertChange = createInsertChange(offset, [0, addBuffer.length - text.length, text.length], meta)
       this.changes.push(change)
       this.changeIndex += 1
     }
@@ -148,37 +173,59 @@ export class PieceTree extends PieceTreeBase {
   /**
    * Delete Content
    */
-  delete(start: number, length: number) {
+  delete(start: number, length: number, disableChange?: boolean) {
+    const pieceChange: Piece[] = []
+
     const startNodePosition = this.root.find(start)
 
     let { node, startOffset } = startNodePosition
-    this.deleteInner(start, length, startOffset, node)
+    this.deleteInner(start, length, startOffset, node, pieceChange)
 
     startNodePosition.node.updateMetaUpward()
+
+    if (!disableChange && pieceChange.length > 0) {
+      const change: DeleteChange = createDeleteChange(start, length, pieceChange)
+      this.changes.push(change)
+      this.changeIndex += 1
+    }
   }
 
-  deleteInner(start: number, length: number, startOffset: number, node: PieceTreeNode) {
+  deleteInner(start: number, length: number, startOffset: number, node: PieceTreeNode, pieceChange: Piece[]) {
     if (length <= 0) {
       return
     }
-
     // Start of the piece node
     if (start === startOffset) {
       if (length === node.piece.length) {
         this.deleteNode(node)
+        length -= node.piece.length
+
+        // record the delete change
+        pieceChange.push(node.piece)
       } else if (length >= node.piece.length) {
         const currentNode = node
         node = node.successor()
 
         this.deleteNode(currentNode)
+        length -= currentNode.piece.length
+
+        // record the delete change
+        pieceChange.push(currentNode.piece)
       } else {
+        const originalStart = node.piece.start
+        const originalLineFeedCnt = node.piece.lineFeedCnt
+
         node.piece.start += length
         node.piece.length -= length
         node.piece.lineFeedCnt = this.recomputeLineFeedsCntInPiece(node.piece)
+
+        length = 0
+
+        // record the delete change
+        pieceChange.push(new Piece(node.piece.bufferIndex, originalStart, length, originalLineFeedCnt - node.piece.lineFeedCnt))
       }
 
-      length -= node.piece.length
-      this.deleteInner(startOffset, length, startOffset, node)
+      this.deleteInner(start, length, start, node, pieceChange)
     } else {
       const reminder = start - startOffset
       if (reminder === node.piece.length) {
@@ -186,7 +233,8 @@ export class PieceTree extends PieceTreeBase {
         this.splitNodeRight(node, reminder)
       }
       node = node.successor()
-      this.deleteInner(start, length, start, node)
+
+      this.deleteInner(start, length, start, node, pieceChange)
     }
   }
 
@@ -201,13 +249,7 @@ export class PieceTree extends PieceTreeBase {
     this.formatInner(start, length, startOffset, node, meta)
   }
 
-  private formatInner(
-    start: number,
-    length: number,
-    startOffset: number,
-    node: PieceTreeNode,
-    meta: any
-  ) {
+  private formatInner(start: number, length: number, startOffset: number, node: PieceTreeNode, meta: any) {
     if (length <= 0) {
       return
     }
@@ -348,14 +390,15 @@ export class PieceTree extends PieceTreeBase {
   getLine(lineNumber: number): IPiece[] {
     const line: IPiece[] = []
 
-    let anchorNodePostion: LineNodePosition = { node: this.root, remindLineCnt: 0, startOffset: 0 }
+    let anchorNodePostion: LineNodePosition = {
+      node: this.root,
+      remindLineCnt: 0,
+      startOffset: 0,
+    }
 
     if (lineNumber <= 1) {
       anchorNodePostion.node = this.root.findMin()
-    } else if (
-      lineNumber >=
-      this.root.leftLineFeeds + this.root.piece.lineFeedCnt + this.root.rightLineFeeds + 1
-    ) {
+    } else if (lineNumber >= this.root.leftLineFeeds + this.root.piece.lineFeedCnt + this.root.rightLineFeeds + 1) {
       lineNumber = this.root.leftLineFeeds + this.root.piece.lineFeedCnt + this.root.rightLineFeeds
       anchorNodePostion = this.root.findByLineNumber(lineNumber)
     } else {
@@ -406,12 +449,8 @@ export class PieceTree extends PieceTreeBase {
   findLineStartOffset(lineNumber: number) {
     if (lineNumber <= 1) {
       return 0
-    } else if (
-      lineNumber >=
-      this.root.leftLineFeeds + this.root.piece.lineFeedCnt + this.root.rightLineFeeds + 1
-    ) {
-      lineNumber =
-        this.root.leftLineFeeds + this.root.piece.lineFeedCnt + this.root.rightLineFeeds + 1
+    } else if (lineNumber >= this.root.leftLineFeeds + this.root.piece.lineFeedCnt + this.root.rightLineFeeds + 1) {
+      lineNumber = this.root.leftLineFeeds + this.root.piece.lineFeedCnt + this.root.rightLineFeeds + 1
     } else {
       lineNumber -= 1
     }
@@ -494,7 +533,7 @@ export class PieceTree extends PieceTreeBase {
       start + reminder,
       length - reminder,
       lineFeedCnt - leftLineFeedsCnt,
-      meta ? { ...meta } : meta
+      meta ? { ...meta } : meta,
     )
 
     node.piece.length = reminder
