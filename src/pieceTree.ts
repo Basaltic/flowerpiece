@@ -56,7 +56,7 @@ export class PieceTree extends PieceTreeBase {
           return
         case 'delete':
           const deleteChange = change as DeleteChange
-          const nodePosition = this.root.find(deleteChange.start)
+          const nodePosition = this.findByOffset(deleteChange.start)
           // Start of node
           if (nodePosition.startOffset === deleteChange.start) {
             let node = nodePosition.node.predecessor()
@@ -96,7 +96,7 @@ export class PieceTree extends PieceTreeBase {
    * 2. Coninuesly input only text, append to same node
    */
   insert(offset: number, text: string, meta?: any, disableChange?: boolean) {
-    const nodePosition = this.root.find(offset)
+    const nodePosition = this.findByOffset(offset)
     let { node, reminder, startOffset } = nodePosition
 
     const addBuffer = this.buffers[0]
@@ -176,7 +176,7 @@ export class PieceTree extends PieceTreeBase {
   delete(start: number, length: number, disableChange?: boolean) {
     const pieceChange: Piece[] = []
 
-    const startNodePosition = this.root.find(start)
+    const startNodePosition = this.findByOffset(start)
 
     let { node, startOffset } = startNodePosition
     this.deleteInner(start, length, startOffset, node, pieceChange)
@@ -190,7 +190,7 @@ export class PieceTree extends PieceTreeBase {
     }
   }
 
-  deleteInner(start: number, length: number, startOffset: number, node: PieceTreeNode, pieceChange: Piece[]) {
+  private deleteInner(start: number, length: number, startOffset: number, node: PieceTreeNode, pieceChange: Piece[]) {
     if (length <= 0) {
       return
     }
@@ -242,7 +242,7 @@ export class PieceTree extends PieceTreeBase {
    * Format The Content. Only change the meta
    */
   format(start: number, length: number, meta: any) {
-    const startNodePosition = this.root.find(start)
+    const startNodePosition = this.findByOffset(start)
 
     let { node, startOffset } = startNodePosition
 
@@ -257,15 +257,19 @@ export class PieceTree extends PieceTreeBase {
     if (start === startOffset) {
       if (length >= node.piece.length) {
         node.piece.meta = mergeMeta(node.piece.meta, meta)
+        length -= node.piece.length
+        start += node.piece.length
+
         node = node.successor()
       } else {
         this.splitNodeRight(node, length)
         node.piece.meta = mergeMeta(node.piece.meta, meta)
+
+        length -= node.piece.length
+        start += node.piece.length
       }
 
-      length -= node.piece.length
-      startOffset += node.piece.length
-      this.formatInner(startOffset, length, startOffset, node, meta)
+      this.formatInner(start, length, start, node, meta)
     } else {
       const reminder = start - startOffset
       this.splitNodeLeft(node, reminder)

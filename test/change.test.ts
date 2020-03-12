@@ -1,8 +1,8 @@
-import { PieceTree } from '../src/pieceTree'
+import { PieceTree } from '../src/flowerpiece'
 
 const log = console.log
 
-it('flower piece: redo undo 1', () => {
+it('flower piece: redo undo insert', () => {
   const tree = new PieceTree()
 
   tree.insert(0, 'test', {})

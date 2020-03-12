@@ -1,5 +1,5 @@
 import PieceTreeNode, { SENTINEL, createPieceTreeNode } from './pieceTreeNode'
-import { NodeColor } from './common'
+import { NodeColor, NodePosition } from './common'
 import Piece from './piece'
 
 /**
@@ -43,11 +43,43 @@ export default class PieceTreeBase {
   }
 
   /**
+   * Find Node Position by Offset
+   * @param offset
+   */
+  protected findByOffset(offset: number): NodePosition {
+    let node = this.root
+    let reminder = 0
+    let startOffset = 0
+    let startLineFeedCnt = 0
+
+    while (node !== SENTINEL) {
+      if (node.leftSize > offset) {
+        node = node.left
+      } else if (node.leftSize + node.piece.length >= offset) {
+        reminder = offset - node.leftSize
+        startOffset += node.leftSize
+        startLineFeedCnt += node.leftLineFeeds
+        break
+      } else {
+        if (node.right === SENTINEL) break
+
+        offset -= node.leftSize + node.piece.length
+        startOffset += node.leftSize + node.piece.length
+        startLineFeedCnt += node.leftLineFeeds
+
+        node = node.right
+      }
+    }
+
+    return { node, reminder, startOffset, startLineFeedCnt }
+  }
+
+  /**
    * Insert newNode as Node predecessor
    * @param node Insert After This Node
    * @param piece
    */
-  insertFixedLeft(node: PieceTreeNode, piece: Piece) {
+  protected insertFixedLeft(node: PieceTreeNode, piece: Piece) {
     const newNode = createPieceTreeNode(piece)
     if (node.isNil) {
       this.root = newNode
@@ -84,7 +116,7 @@ export default class PieceTreeBase {
    * Delete Node
    * @param node
    */
-  deleteNode(z: PieceTreeNode) {
+  protected deleteNode(z: PieceTreeNode) {
     let y = z
     let yOriginalColor = y.color
 
@@ -132,9 +164,9 @@ export default class PieceTreeBase {
 
   /**
    * Fixup the tree after node deletion
-   * @param x 替换删除节点的节点
+   * @param x node which is used to replace deleted node
    */
-  deleteNodeFixup(x: PieceTreeNode) {
+  protected deleteNodeFixup(x: PieceTreeNode) {
     while (!x.isRoot && x.isBlack) {
       if (x.isLeft) {
         let w = x.parent.right
@@ -194,7 +226,7 @@ export default class PieceTreeBase {
    * Fix up The Tree
    * @param node
    */
-  insertFixup(node: PieceTreeNode) {
+  protected insertFixup(node: PieceTreeNode) {
     // 0. 传入节点的父节点是红色节点，就不断循环
     while (node.parent.isRed) {
       // 1. 插入的节点的父节点是 左节点
@@ -241,7 +273,6 @@ export default class PieceTreeBase {
 
   /**
    * Tree Left Rotate
-   * 左旋
    *
    *      g                   g
    *      |                   |
@@ -251,7 +282,7 @@ export default class PieceTreeBase {
    *        /   \       /   \
    *      b       c   a       b
    */
-  leftRotate(x: PieceTreeNode) {
+  protected leftRotate(x: PieceTreeNode) {
     // 1. Link x's right to y's left
     const y = x.right
     const b = y.left
@@ -284,7 +315,6 @@ export default class PieceTreeBase {
 
   /**
    * Tree Right Rotate
-   * 右旋
    *
    *          g                         g
    *          |                         |
@@ -295,7 +325,7 @@ export default class PieceTreeBase {
    *  a       b                         b       c
    *
    */
-  rightRotate(y: PieceTreeNode) {
+  protected rightRotate(y: PieceTreeNode) {
     const x = y.left
     const b = x.right
 
@@ -328,7 +358,7 @@ export default class PieceTreeBase {
    * @param x
    * @param y
    */
-  transplant(x: PieceTreeNode, y: PieceTreeNode) {
+  protected transplant(x: PieceTreeNode, y: PieceTreeNode) {
     if (x.isRoot) {
       this.root = y
     } else if (x.isLeft) {

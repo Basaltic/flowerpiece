@@ -45,20 +45,9 @@ export interface FormatChange extends Change {
 }
 
 export function createInsertChange(startOffset: number, text: number[], meta: PieceMeta): InsertChange {
-  return {
-    type: 'insert',
-    start: startOffset,
-    length: text[2],
-    text,
-    meta,
-  }
+  return { type: 'insert', start: startOffset, length: text[2], text, meta }
 }
 
 export function createDeleteChange(startOffset: number, length: number, pieces: Piece[]): DeleteChange {
-  return {
-    type: 'delete',
-    start: startOffset,
-    length,
-    pieces: pieces,
-  }
+  return { type: 'delete', start: startOffset, length, pieces: pieces }
 }

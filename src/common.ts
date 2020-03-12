@@ -5,7 +5,7 @@ import PieceTreeNode from './pieceTreeNode'
  */
 export enum NodeColor {
   BLACK = 1,
-  RED = 2
+  RED = 2,
 }
 
 /**
@@ -18,6 +18,8 @@ export interface NodePosition {
   reminder: number
   // node content start offset in the document
   startOffset: number
+  // line Feed Cnt before this node
+  startLineFeedCnt: number
 }
 
 export interface LineNodePosition {

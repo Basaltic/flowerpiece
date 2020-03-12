@@ -14,19 +14,9 @@ export default class Piece {
   // How Many Line Break In This Piece
   lineFeedCnt: number
 
-  meta: PieceMeta
+  meta: PieceMeta | null
 
-  get end() {
-    return this.start + this.length
-  }
-
-  constructor(
-    bufferIndex: number,
-    start: number,
-    length: number,
-    lineFeedCnt: number,
-    meta: any = null
-  ) {
+  constructor(bufferIndex: number, start: number, length: number, lineFeedCnt: number, meta: PieceMeta | null = null) {
     this.bufferIndex = bufferIndex
     this.start = start
     this.length = length
@@ -38,5 +28,5 @@ export default class Piece {
 export interface IPiece {
   text: string
   length: number
-  meta: PieceMeta
+  meta: PieceMeta | null
 }
