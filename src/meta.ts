@@ -1,7 +1,3 @@
-import produce, { enablePatches } from 'immer'
-
-enablePatches()
-
 /**
  * Keep One Level. No nest object
  */
