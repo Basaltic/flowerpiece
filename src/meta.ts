@@ -6,7 +6,9 @@ export interface PieceMeta {
 }
 
 /**
- * Merge Two Meta
+ * Merge Two Meta. Return the
+ *
+ *
  * @param target
  * @param source
  */
