@@ -2,7 +2,29 @@
 
 A Piece Table Text Sequence Implementation
 
-# Piece Tree
+# installing
+
+Using npm:
+
+```
+$ npm install flowerpiece
+```
+
+Using yarn:
+
+```
+$ yarn add flowerpiece
+```
+
+# Examples
+
+```javascript
+import { PieceTree } from 'flowerpiece'
+
+const tree = new PieceTree()
+```
+
+# Piece Tree API
 
 - redo()
 - undo()
