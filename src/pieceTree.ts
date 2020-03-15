@@ -3,7 +3,8 @@ import Piece, { IPiece } from './piece'
 import PieceTreeBase from './pieceTreebase'
 import PieceTreeNode, { SENTINEL } from './pieceTreeNode'
 import Change, { InsertChange, createInsertChange, DeleteChange, createDeleteChange, FormatChange, createFormatChange } from './change'
-import { PieceMeta, mergeMeta } from './Meta'
+import { PieceMeta, mergeMeta } from './meta'
+import { Diff } from './diff'
 
 const EOL = '\n'
 
@@ -104,14 +105,17 @@ export class PieceTree extends PieceTreeBase {
    * 1. Always create a new piece while having meta
    * 2. Coninuesly input only text, append to same node
    */
-  insert(offset: number, text: string, meta?: any, disableChange?: boolean) {
+  insert(offset: number, text: string, meta?: any, disableChange?: boolean): Diff[] {
+    const diffs: Diff[] = []
     const nodePosition = this.findByOffset(offset)
-    let { node, reminder, startOffset } = nodePosition
+    let { node, reminder, startOffset, startLineFeedCnt } = nodePosition
 
     const addBuffer = this.buffers[0]
     // 1. Start of Node
     if (startOffset === offset) {
       const preNode = node.predecessor()
+
+      // 1.1 Continous input
       if (
         text &&
         !meta &&
@@ -119,12 +123,43 @@ export class PieceTree extends PieceTreeBase {
         preNode.piece.bufferIndex === 0 &&
         addBuffer.length === preNode.piece.start + preNode.piece.length
       ) {
+        // create diff
+        const lineFeeds = computeLineFeedCnt(text)
+        for (let i = 0; i < lineFeeds + 1; i++) {
+          const lineNumber = startLineFeedCnt + 1 + i
+          if (i === 0) diffs.push({ type: 'replace', lineNumber })
+          else diffs.push({ type: 'insert', lineNumber })
+        }
+
         addBuffer.buffer += text
         preNode.piece.length += text.length
+        preNode.piece.lineFeedCnt += lineFeeds
+
         preNode.updateMetaUpward()
-      } else {
+      }
+      // 1.2 Not Continous Input. Need to create a new piece
+      else {
         const piece = this.createPiece(text, meta)
         this.insertFixedLeft(node, piece)
+
+        // create diff
+        const lineFeeds = piece.lineFeedCnt
+        if (node === SENTINEL) {
+          for (let i = 0; i < lineFeeds + 1; i++) {
+            const lineNumber = startLineFeedCnt + 1 + i
+            diffs.push({ type: 'insert', lineNumber })
+          }
+        } else {
+          if (lineFeeds === 0) {
+            diffs.push({ type: 'replace', lineNumber: 1 })
+          } else if (lineFeeds >= 1) {
+            for (let i = 0; i < lineFeeds + 1; i++) {
+              const lineNumber = i + 1
+              if (i === lineFeeds - 1) diffs.push({ type: 'replace', lineNumber })
+              else diffs.push({ type: 'insert', lineNumber })
+            }
+          }
+        }
       }
     }
 
@@ -151,6 +186,14 @@ export class PieceTree extends PieceTreeBase {
 
       const middlePieces = this.createPiece(text, meta)
       this.insertFixedRight(node, middlePieces)
+
+      // create diff
+      const accumulateLineFeedsCnt = middlePieces.lineFeedCnt
+      for (let i = 0; i < accumulateLineFeedsCnt + 1; i++) {
+        const lineNumber = startLineFeedCnt + leftLineFeedCnt + 1 + i
+        if (i === 0) diffs.push({ type: 'replace', lineNumber })
+        else diffs.push({ type: 'insert', lineNumber })
+      }
     }
 
     // 3. End of Node
@@ -162,13 +205,28 @@ export class PieceTree extends PieceTreeBase {
         startOffset + node.piece.length === offset &&
         addBuffer.length === node.piece.start + node.piece.length
       ) {
+        // create diff
+        const accumulateLineFeedsCnt = computeLineFeedCnt(text)
+        for (let i = 0; i < accumulateLineFeedsCnt + 1; i++) {
+          const lineNumber = startLineFeedCnt + node.piece.lineFeedCnt + 1 + i
+          if (i === 0) diffs.push({ type: 'replace', lineNumber })
+          else diffs.push({ type: 'insert', lineNumber })
+        }
+
         addBuffer.buffer += text
         node.piece.length += text.length
-        node.piece.lineFeedCnt += computeLineFeedCnt(text)
+        node.piece.lineFeedCnt += accumulateLineFeedsCnt
         node.updateMetaUpward()
       } else {
         const piece = this.createPiece(text, meta)
         this.insertFixedRight(node, piece)
+
+        // create diff
+        const lineFeeds = piece.lineFeedCnt
+        for (let i = 0; i < lineFeeds + 1; i++) {
+          const lineNumber = startLineFeedCnt + node.piece.lineFeedCnt + 1 + i
+          diffs.push({ type: 'insert', lineNumber })
+        }
       }
     }
 
@@ -177,6 +235,8 @@ export class PieceTree extends PieceTreeBase {
       this.undoChanges.push(change)
       this.redoChanges = []
     }
+
+    return diffs
   }
 
   /**
