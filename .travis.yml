@@ -8,4 +8,4 @@ install:
   - npm install
 script:
   - npm run test
-  - codecov --file coverage/lcov.info --disable search -t 867b61a5-67a6-48ad-acb5-305df0184cd4
+  - codecov --file coverage/*.json --disable search -t 867b61a5-67a6-48ad-acb5-305df0184cd4
