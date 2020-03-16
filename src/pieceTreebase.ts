@@ -79,7 +79,7 @@ export default class PieceTreeBase {
    * @param node Insert After This Node
    * @param piece
    */
-  protected insertFixedLeft(node: PieceTreeNode, piece: Piece) {
+  protected insertFixedLeft(node: PieceTreeNode, piece: Piece): PieceTreeNode {
     const newNode = createPieceTreeNode(piece)
     if (node.isNil) {
       this.root = newNode
@@ -91,6 +91,8 @@ export default class PieceTreeBase {
     }
     newNode.updateMetaUpward()
     this.insertFixup(newNode)
+
+    return newNode
   }
 
   /**
@@ -98,7 +100,7 @@ export default class PieceTreeBase {
    * @param node
    * @param piece
    */
-  insertFixedRight(node: PieceTreeNode, piece: Piece) {
+  protected insertFixedRight(node: PieceTreeNode, piece: Piece) {
     const newNode = createPieceTreeNode(piece)
     if (node.isNil) {
       this.root = newNode
@@ -110,6 +112,8 @@ export default class PieceTreeBase {
     }
     newNode.updateMetaUpward()
     this.insertFixup(newNode)
+
+    return newNode
   }
 
   /**

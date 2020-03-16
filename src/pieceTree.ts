@@ -168,7 +168,7 @@ export class PieceTree extends PieceTreeBase {
       // 2.1 Split to two node
       const strBuffer = this.buffers[node.piece.bufferIndex]
 
-      const leftStr = strBuffer.buffer.substring(node.piece.start, reminder)
+      const leftStr = strBuffer.buffer.substring(node.piece.start, node.piece.start + reminder)
       const leftLineFeedCnt = computeLineFeedCnt(leftStr)
 
       const rightPiece = new Piece(
@@ -198,6 +198,7 @@ export class PieceTree extends PieceTreeBase {
 
     // 3. End of Node
     else {
+      // Continous Input
       if (
         text &&
         !meta &&
@@ -242,35 +243,54 @@ export class PieceTree extends PieceTreeBase {
   /**
    * Delete Content
    */
-  delete(start: number, length: number, disableChange?: boolean) {
+  delete(start: number, length: number, disableChange?: boolean): Diff[] {
     const pieceChange: Piece[] = []
 
+    // delete
     const startNodePosition = this.findByOffset(start)
-
-    let { node, startOffset } = startNodePosition
-    this.deleteInner(start, length, startOffset, node, pieceChange)
+    let { node, startOffset, startLineFeedCnt } = startNodePosition
+    if (start !== startOffset) {
+      const reminder = start - startOffset
+      if (reminder === node.piece.length) {
+        node = node.successor()
+      } else {
+        const [leftNode, rightNode] = this.splitNodeLeft(node, reminder)
+        node = rightNode
+      }
+    }
+    const formattedLineFeeds = this.deleteInner(start, length, node, pieceChange)
 
     startNodePosition.node.updateMetaUpward()
 
+    // changes
     if (!disableChange && pieceChange.length > 0) {
       const change: DeleteChange = createDeleteChange(start, length, pieceChange)
       this.undoChanges.push(change)
       this.redoChanges = []
     }
+
+    // diffs
+    const diffs: Diff[] = []
+    for (let i = 0; i <= formattedLineFeeds; i++) {
+      if (i === 0) diffs.push({ type: 'replace', lineNumber: startLineFeedCnt + 1 + i })
+      else diffs.push({ type: 'remove', lineNumber: startLineFeedCnt + 1 + i })
+    }
+    return diffs
   }
 
-  private deleteInner(start: number, length: number, startOffset: number, node: PieceTreeNode, pieceChange: Piece[]) {
-    if (length <= 0) {
-      return
-    }
-    // Start of the piece node
-    if (start === startOffset) {
+  private deleteInner(start: number, length: number, node: PieceTreeNode, pieceChange: Piece[]) {
+    let lineFeedCnt: number = 0
+
+    if (length > 0) {
+      // Start of the piece node
       if (length === node.piece.length) {
         this.deleteNode(node)
         length -= node.piece.length
 
         // record the delete change
         pieceChange.push(node.piece)
+
+        lineFeedCnt += node.piece.lineFeedCnt
       } else if (length >= node.piece.length) {
         const currentNode = node
         node = node.successor()
@@ -280,6 +300,8 @@ export class PieceTree extends PieceTreeBase {
 
         // record the delete change
         pieceChange.push(currentNode.piece)
+
+        lineFeedCnt += currentNode.piece.lineFeedCnt
       } else {
         const originalStart = node.piece.start
         const originalLineFeedCnt = node.piece.lineFeedCnt
@@ -291,54 +313,61 @@ export class PieceTree extends PieceTreeBase {
         // record the delete change
         pieceChange.push(new Piece(node.piece.bufferIndex, originalStart, length, originalLineFeedCnt - node.piece.lineFeedCnt))
 
+        lineFeedCnt += originalLineFeedCnt - node.piece.lineFeedCnt
+
         length = 0
       }
 
-      this.deleteInner(start, length, start, node, pieceChange)
-    } else {
-      const reminder = start - startOffset
-      if (reminder === node.piece.length) {
-      } else {
-        this.splitNodeRight(node, reminder)
-      }
-      node = node.successor()
-
-      this.deleteInner(start, length, start, node, pieceChange)
+      this.deleteInner(start, length, node, pieceChange)
     }
+
+    return lineFeedCnt
   }
 
   /**
    * Format The Content. Only change the meta
    */
-  format(start: number, length: number, meta: PieceMeta, disableChange: boolean = false) {
+  format(start: number, length: number, meta: PieceMeta, disableChange: boolean = false): Diff[] {
     const pieceChange: Array<{ startOffset: number; length: number; meta: PieceMeta }> = []
 
-    const { node, startOffset } = this.findByOffset(start)
-    this.formatInner(start, length, startOffset, node, meta, pieceChange)
+    // format
+    let { node, startOffset, startLineFeedCnt } = this.findByOffset(start)
+    if (start !== startOffset) {
+      const reminder = start - startOffset
+      const [leftNode, rightNode] = this.splitNodeLeft(node, reminder)
+      node = rightNode
+      startLineFeedCnt += leftNode.piece.lineFeedCnt
+    }
+    const formattedLineFeeds = this.formatInner(start, length, node, meta, pieceChange)
 
+    // changes
     if (!disableChange) {
       const change: FormatChange = createFormatChange(startOffset, length, meta, pieceChange)
       this.undoChanges.push(change)
       this.redoChanges = []
     }
+
+    // diffs
+    const diffs: Diff[] = []
+    for (let i = 0; i <= formattedLineFeeds; i++) {
+      diffs.push({ type: 'replace', lineNumber: startLineFeedCnt + 1 + i })
+    }
+    return diffs
   }
 
   private formatInner(
     start: number,
     length: number,
-    startOffset: number,
     node: PieceTreeNode,
     meta: PieceMeta,
     pieceChange: Array<{ startOffset: number; length: number; meta: PieceMeta }> = [],
   ) {
-    if (length <= 0) {
-      return
-    }
+    let lineFeedCnt: number = 0
 
-    if (start === startOffset) {
+    if (length > 0) {
       if (length >= node.piece.length) {
+        lineFeedCnt += node.piece.lineFeedCnt
         const reverse = mergeMeta(node.piece.meta, meta)
-
         if (reverse !== null) pieceChange.push({ startOffset: start, length: node.piece.length, meta: reverse })
 
         length -= node.piece.length
@@ -347,6 +376,8 @@ export class PieceTree extends PieceTreeBase {
         node = node.successor()
       } else {
         this.splitNodeRight(node, length)
+
+        lineFeedCnt += node.piece.lineFeedCnt
         const reverse = mergeMeta(node.piece.meta, meta)
         if (reverse !== null) pieceChange.push({ startOffset: start, length: length, meta: reverse })
 
@@ -354,13 +385,10 @@ export class PieceTree extends PieceTreeBase {
         start += node.piece.length
       }
 
-      this.formatInner(start, length, start, node, meta, pieceChange)
-    } else {
-      const reminder = start - startOffset
-      this.splitNodeLeft(node, reminder)
-
-      this.formatInner(start, length, start, node, meta, pieceChange)
+      lineFeedCnt += this.formatInner(start, length, node, meta, pieceChange)
     }
+
+    return lineFeedCnt
   }
 
   // ---- Atomic Operation ---- //
@@ -610,9 +638,15 @@ export class PieceTree extends PieceTreeBase {
     node.piece.length -= reminder
     node.piece.lineFeedCnt -= leftLineFeedsCnt
 
-    this.insertFixedLeft(node, leftPiece)
+    const leftNode = this.insertFixedLeft(node, leftPiece)
+    return [leftNode, node]
   }
 
+  /**
+   * Split One Node into two nodes
+   * @param node
+   * @param reminder
+   */
   private splitNodeRight(node: PieceTreeNode, reminder: number) {
     const { bufferIndex, start, meta, length, lineFeedCnt } = node.piece
 
@@ -631,7 +665,9 @@ export class PieceTree extends PieceTreeBase {
     node.piece.lineFeedCnt = leftLineFeedsCnt
     mergeMeta(node.piece.meta, meta)
 
-    this.insertFixedRight(node, rightPiece)
+    const rightNode = this.insertFixedRight(node, rightPiece)
+
+    return [node, rightNode]
   }
 
   private recomputeLineFeedsCntInPiece(piece: Piece) {
