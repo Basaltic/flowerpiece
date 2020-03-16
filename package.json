@@ -5,7 +5,7 @@
   "keywords": [],
   "main": "dist/flowerpiece.umd.js",
   "module": "dist/flowerpiece.es5.js",
-  "typings": "dist/types/flowerpiece.d.ts",
+  "typings": "dist/lib/*.d.ts",
   "files": [
     "dist"
   ],

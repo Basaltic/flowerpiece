@@ -17,6 +17,7 @@
     "jsx": "preserve",
     "downlevelIteration": true,
     "declaration": true,
+    "emitDeclarationOnly": true,
     "baseUrl": "src/",
     // "composite": true,
     // "declaration": true,
