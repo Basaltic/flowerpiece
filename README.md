@@ -1,6 +1,6 @@
 # Flower Piece (WIP)
 
-[![Build Status](https://travis-ci.org/github/Basaltic/flowerpiece.png?branch=master)](https://travis-ci.org/github/Basaltic/flowerpiece)
+[![Build Status](https://travis-ci.org/Basaltic/flowerpiece.svg?branch=master)](https://travis-ci.org/Basaltic/flowerpiece)
 
 A Piece Table Text Sequence Implementation
 
