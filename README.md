@@ -1,6 +1,7 @@
 # Flower Piece (WIP)
 
 [![Build Status](https://travis-ci.org/Basaltic/flowerpiece.svg?branch=master)](https://travis-ci.org/Basaltic/flowerpiece)
+[![codecov](https://codecov.io/gh/Basaltic/flowerpiece/branch/master/graph/badge.svg)](https://codecov.io/gh/Basaltic/flowerpiece)
 
 A Piece Table Text Sequence Implementation
 
