@@ -1,4 +1,4 @@
-import { PieceMeta } from './Meta'
+import { PieceMeta } from './meta'
 import Piece from './piece'
 
 export default interface IChange {
