@@ -1,11 +1,11 @@
 {
   "name": "flowerpiece",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "",
   "keywords": [],
   "main": "dist/flowerpiece.umd.js",
   "module": "dist/flowerpiece.es5.js",
-  "typings": "dist/lib/*.d.ts",
+  "typings": "dist/lib/flowerpiece.d.ts",
   "files": [
     "dist"
   ],
