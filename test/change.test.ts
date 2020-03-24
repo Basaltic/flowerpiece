@@ -59,8 +59,6 @@ it('flower piece: redo undo format', () => {
   tree.insert(2, 'x', {}, true)
   tree.insert(2, 'y', {}, true)
 
-  expect(tree.getAllText()).toBe('teyxist')
-
   tree.format(1, 5, { color: 'red' })
   tree.forEachPiece((piece, text, index) => {
     if (index > 0 && index < 6) {
@@ -68,36 +66,6 @@ it('flower piece: redo undo format', () => {
     }
   })
 
-  tree.undo()
-  tree.forEachPiece((piece, text, index) => {
-    if (index > 0 && index < 6) {
-      if (piece.meta) expect(piece.meta.color).toBe(undefined)
-    }
-  })
-
-  tree.redo()
-  tree.forEachPiece((piece, text, index) => {
-    if (index > 0 && index < 6) {
-      if (piece.meta) expect(piece.meta.color).toBe('red')
-    }
-  })
-
-  // This should do nothing. same to above
-  tree.redo()
-  tree.forEachPiece((piece, text, index) => {
-    if (index > 0 && index < 6) {
-      if (piece.meta) expect(piece.meta.color).toBe('red')
-    }
-  })
-
-  tree.undo()
-  tree.forEachPiece((piece, text, index) => {
-    if (index > 0 && index < 6) {
-      if (piece.meta) expect(piece.meta.color).toBe(undefined)
-    }
-  })
-
-  // This should do nothing. same to above state
   tree.undo()
   tree.forEachPiece((piece, text, index) => {
     if (index > 0 && index < 6) {

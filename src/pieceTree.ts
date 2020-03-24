@@ -2,9 +2,18 @@ import { LineNodePosition } from './common'
 import Piece, { IPiece } from './piece'
 import PieceTreeBase from './pieceTreebase'
 import PieceTreeNode, { SENTINEL } from './pieceTreeNode'
-import Change, { InsertChange, createInsertChange, DeleteChange, createDeleteChange, FormatChange, createFormatChange } from './change'
+import Change, {
+  InsertChange,
+  createInsertChange,
+  DeleteChange,
+  createDeleteChange,
+  FormatChange,
+  createFormatChange,
+  PiecePatch,
+} from './change'
 import { PieceMeta, mergeMeta } from './meta'
 import { Diff } from './diff'
+import { applyPatches } from 'immer'
 
 const EOL = '\n'
 
@@ -37,7 +46,14 @@ export class PieceTree extends PieceTreeBase {
           break
         case 'format':
           const formatChange = change as FormatChange
-          this.format(formatChange.startOffset, formatChange.length, formatChange.meta, true)
+          if (formatChange.piecePatches.length > 0) {
+            for (const patch of formatChange.piecePatches) {
+              const { startOffset, patches } = patch
+              const { node } = this.findByOffset(startOffset)
+
+              node.piece.meta = applyPatches(node.piece.meta || {}, patches)
+            }
+          }
           break
       }
       this.undoChanges.push(change)
@@ -58,7 +74,6 @@ export class PieceTree extends PieceTreeBase {
         case 'delete':
           const deleteChange = change as DeleteChange
           const nodePosition = this.findByOffset(deleteChange.startOffset)
-
           // Start of node
           if (nodePosition.startOffset === deleteChange.startOffset) {
             let node = nodePosition.node.predecessor()
@@ -88,7 +103,10 @@ export class PieceTree extends PieceTreeBase {
           const formatChange = change as FormatChange
           if (formatChange.piecePatches.length > 0) {
             for (const patch of formatChange.piecePatches) {
-              this.format(patch.startOffset, patch.length, patch.meta, true)
+              const { startOffset, inversePatches } = patch
+              const { node } = this.findByOffset(startOffset)
+              node.piece.meta = applyPatches(node.piece.meta || {}, inversePatches)
+              console.log(node.piece.meta)
             }
           }
           break
@@ -254,7 +272,7 @@ export class PieceTree extends PieceTreeBase {
       if (reminder === node.piece.length) {
         node = node.successor()
       } else {
-        const [leftNode, rightNode] = this.splitNodeLeft(node, reminder)
+        const [, rightNode] = this.splitNodeLeft(node, reminder)
         node = rightNode
       }
     }
@@ -282,27 +300,29 @@ export class PieceTree extends PieceTreeBase {
     let lineFeedCnt: number = 0
 
     if (length > 0) {
-      // Start of the piece node
+      // 1. The length is actually same as the node length. just delete this node
       if (length === node.piece.length) {
         this.deleteNode(node)
         length -= node.piece.length
+        lineFeedCnt += node.piece.lineFeedCnt
 
         // record the delete change
         pieceChange.push(node.piece)
-
-        lineFeedCnt += node.piece.lineFeedCnt
-      } else if (length >= node.piece.length) {
+      }
+      // 2. The length is larger than node length. just delete this ndoe and go deeper
+      else if (length >= node.piece.length) {
         const currentNode = node
         node = node.successor()
 
         this.deleteNode(currentNode)
         length -= currentNode.piece.length
+        lineFeedCnt += currentNode.piece.lineFeedCnt
 
         // record the delete change
         pieceChange.push(currentNode.piece)
-
-        lineFeedCnt += currentNode.piece.lineFeedCnt
-      } else {
+      }
+      // 3. The length is smaller than node length. delete part of node
+      else {
         const originalStart = node.piece.start
         const originalLineFeedCnt = node.piece.lineFeedCnt
 
@@ -310,11 +330,12 @@ export class PieceTree extends PieceTreeBase {
         node.piece.length -= length
         node.piece.lineFeedCnt = this.recomputeLineFeedsCntInPiece(node.piece)
 
+        lineFeedCnt += originalLineFeedCnt - node.piece.lineFeedCnt
+
         // record the delete change
         pieceChange.push(new Piece(node.piece.bufferIndex, originalStart, length, originalLineFeedCnt - node.piece.lineFeedCnt))
 
-        lineFeedCnt += originalLineFeedCnt - node.piece.lineFeedCnt
-
+        // set to 0 to force the recursive end
         length = 0
       }
 
@@ -328,7 +349,7 @@ export class PieceTree extends PieceTreeBase {
    * Format The Content. Only change the meta
    */
   format(start: number, length: number, meta: PieceMeta, disableChange: boolean = false): Diff[] {
-    const pieceChange: Array<{ startOffset: number; length: number; meta: PieceMeta }> = []
+    const piecePatches: PiecePatch[] = []
 
     // format
     let { node, startOffset, startLineFeedCnt } = this.findByOffset(start)
@@ -338,11 +359,11 @@ export class PieceTree extends PieceTreeBase {
       node = rightNode
       startLineFeedCnt += leftNode.piece.lineFeedCnt
     }
-    const formattedLineFeeds = this.formatInner(start, length, node, meta, pieceChange)
+    const formattedLineFeeds = this.formatInner(start, length, node, meta, piecePatches)
 
     // changes
     if (!disableChange) {
-      const change: FormatChange = createFormatChange(startOffset, length, meta, pieceChange)
+      const change: FormatChange = createFormatChange(startOffset, length, meta, piecePatches)
       this.undoChanges.push(change)
       this.redoChanges = []
     }
@@ -355,20 +376,19 @@ export class PieceTree extends PieceTreeBase {
     return diffs
   }
 
-  private formatInner(
-    start: number,
-    length: number,
-    node: PieceTreeNode,
-    meta: PieceMeta,
-    pieceChange: Array<{ startOffset: number; length: number; meta: PieceMeta }> = [],
-  ) {
+  private formatInner(start: number, length: number, node: PieceTreeNode, meta: PieceMeta, piecePatches: PiecePatch[]) {
     let lineFeedCnt: number = 0
 
     if (length > 0) {
       if (length >= node.piece.length) {
+        // Line feeds counting. Meta Merge
         lineFeedCnt += node.piece.lineFeedCnt
-        const reverse = mergeMeta(node.piece.meta, meta)
-        if (reverse !== null) pieceChange.push({ startOffset: start, length: node.piece.length, meta: reverse })
+        const mergeResult = mergeMeta(node.piece.meta, meta)
+        if (mergeResult !== null) {
+          const [target, patches, inversePatches] = mergeResult
+          node.piece.meta = target
+          piecePatches.push({ startOffset: start, length: node.piece.length, patches, inversePatches })
+        }
 
         length -= node.piece.length
         start += node.piece.length
@@ -377,15 +397,20 @@ export class PieceTree extends PieceTreeBase {
       } else {
         this.splitNodeRight(node, length)
 
+        // Line feeds counting. Meta Merge
         lineFeedCnt += node.piece.lineFeedCnt
-        const reverse = mergeMeta(node.piece.meta, meta)
-        if (reverse !== null) pieceChange.push({ startOffset: start, length: length, meta: reverse })
+        const mergeResult = mergeMeta(node.piece.meta, meta)
+        if (mergeResult !== null) {
+          const [target, patches, inversePatches] = mergeResult
+          node.piece.meta = target
+          piecePatches.push({ startOffset: start, length: node.piece.length, patches, inversePatches })
+        }
 
         length -= node.piece.length
         start += node.piece.length
       }
 
-      lineFeedCnt += this.formatInner(start, length, node, meta, pieceChange)
+      lineFeedCnt += this.formatInner(start, length, node, meta, piecePatches)
     }
 
     return lineFeedCnt

@@ -1,21 +1,33 @@
-import { mergeMeta, PieceMeta } from '../src/meta'
+import { mergeMeta } from '../src/meta'
 
-it('flower piece: mergeMeta', () => {
-  let reverse = mergeMeta(null, null)
-  expect(reverse).toBe(null)
-
-  reverse = mergeMeta(null, { width: 100, color: 'red' })
-  expect(reverse).not.toBe(null)
-  if (reverse) {
-    expect(reverse.width).toBe(undefined)
-    expect(reverse.color).toBe(undefined)
+it('mergeMeta test 1', () => {
+  const target = {
+    age: 10,
+    obj: {
+      color: 10,
+    },
   }
 
-  const target: PieceMeta = { color: 'green', height: 100 }
-  reverse = mergeMeta(target, { width: 100, color: 'red' })
-  expect(reverse).not.toBe(null)
-  if (reverse) {
-    expect(reverse.width).toBe(undefined)
-    expect(reverse.color).toBe('green')
+  const source = {
+    age: 11,
+    obj: {
+      color: 11,
+      ss: 10,
+    },
   }
+
+  const mergeResult = mergeMeta(target, source)
+  expect(mergeResult).toEqual([
+    { age: 11, obj: { color: 11, ss: 10 } },
+    [
+      { op: 'replace', path: ['obj', 'color'], value: 11 },
+      { op: 'add', path: ['obj', 'ss'], value: 10 },
+      { op: 'replace', path: ['age'], value: 11 },
+    ],
+    [
+      { op: 'replace', path: ['obj', 'color'], value: 10 },
+      { op: 'remove', path: ['obj', 'ss'] },
+      { op: 'replace', path: ['age'], value: 10 },
+    ],
+  ])
 })

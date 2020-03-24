@@ -1,6 +1,6 @@
 {
   "name": "flowerpiece",
-  "version": "0.0.9",
+  "version": "0.1.0",
   "description": "",
   "keywords": [],
   "main": "dist/flowerpiece.umd.js",
@@ -120,5 +120,9 @@
     "tslint-config-prettier": "^1.15.0",
     "tslint-config-standard": "^8.0.1",
     "typescript": "^3.8.3"
+  },
+  "dependencies": {
+    "immer": "^6.0.2",
+    "lodash.merge": "^4.6.2"
   }
 }
