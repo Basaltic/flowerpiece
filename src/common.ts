@@ -23,6 +23,7 @@ export interface NodePosition {
 }
 
 export interface LineNodePosition {
+  // start node of this line
   node: PieceTreeNode
   remindLineCnt: number
   startOffset: number

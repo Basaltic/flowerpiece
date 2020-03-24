@@ -45,7 +45,6 @@ export interface FormatChange extends IChange {
 export interface PiecePatch {
   startOffset: number
   length: number
-  patches: Patch[]
   inversePatches: Patch[]
 }
 

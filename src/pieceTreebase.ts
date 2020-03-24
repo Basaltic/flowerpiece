@@ -164,6 +164,8 @@ export default class PieceTreeBase {
     if (yOriginalColor === NodeColor.BLACK) {
       this.deleteNodeFixup(x)
     }
+
+    z.detach()
   }
 
   /**

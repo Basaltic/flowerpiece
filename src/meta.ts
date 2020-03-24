@@ -17,15 +17,15 @@ export interface PieceMeta {
  * @param target
  * @param source
  */
-export function mergeMeta(target: PieceMeta | null, source: PieceMeta | null): [PieceMeta, Patch[], Patch[]] | null {
+export function mergeMeta(target: PieceMeta | null, source: PieceMeta | null): [PieceMeta, Patch[]] | null {
   if (source) {
     if (target === null) target = {}
 
-    const [nextState, patches, inversePatches] = produceWithPatches(target, draft => {
+    const [nextState, , inversePatches] = produceWithPatches(target, draft => {
       merge(draft, source)
     })
 
-    return [nextState, patches, inversePatches]
+    return [nextState, inversePatches]
   }
 
   return null
