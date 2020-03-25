@@ -1,6 +1,6 @@
 import { LineNodePosition } from './common'
 import Piece, { IPiece } from './piece'
-import PieceTreeBase from './pieceTreebase'
+import PieceTreeBase, { StringBuffer } from './pieceTreebase'
 import PieceTreeNode, { SENTINEL } from './pieceTreeNode'
 import Change, {
   InsertChange,
@@ -24,8 +24,17 @@ export class PieceTree extends PieceTreeBase {
   private undoChanges: Change[] = []
   private redoChanges: Change[] = []
 
-  constructor() {
+  constructor(pieces?: IPiece[]) {
     super()
+    if (pieces) {
+      for (const piece of pieces) {
+        if (piece.text) {
+          const buffer = new StringBuffer(piece.text)
+          this.buffers.push(buffer)
+          this.insertRightest(new Piece(this.buffers.length - 1, 0, buffer.length, computeLineFeedCnt(piece.text), piece.meta))
+        }
+      }
+    }
   }
 
   /**
@@ -444,12 +453,13 @@ export class PieceTree extends PieceTreeBase {
    * Interate all the pieces
    * @param callback
    */
-  forEachPiece(callback: (piece: Piece, text: string, index: number) => void) {
+  forEachPiece(callback: (piece: IPiece, index: number) => void) {
     let node = this.root.findMin()
     let index = 0
     while (node.isNotNil) {
+      const { length, meta } = node.piece
       const text = this.getTextInPiece(node.piece)
-      callback(node.piece, text, index)
+      callback({ text, length, meta }, index)
       node = node.successor()
       index++
     }
@@ -464,8 +474,8 @@ export class PieceTree extends PieceTreeBase {
    */
   getAllText(): string {
     let txt = ''
-    this.forEachPiece((_, text) => {
-      txt += text
+    this.forEachPiece(piece => {
+      txt += piece.text
     })
     return txt
   }
@@ -527,6 +537,18 @@ export class PieceTree extends PieceTreeBase {
     }
 
     return line
+  }
+
+  /**
+   * Get All the pieces of this tree
+   */
+  getPieces(): IPiece[] {
+    const pieces: IPiece[] = []
+    this.forEachPiece(piece => {
+      pieces.push(piece)
+    })
+
+    return pieces
   }
 
   /**

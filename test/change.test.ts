@@ -62,21 +62,21 @@ it('flower piece: redo undo format', () => {
   expect(tree.getAllText()).toBe('teyxist')
 
   tree.format(1, 5, { color: 'red' })
-  tree.forEachPiece((piece, text, index) => {
+  tree.forEachPiece((piece, index) => {
     if (index > 0 && index < 6) {
       if (piece.meta) expect(piece.meta.color).toBe('red')
     }
   })
 
   tree.undo()
-  tree.forEachPiece((piece, text, index) => {
+  tree.forEachPiece((piece, index) => {
     if (index > 0 && index < 6) {
       if (piece.meta) expect(piece.meta.color).toBe(undefined)
     }
   })
 
   tree.redo()
-  tree.forEachPiece((piece, text, index) => {
+  tree.forEachPiece((piece, index) => {
     if (index > 0 && index < 6) {
       if (piece.meta) expect(piece.meta.color).toBe('red')
     }

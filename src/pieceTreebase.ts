@@ -75,6 +75,15 @@ export default class PieceTreeBase {
   }
 
   /**
+   * Append the piece
+   * @param piece
+   */
+  protected insertRightest(piece: Piece) {
+    const node = this.root.findMax()
+    this.insertFixedRight(node, piece)
+  }
+
+  /**
    * Insert newNode as Node predecessor
    * @param node Insert After This Node
    * @param piece

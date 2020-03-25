@@ -26,7 +26,10 @@ export default class Piece {
 }
 
 export interface IPiece {
+  // Text Content
   text: string
+  // Length of this piece
   length: number
+  // Meta info of this piece
   meta: PieceMeta | null
 }

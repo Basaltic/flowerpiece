@@ -20,4 +20,7 @@ it('get test 1', () => {
 
   line = tree.getLine(4)
   expect(line).toEqual([{ text: '', length: 0, meta: null }])
+
+  let pieces = tree.getPieces()
+  expect(pieces).toEqual([{ text, length: text.length, meta: null }])
 })

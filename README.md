@@ -29,7 +29,7 @@ const tree = new PieceTree()
 
 # APIs
 
-## Piece Tree
+## Piece Tree API
 
 - redo()
 - undo()
@@ -39,13 +39,19 @@ const tree = new PieceTree()
 
 ## Diff
 
-- type
-  - insert
-  - remove
-  - replace
-- lineNumber: which line is inserted，removed or replaced
+Diff indicate which line of content is newly added, removed or modified after operation
+
+```typescript
+export interface Diff {
+  type: 'insert' | 'remove' | 'replace'
+  lineNumber: number
+}
+```
 
 ## PieceMeta
 
-- Must be plain object
-- Have to only have one level
+```typescript
+export interface PieceMeta {
+  [key: string]: number | string | PieceMeta
+}
+```
