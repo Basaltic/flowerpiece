@@ -23,4 +23,12 @@ it('get test 1', () => {
 
   let pieces = tree.getPieces()
   expect(pieces).toEqual([{ text, length: text.length, meta: null }])
+
+  tree.insert(2, 'abc')
+  pieces = tree.getPieces()
+  expect(pieces).toEqual([
+    { text: 'Th', length: 2, meta: null },
+    { text: 'abc', length: 3, meta: null },
+    { text: 'is is a test paragraph.\n这是测试段落，只有文字\n', length: 36, meta: null },
+  ])
 })
