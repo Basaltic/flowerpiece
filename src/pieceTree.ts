@@ -178,31 +178,16 @@ export class PieceTree extends PieceTreeBase {
     // 2. Middle of the Node
     else if (startOffset + node.piece.length > offset) {
       // 2.1 Split to two node
-      const strBuffer = this.buffers[node.piece.bufferIndex]
 
-      const leftStr = strBuffer.buffer.substring(node.piece.start, node.piece.start + reminder)
-      const leftLineFeedCnt = computeLineFeedCnt(leftStr)
-
-      const rightPiece = new Piece(
-        node.piece.bufferIndex,
-        node.piece.start + reminder,
-        node.piece.length - reminder,
-        node.piece.lineFeedCnt - leftLineFeedCnt,
-        { ...node.piece.meta },
-      )
-
-      node.piece.length = reminder
-      node.piece.lineFeedCnt = leftLineFeedCnt
-
-      this.insertFixedRight(node, rightPiece)
+      const [leftNode] = this.splitNode(node, reminder)
 
       const middlePieces = this.createPiece(text, meta)
-      this.insertFixedRight(node, middlePieces)
+      this.insertFixedRight(leftNode, middlePieces)
 
       // create diff
       const accumulateLineFeedsCnt = middlePieces.lineFeedCnt
       for (let i = 0; i < accumulateLineFeedsCnt + 1; i++) {
-        const lineNumber = startLineFeedCnt + leftLineFeedCnt + 1 + i
+        const lineNumber = startLineFeedCnt + leftNode.leftLineFeeds + 1 + i
         if (i === 0) diffs.push({ type: 'replace', lineNumber })
         else diffs.push({ type: 'insert', lineNumber })
       }
@@ -266,7 +251,7 @@ export class PieceTree extends PieceTreeBase {
       if (reminder === node.piece.length) {
         node = node.successor()
       } else {
-        const [, rightNode] = this.splitNodeLeft(node, reminder)
+        const [, rightNode] = this.splitNode(node, reminder)
         node = rightNode
       }
     }
@@ -349,7 +334,7 @@ export class PieceTree extends PieceTreeBase {
     let { node, startOffset, startLineFeedCnt } = this.findByOffset(start)
     if (start !== startOffset) {
       const reminder = start - startOffset
-      const [leftNode, rightNode] = this.splitNodeLeft(node, reminder)
+      const [leftNode, rightNode] = this.splitNode(node, reminder)
       node = rightNode
       startLineFeedCnt += leftNode.piece.lineFeedCnt
     }
@@ -389,7 +374,8 @@ export class PieceTree extends PieceTreeBase {
 
         node = node.successor()
       } else {
-        this.splitNodeRight(node, length)
+        const [leftNode] = this.splitNode(node, length)
+        node = leftNode
 
         // Line feeds counting. Meta Merge
         lineFeedCnt += node.piece.lineFeedCnt
@@ -485,7 +471,7 @@ export class PieceTree extends PieceTreeBase {
   }
 
   /**
-   * 获取某一行的 piece 列表
+   * get piece list of some line
    * @param lineNumber
    */
   getLine(lineNumber: number): IPiece[] {
@@ -509,7 +495,7 @@ export class PieceTree extends PieceTreeBase {
 
     const { remindLineCnt } = anchorNodePostion
 
-    // 1. 往查找直到上一个换行符出现
+    // 1. find until eol found
     let anchorNode = anchorNodePostion.node
     const { piece } = anchorNode
     const { meta, bufferIndex, start, length } = piece
@@ -544,32 +530,7 @@ export class PieceTree extends PieceTreeBase {
   }
 
   /**
-   * Find Start Offset for specific line
-   * @param lineNumber
-   */
-  findLineStartOffset(lineNumber: number) {
-    if (lineNumber <= 1) {
-      return 0
-    } else if (lineNumber >= this.root.leftLineFeeds + this.root.piece.lineFeedCnt + this.root.rightLineFeeds + 1) {
-      lineNumber = this.root.leftLineFeeds + this.root.piece.lineFeedCnt + this.root.rightLineFeeds + 1
-    } else {
-      lineNumber -= 1
-    }
-    let { node, remindLineCnt, startOffset } = this.root.findByLineNumber(lineNumber)
-    const { piece } = node
-    const { bufferIndex, start, length } = piece
-    const txt = this.getTextInBuffer(bufferIndex, start, length)
-    const texts = txt.split(EOL)
-    for (let i = 0; i <= remindLineCnt; i++) {
-      const text = texts[i]
-      startOffset += text.length + 1
-    }
-
-    return startOffset
-  }
-
-  /**
-   * 获取 piece 中的文字内容。
+   * Get Actual Text in piece
    *
    * @param piece
    */
@@ -578,6 +539,13 @@ export class PieceTree extends PieceTreeBase {
     return this.getTextInBuffer(bufferIndex, start, length)
   }
 
+  /**
+   * Get Actual Text in TextBuffer
+   *
+   * @param bufferIndex
+   * @param start
+   * @param length
+   */
   private getTextInBuffer(bufferIndex: number, start: number, length: number) {
     if (bufferIndex < 0) return ''
     const buffer = this.buffers[bufferIndex]
@@ -609,12 +577,12 @@ export class PieceTree extends PieceTreeBase {
    * @param node
    * @param reminder
    */
-  private splitNodeLeft(node: PieceTreeNode, reminder: number) {
+  private splitNode(node: PieceTreeNode, reminder: number) {
     const { bufferIndex, start, meta } = node.piece
     const leftStr = this.buffers[bufferIndex].buffer.substring(start, start + reminder)
     const leftLineFeedsCnt = computeLineFeedCnt(leftStr)
 
-    const leftPiece = new Piece(bufferIndex, start, reminder, leftLineFeedsCnt, { ...meta })
+    const leftPiece = new Piece(bufferIndex, start, reminder, leftLineFeedsCnt, meta ? { ...meta } : meta)
 
     node.piece.start += reminder
     node.piece.length -= reminder
@@ -622,34 +590,6 @@ export class PieceTree extends PieceTreeBase {
 
     const leftNode = this.insertFixedLeft(node, leftPiece)
     return [leftNode, node]
-  }
-
-  /**
-   * Split One Node into two nodes
-   * @param node
-   * @param reminder
-   */
-  private splitNodeRight(node: PieceTreeNode, reminder: number) {
-    const { bufferIndex, start, meta, length, lineFeedCnt } = node.piece
-
-    const leftStr = this.buffers[bufferIndex].buffer.substring(start, start + reminder)
-    const leftLineFeedsCnt = computeLineFeedCnt(leftStr)
-
-    const rightPiece = new Piece(
-      bufferIndex,
-      start + reminder,
-      length - reminder,
-      lineFeedCnt - leftLineFeedsCnt,
-      meta ? { ...meta } : meta,
-    )
-
-    node.piece.length = reminder
-    node.piece.lineFeedCnt = leftLineFeedsCnt
-    mergeMeta(node.piece.meta, meta)
-
-    const rightNode = this.insertFixedRight(node, rightPiece)
-
-    return [node, rightNode]
   }
 
   private recomputeLineFeedsCntInPiece(piece: Piece) {

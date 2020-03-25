@@ -1,14 +1,12 @@
 import { PieceTree } from '../src/flowerpiece'
 
-const log = console.log
-
 it('flower piece: Insert', () => {
   const tree = new PieceTree()
 
   // Format
 })
 
-it('flower piece: Format', () => {
+it('format 1', () => {
   const tree = new PieceTree()
 
   tree.insert(0, 'abc defg hijk \n', { color: 'red' })

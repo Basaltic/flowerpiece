@@ -123,6 +123,10 @@
   },
   "dependencies": {
     "immer": "^6.0.2",
+    "lodash.isequal": "^4.5.0",
     "lodash.merge": "^4.6.2"
+  },
+  "peerDependencies": {
+    "immer": "^6.0.2"
   }
 }

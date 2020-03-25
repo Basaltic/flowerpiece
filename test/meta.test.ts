@@ -16,7 +16,7 @@ it('mergeMeta test 1', () => {
     },
   }
 
-  const mergeResult = mergeMeta(target, source)
+  let mergeResult = mergeMeta(target, source)
   expect(mergeResult).toEqual([
     { age: 11, obj: { color: 11, ss: 10 } },
     [
@@ -25,4 +25,10 @@ it('mergeMeta test 1', () => {
       { op: 'replace', path: ['age'], value: 10 },
     ],
   ])
+
+  mergeResult = mergeMeta({}, null)
+  expect(mergeResult).toBeNull()
+
+  mergeResult = mergeMeta(null, null)
+  expect(mergeResult).toBeNull()
 })
