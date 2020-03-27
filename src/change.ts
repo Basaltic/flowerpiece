@@ -59,3 +59,71 @@ export function createDeleteChange(startOffset: number, length: number, pieces: 
 export function createFormatChange(startOffset: number, length: number, meta: PieceMeta, piecePatches: PiecePatch[]): FormatChange {
   return { type: 'format', startOffset, length, meta, piecePatches }
 }
+
+/**
+ * Manage the Changes
+ */
+export class ChangeStack {
+  // undo stack
+  private undoChanges: IChange[][] = []
+  // redo stack
+  private redoChanges: IChange[][] = []
+
+  // indicate if piece tree is under the changing mode.
+  private changing: boolean = false
+
+  startChange() {
+    this.changing = true
+    this.undoChanges.push([])
+  }
+
+  endChange() {
+    this.changing = false
+  }
+
+  /**
+   * Add new Changes
+   * @param change
+   */
+  push(change: IChange) {
+    if (this.changing) {
+      const len = this.undoChanges.length
+      this.undoChanges[len].push(change)
+    } else {
+      this.undoChanges.push([change])
+    }
+    if (this.redoChanges.length > 0) {
+      this.redoChanges = []
+    }
+  }
+
+  /**
+   * Redo
+   * @param callback
+   */
+  applayRedo(callback: (change: IChange) => void) {
+    const changes = this.redoChanges.pop()
+    if (changes) {
+      for (let i = 0; i < changes.length; i++) {
+        callback(changes[i])
+      }
+
+      this.undoChanges.push(changes)
+    }
+  }
+
+  /**
+   * Undo
+   * @param callback
+   */
+  applayUndo(callback: (change: IChange) => void) {
+    const changes = this.undoChanges.pop()
+    if (changes) {
+      for (let i = changes.length - 1; i >= 0; i--) {
+        callback(changes[i])
+      }
+
+      this.redoChanges.push(changes)
+    }
+  }
+}

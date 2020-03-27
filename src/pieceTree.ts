@@ -10,6 +10,7 @@ import Change, {
   FormatChange,
   createFormatChange,
   PiecePatch,
+  ChangeStack,
 } from './change'
 import { PieceMeta, mergeMeta } from './meta'
 import { Diff } from './diff'
@@ -21,11 +22,16 @@ const EOL = '\n'
  * Piece Tree Implementation
  */
 export class PieceTree extends PieceTreeBase {
+  // undo stack
   private undoChanges: Change[] = []
+  // redo stack
   private redoChanges: Change[] = []
+
+  private changeStack: ChangeStack = new ChangeStack()
 
   constructor(pieces?: IPiece[]) {
     super()
+
     if (pieces) {
       for (const piece of pieces) {
         if (piece.text) {
@@ -37,89 +43,108 @@ export class PieceTree extends PieceTreeBase {
     }
   }
 
+  startChange() {
+    this.changeStack.startChange()
+  }
+
+  endChange() {
+    this.changeStack.endChange()
+  }
+
   /**
    * Redo the operation
    */
   redo() {
-    const change = this.redoChanges.pop()
-    if (change) {
-      switch (change.type) {
-        case 'insert':
-          const { startOffset: start, text, meta } = change as InsertChange
-          const txt = this.getTextInBuffer(text[0], text[1], text[2])
-          this.insert(start, txt, meta, true)
-          break
-        case 'delete':
-          const deleteChange = change as DeleteChange
-          this.delete(deleteChange.startOffset, deleteChange.length, true)
-          break
-        case 'format':
-          const formatChange = change as FormatChange
-          this.format(formatChange.startOffset, formatChange.length, formatChange.meta, true)
-          break
-      }
-      this.undoChanges.push(change)
-    }
+    this.changeStack.applayRedo(change => {
+      this.doRedo(change)
+    })
   }
 
   /**
    * Undo the operation
    */
   undo() {
-    const change = this.undoChanges.pop()
-    if (change) {
-      switch (change.type) {
-        case 'insert':
-          const insertChange = change as InsertChange
-          this.delete(insertChange.startOffset, insertChange.length, true)
-          break
-        case 'delete':
-          {
-            const deleteChange = change as DeleteChange
-            const nodePosition = this.findByOffset(deleteChange.startOffset)
-            // Start of node
-            if (nodePosition.startOffset === deleteChange.startOffset) {
-              let node = nodePosition.node.predecessor()
+    this.changeStack.applayUndo(change => {
+      this.doUndo(change)
+    })
+  }
 
-              if (node === SENTINEL) {
-                for (const piece of deleteChange.pieces) {
-                  this.insertFixedLeft(nodePosition.node, piece)
-                }
-              } else {
-                for (const piece of deleteChange.pieces) {
-                  this.insertFixedRight(node, piece)
-                  node = node.successor()
-                }
+  /**
+   * Actual Operation to undo the change
+   * @param change
+   */
+  private doUndo(change: Change) {
+    switch (change.type) {
+      case 'insert':
+        const insertChange = change as InsertChange
+        this.delete(insertChange.startOffset, insertChange.length, true)
+        break
+      case 'delete':
+        {
+          const deleteChange = change as DeleteChange
+          const nodePosition = this.findByOffset(deleteChange.startOffset)
+          // Start of node
+          if (nodePosition.startOffset === deleteChange.startOffset) {
+            let node = nodePosition.node.predecessor()
+
+            if (node === SENTINEL) {
+              for (const piece of deleteChange.pieces) {
+                this.insertFixedLeft(nodePosition.node, piece)
               }
-            }
-            // End of node
-            else if (nodePosition.reminder === nodePosition.node.piece.length) {
-              let node = nodePosition.node
+            } else {
               for (const piece of deleteChange.pieces) {
                 this.insertFixedRight(node, piece)
                 node = node.successor()
               }
             }
           }
-          break
-        case 'format':
-          const formatChange = change as FormatChange
-          if (formatChange.piecePatches.length > 0) {
-            for (const patch of formatChange.piecePatches) {
-              const { startOffset, inversePatches } = patch
-              let { node, reminder } = this.findByOffset(startOffset)
-              if (reminder === node.piece.length) node = node.successor()
-              node.piece.meta = applyPatches(node.piece.meta || {}, inversePatches)
+          // End of node
+          else if (nodePosition.reminder === nodePosition.node.piece.length) {
+            let node = nodePosition.node
+            for (const piece of deleteChange.pieces) {
+              this.insertFixedRight(node, piece)
+              node = node.successor()
             }
           }
-          break
-      }
-
-      this.redoChanges.push(change)
+        }
+        break
+      case 'format':
+        const formatChange = change as FormatChange
+        if (formatChange.piecePatches.length > 0) {
+          for (const patch of formatChange.piecePatches) {
+            const { startOffset, inversePatches } = patch
+            let { node, reminder } = this.findByOffset(startOffset)
+            if (reminder === node.piece.length) node = node.successor()
+            node.piece.meta = applyPatches(node.piece.meta || {}, inversePatches)
+          }
+        }
+        break
     }
   }
 
-  // ---- Atomic Operation ---- //
+  /**
+   * Actual Operation to redo the change
+   * @param change
+   */
+  private doRedo(change: Change) {
+    switch (change.type) {
+      case 'insert':
+        const { startOffset, text, meta } = change as InsertChange
+        const txt = this.getTextInBuffer(text[0], text[1], text[2])
+        this.insert(startOffset, txt, meta, true)
+        break
+      case 'delete':
+        const deleteChange = change as DeleteChange
+        this.delete(deleteChange.startOffset, deleteChange.length, true)
+        break
+      case 'format':
+        const formatChange = change as FormatChange
+        this.format(formatChange.startOffset, formatChange.length, formatChange.meta, true)
+        break
+    }
+  }
+
+  // ------------------- Atomic Operation ---------------------- //
 
   /**
    * Insert Content Which will cause offset change, piece increment, piece split
@@ -239,8 +264,7 @@ export class PieceTree extends PieceTreeBase {
 
     if (!disableChange && text.length > 0) {
       const change: InsertChange = createInsertChange(offset, [0, addBuffer.length - text.length, text.length], meta)
-      this.undoChanges.push(change)
-      this.redoChanges = []
+      this.changeStack.push(change)
     }
 
     return diffs
@@ -271,8 +295,7 @@ export class PieceTree extends PieceTreeBase {
     // changes
     if (!disableChange && pieceChange.length > 0) {
       const change: DeleteChange = createDeleteChange(start, length, pieceChange)
-      this.undoChanges.push(change)
-      this.redoChanges = []
+      this.changeStack.push(change)
     }
 
     // diffs
@@ -352,8 +375,7 @@ export class PieceTree extends PieceTreeBase {
     // changes
     if (!disableChange) {
       const change: FormatChange = createFormatChange(start, length, meta, piecePatches)
-      this.undoChanges.push(change)
-      this.redoChanges = []
+      this.changeStack.push(change)
     }
 
     // diffs
@@ -405,9 +427,9 @@ export class PieceTree extends PieceTreeBase {
     return lineFeedCnt
   }
 
-  // ---- Atomic Operation ---- //
+  // ----------------------- Atomic Operation End ------------------------ //
 
-  // ---- Iterate ---- //
+  // ----------------------- Iterate ------------------------------- //
 
   /**
    * Iterate the line in this piece tree
@@ -465,7 +487,7 @@ export class PieceTree extends PieceTreeBase {
     }
   }
 
-  // ---- Iterate ---- //
+  // ----------------------- Iterate End ------------------------ //
 
   // ---- Fetch Operation ---- //
 
@@ -551,6 +573,8 @@ export class PieceTree extends PieceTreeBase {
     return pieces
   }
 
+  // ---- Fetch Operation End ---- //
+
   /**
    * Get Actual Text in piece
    *
@@ -568,7 +592,7 @@ export class PieceTree extends PieceTreeBase {
    * @param start
    * @param length
    */
-  private getTextInBuffer(bufferIndex: number, start: number, length: number) {
+  protected getTextInBuffer(bufferIndex: number, start: number, length: number) {
     if (bufferIndex < 0) return ''
     const buffer = this.buffers[bufferIndex]
     const value = buffer.buffer.substring(start, start + length)
@@ -580,13 +604,15 @@ export class PieceTree extends PieceTreeBase {
    * @param type
    * @param meta
    */
-  private createPiece(text: string, meta: any): Piece {
+  protected createPiece(text: string, meta: any): Piece {
     if (text) {
       const start = this.buffers[0].length
-      this.buffers[0].buffer += text
       const length = text.length
       const lineFeedsCnt = computeLineFeedCnt(text)
       const piece = new Piece(0, start, length, lineFeedsCnt, meta)
+
+      this.buffers[0].buffer += text
+
       return piece
     } else {
       const piece = new Piece(-1, 0, 1, 0, meta)
@@ -599,7 +625,7 @@ export class PieceTree extends PieceTreeBase {
    * @param node
    * @param reminder
    */
-  private splitNode(node: PieceTreeNode, reminder: number) {
+  protected splitNode(node: PieceTreeNode, reminder: number) {
     const { bufferIndex, start, meta } = node.piece
     const leftStr = this.buffers[bufferIndex].buffer.substring(start, start + reminder)
     const leftLineFeedsCnt = computeLineFeedCnt(leftStr)
@@ -614,11 +640,13 @@ export class PieceTree extends PieceTreeBase {
     return [leftNode, node]
   }
 
-  private recomputeLineFeedsCntInPiece(piece: Piece) {
+  /**
+   * Recompute how much line feeds in passed piece
+   * @param piece
+   */
+  protected recomputeLineFeedsCntInPiece(piece: Piece) {
     const { bufferIndex, start, length } = piece
-    if (bufferIndex < 0 || bufferIndex > this.buffers.length - 1) {
-      return 0
-    }
+    if (bufferIndex < 0 || bufferIndex > this.buffers.length - 1) return 0
 
     const str = this.buffers[bufferIndex].buffer.substring(start, start + length)
     const cnt = computeLineFeedCnt(str)
