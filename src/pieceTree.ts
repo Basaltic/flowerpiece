@@ -22,11 +22,7 @@ const EOL = '\n'
  * Piece Tree Implementation
  */
 export class PieceTree extends PieceTreeBase {
-  // undo stack
-  private undoChanges: Change[] = []
-  // redo stack
-  private redoChanges: Change[] = []
-
+  // A Stack to manage the changes
   private changeStack: ChangeStack = new ChangeStack()
 
   constructor(pieces?: IPiece[]) {

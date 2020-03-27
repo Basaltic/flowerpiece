@@ -83,4 +83,18 @@ it('flower piece: redo undo format', () => {
   })
 })
 
-//
+// Chagne Cascade undo redo
+it('change cascade undo redo', () => {
+  const tree = new PieceTree()
+
+  tree.startChange()
+  tree.insert(0, 'test', {})
+  tree.insert(2, 'i', {})
+  tree.endChange()
+
+  tree.undo()
+  expect(tree.getAllText()).toBe('')
+
+  tree.redo()
+  expect(tree.getAllText()).toBe('teist')
+})

@@ -1,6 +1,6 @@
 import { PieceTree } from '../src/flowerpiece'
 
-it('flower piece: Insert', () => {
+it('init from json', () => {
   const tree = new PieceTree()
 
   // Format

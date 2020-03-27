@@ -65,20 +65,25 @@ export function createFormatChange(startOffset: number, length: number, meta: Pi
  */
 export class ChangeStack {
   // undo stack
-  private undoChanges: IChange[][] = []
+  private undoChangesStack: IChange[][] = []
   // redo stack
-  private redoChanges: IChange[][] = []
+  private redoChangesStack: IChange[][] = []
 
   // indicate if piece tree is under the changing mode.
   private changing: boolean = false
 
   startChange() {
     this.changing = true
-    this.undoChanges.push([])
+    this.undoChangesStack.push([])
   }
 
   endChange() {
     this.changing = false
+    // make sure there's no empty change list in the stack
+    const changes = this.undoChangesStack.pop()
+    if (changes && changes.length > 0) {
+      this.undoChangesStack.push(changes)
+    }
   }
 
   /**
@@ -87,13 +92,13 @@ export class ChangeStack {
    */
   push(change: IChange) {
     if (this.changing) {
-      const len = this.undoChanges.length
-      this.undoChanges[len].push(change)
+      const len = this.undoChangesStack.length - 1
+      this.undoChangesStack[len].push(change)
     } else {
-      this.undoChanges.push([change])
+      this.undoChangesStack.push([change])
     }
-    if (this.redoChanges.length > 0) {
-      this.redoChanges = []
+    if (this.redoChangesStack.length > 0) {
+      this.redoChangesStack = []
     }
   }
 
@@ -102,13 +107,13 @@ export class ChangeStack {
    * @param callback
    */
   applayRedo(callback: (change: IChange) => void) {
-    const changes = this.redoChanges.pop()
+    const changes = this.redoChangesStack.pop()
     if (changes) {
       for (let i = 0; i < changes.length; i++) {
         callback(changes[i])
       }
 
-      this.undoChanges.push(changes)
+      this.undoChangesStack.push(changes)
     }
   }
 
@@ -117,13 +122,13 @@ export class ChangeStack {
    * @param callback
    */
   applayUndo(callback: (change: IChange) => void) {
-    const changes = this.undoChanges.pop()
+    const changes = this.undoChangesStack.pop()
     if (changes) {
       for (let i = changes.length - 1; i >= 0; i--) {
         callback(changes[i])
       }
 
-      this.redoChanges.push(changes)
+      this.redoChangesStack.push(changes)
     }
   }
 }
