@@ -81,7 +81,7 @@ export class ChangeStack {
     this.changing = false
     // make sure there's no empty change list in the stack
     const changes = this.undoChangesStack.pop()
-    if (changes && changes.length > 0) {
+    if (changes !== undefined && changes.length > 0) {
       this.undoChangesStack.push(changes)
     }
   }
@@ -108,7 +108,7 @@ export class ChangeStack {
    */
   applayRedo(callback: (change: IChange) => void) {
     const changes = this.redoChangesStack.pop()
-    if (changes) {
+    if (changes !== undefined) {
       for (let i = 0; i < changes.length; i++) {
         callback(changes[i])
       }

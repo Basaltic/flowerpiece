@@ -5,7 +5,7 @@
 
 A Piece Table Text Sequence Implementation
 
-# Feature
+# Features
 
 # installing
 
