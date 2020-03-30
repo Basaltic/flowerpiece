@@ -17,6 +17,5 @@ it('serialize deserialize', () => {
   const deserializePieces = JSON.parse(pieceStr) as IPiece[]
 
   const tree2 = new PieceTree(deserializePieces)
-
   expect(tree2.getAllText()).toBe('zyxwvutsrqponmlkjihgfedcba')
 })

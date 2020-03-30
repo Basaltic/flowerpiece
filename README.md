@@ -42,6 +42,25 @@ tree.endChange()
 
 - startChange()
 - endChange()
+
+```typescript
+// operations between 'startChange' and 'endChange' are considered as a operation combination.
+
+const tree = new PieceTree()
+
+tree.startChange()
+
+tree.insert(0, 'test')
+tree.insert(2, 'tt)
+
+tree.endChange()
+
+// Above two operations will redo and undo togethor
+tree.undo()
+tree.redo()
+
+```
+
 - redo()
 - undo()
 - insert(offset: number, length: number, text: string, meta: PieceMeta | null): Diff[]

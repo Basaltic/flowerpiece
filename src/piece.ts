@@ -25,6 +25,9 @@ export default class Piece {
   }
 }
 
+/**
+ * Piece Type for
+ */
 export interface IPiece {
   // Text Content
   text: string
@@ -33,3 +36,8 @@ export interface IPiece {
   // Meta info of this piece
   meta: PieceMeta | null
 }
+
+/**
+ * A Line of Content is a list of pieces
+ */
+export declare type Line = IPiece[]

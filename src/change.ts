@@ -1,9 +1,11 @@
+import { Patch } from 'immer'
 import { PieceMeta } from './meta'
 import Piece from './piece'
-import { Patch } from 'immer'
+import { Diff, mergeDiffs } from './diff'
 
 export default interface IChange {
   type: 'insert' | 'delete' | 'format'
+  diffs: Diff[]
 }
 
 /**
@@ -48,16 +50,22 @@ export interface PiecePatch {
   inversePatches: Patch[]
 }
 
-export function createInsertChange(startOffset: number, text: number[], meta: PieceMeta): InsertChange {
-  return { type: 'insert', startOffset, length: text[2], text, meta }
+export function createInsertChange(startOffset: number, text: number[], meta: PieceMeta, diffs: Diff[]): InsertChange {
+  return { type: 'insert', startOffset, length: text[2], text, meta, diffs }
 }
 
-export function createDeleteChange(startOffset: number, length: number, pieces: Piece[]): DeleteChange {
-  return { type: 'delete', startOffset, length, pieces: pieces }
+export function createDeleteChange(startOffset: number, length: number, pieces: Piece[], diffs: Diff[]): DeleteChange {
+  return { type: 'delete', startOffset, length, pieces: pieces, diffs }
 }
 
-export function createFormatChange(startOffset: number, length: number, meta: PieceMeta, piecePatches: PiecePatch[]): FormatChange {
-  return { type: 'format', startOffset, length, meta, piecePatches }
+export function createFormatChange(
+  startOffset: number,
+  length: number,
+  meta: PieceMeta,
+  piecePatches: PiecePatch[],
+  diffs: Diff[],
+): FormatChange {
+  return { type: 'format', startOffset, length, meta, piecePatches, diffs }
 }
 
 /**
@@ -106,29 +114,37 @@ export class ChangeStack {
    * Redo
    * @param callback
    */
-  applayRedo(callback: (change: IChange) => void) {
+  applayRedo(callback: (change: IChange) => Diff[]): Diff[] {
     const changes = this.redoChangesStack.pop()
     if (changes !== undefined) {
+      const diffs: Diff[][] = []
       for (let i = 0; i < changes.length; i++) {
-        callback(changes[i])
+        diffs.push(callback(changes[i]))
       }
 
       this.undoChangesStack.push(changes)
+      return mergeDiffs([])
     }
+
+    return []
   }
 
   /**
    * Undo
    * @param callback
    */
-  applayUndo(callback: (change: IChange) => void) {
+  applayUndo(callback: (change: IChange) => Diff[]) {
     const changes = this.undoChangesStack.pop()
     if (changes) {
+      const diffs: Diff[][] = []
       for (let i = changes.length - 1; i >= 0; i--) {
-        callback(changes[i])
+        diffs.push(callback(changes[i]))
       }
 
       this.redoChangesStack.push(changes)
+
+      return mergeDiffs(diffs)
     }
+    return []
   }
 }

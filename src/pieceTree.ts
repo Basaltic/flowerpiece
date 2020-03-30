@@ -1,5 +1,5 @@
 import { LineNodePosition } from './common'
-import Piece, { IPiece } from './piece'
+import Piece, { IPiece, Line } from './piece'
 import PieceTreeBase, { StringBuffer } from './pieceTreebase'
 import PieceTreeNode, { SENTINEL } from './pieceTreeNode'
 import Change, {
@@ -50,31 +50,34 @@ export class PieceTree extends PieceTreeBase {
   /**
    * Redo the operation
    */
-  redo() {
-    this.changeStack.applayRedo(change => {
-      this.doRedo(change)
-    })
+  redo(): Diff[] {
+    return this.changeStack.applayRedo(change => this.doRedo(change))
   }
 
   /**
    * Undo the operation
    */
-  undo() {
-    this.changeStack.applayUndo(change => {
-      this.doUndo(change)
-    })
+  undo(): Diff[] {
+    return this.changeStack.applayUndo(change => this.doUndo(change))
   }
 
   /**
    * Actual Operation to undo the change
    * @param change
    */
-  private doUndo(change: Change) {
+  private doUndo(change: Change): Diff[] {
     switch (change.type) {
       case 'insert':
         const insertChange = change as InsertChange
         this.delete(insertChange.startOffset, insertChange.length, true)
-        break
+
+        //
+        return change.diffs.map(diff => {
+          if (diff.type === 'insert') {
+            diff.type = 'remove'
+          }
+          return diff
+        })
       case 'delete':
         {
           const deleteChange = change as DeleteChange
@@ -103,7 +106,14 @@ export class PieceTree extends PieceTreeBase {
             }
           }
         }
-        break
+
+        // Change 'remove' to 'insert'
+        return change.diffs.map(diff => {
+          if (diff.type === 'remove') {
+            diff.type = 'insert'
+          }
+          return diff
+        })
       case 'format':
         const formatChange = change as FormatChange
         if (formatChange.piecePatches.length > 0) {
@@ -114,7 +124,7 @@ export class PieceTree extends PieceTreeBase {
             node.piece.meta = applyPatches(node.piece.meta || {}, inversePatches)
           }
         }
-        break
+        return change.diffs
     }
   }
 
@@ -122,22 +132,20 @@ export class PieceTree extends PieceTreeBase {
    * Actual Operation to redo the change
    * @param change
    */
-  private doRedo(change: Change) {
+  private doRedo(change: Change): Diff[] {
     switch (change.type) {
       case 'insert':
         const { startOffset, text, meta } = change as InsertChange
         const txt = this.getTextInBuffer(text[0], text[1], text[2])
-        this.insert(startOffset, txt, meta, true)
-        break
+        return this.insert(startOffset, txt, meta, true)
       case 'delete':
         const deleteChange = change as DeleteChange
-        this.delete(deleteChange.startOffset, deleteChange.length, true)
-        break
+        return this.delete(deleteChange.startOffset, deleteChange.length, true)
       case 'format':
         const formatChange = change as FormatChange
-        this.format(formatChange.startOffset, formatChange.length, formatChange.meta, true)
-        break
+        return this.format(formatChange.startOffset, formatChange.length, formatChange.meta, true)
     }
+    // return change.diffs
   }
 
   // ------------------- Atomic Operation ---------------------- //
@@ -259,7 +267,7 @@ export class PieceTree extends PieceTreeBase {
     }
 
     if (!disableChange && text.length > 0) {
-      const change: InsertChange = createInsertChange(offset, [0, addBuffer.length - text.length, text.length], meta)
+      const change: InsertChange = createInsertChange(offset, [0, addBuffer.length - text.length, text.length], meta, diffs)
       this.changeStack.push(change)
     }
 
@@ -288,17 +296,25 @@ export class PieceTree extends PieceTreeBase {
 
     // startNodePosition.node.updateMetaUpward()
 
-    // changes
-    if (!disableChange && pieceChange.length > 0) {
-      const change: DeleteChange = createDeleteChange(start, length, pieceChange)
-      this.changeStack.push(change)
-    }
-
     // diffs
     const diffs: Diff[] = []
     for (let i = 0; i <= formattedLineFeeds; i++) {
-      if (i === 0) diffs.push({ type: 'replace', lineNumber: startLineFeedCnt + 1 + i })
-      else diffs.push({ type: 'remove', lineNumber: startLineFeedCnt + 1 + i })
+      if (i === 0)
+        diffs.push({
+          type: 'replace',
+          lineNumber: startLineFeedCnt + 1 + i,
+        })
+      else
+        diffs.push({
+          type: 'remove',
+          lineNumber: startLineFeedCnt + 1 + i,
+        })
+    }
+
+    // changes
+    if (!disableChange && pieceChange.length > 0) {
+      const change: DeleteChange = createDeleteChange(start, length, pieceChange, diffs)
+      this.changeStack.push(change)
     }
     return diffs
   }
@@ -368,17 +384,21 @@ export class PieceTree extends PieceTreeBase {
     }
     const formattedLineFeeds = this.formatInner(start, length, node, meta, piecePatches)
 
-    // changes
-    if (!disableChange) {
-      const change: FormatChange = createFormatChange(start, length, meta, piecePatches)
-      this.changeStack.push(change)
-    }
-
     // diffs
     const diffs: Diff[] = []
     for (let i = 0; i <= formattedLineFeeds; i++) {
-      diffs.push({ type: 'replace', lineNumber: startLineFeedCnt + 1 + i })
+      diffs.push({
+        type: 'replace',
+        lineNumber: startLineFeedCnt + 1 + i,
+      })
     }
+
+    // changes
+    if (!disableChange) {
+      const change: FormatChange = createFormatChange(start, length, meta, piecePatches, diffs)
+      this.changeStack.push(change)
+    }
+
     return diffs
   }
 
@@ -431,9 +451,9 @@ export class PieceTree extends PieceTreeBase {
    * Iterate the line in this piece tree
    * @param callback
    */
-  forEachLine(callback: (line: IPiece[], lineNumber: number) => void) {
+  forEachLine(callback: (line: Line, lineNumber: number) => void) {
     let node = this.root.findMin()
-    let line: IPiece[] = []
+    let line: Line = []
     let lineNumber: number = 1
     while (node.isNotNil) {
       const { piece } = node
@@ -502,8 +522,8 @@ export class PieceTree extends PieceTreeBase {
    * get piece list of some line
    * @param lineNumber
    */
-  getLine(lineNumber: number): IPiece[] {
-    const line: IPiece[] = []
+  getLine(lineNumber: number): Line {
+    const line: Line = []
 
     let anchorNodePostion: LineNodePosition = {
       node: this.root,
