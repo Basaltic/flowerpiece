@@ -11,7 +11,7 @@ export default class Piece {
   // Content Length
   length: number
 
-  // How Many Line Break In This Piece
+  // How Many Line Break In This Piece.
   lineFeedCnt: number
 
   meta: PieceMeta | null

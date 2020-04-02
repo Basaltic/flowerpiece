@@ -5,6 +5,8 @@
 
 A Piece Table Text Sequence Implementation
 
+**Warning: Before 1.0.0 release, the api may change.**
+
 # Features
 
 # installing

@@ -20,6 +20,13 @@ const EOL = '\n'
 
 /**
  * Piece Tree Implementation
+ *
+ *
+ * view ---> operation ---> diff
+ *   |<-----------------------|
+ *
+ * piece1 - piece2 - /n - piece3 - piece4 - /n
+ *
  */
 export class PieceTree extends PieceTreeBase {
   // A Stack to manage the changes
@@ -39,11 +46,77 @@ export class PieceTree extends PieceTreeBase {
     }
   }
 
-  startChange() {
+  // /**
+  //  * Cascade Operation
+  //  * @param type
+  //  * @param options
+  //  */
+  // operate(type: 'insert' | 'delete' | 'format' | 'redo' | 'undo', options: any) {
+  //   this.changeStack.startChange()
+  //   switch (type) {
+  //     case 'insert':
+  //       {
+  //         const { offset, text, meta } = options
+  //         const diffs = this.insert(offset, text, meta, false)
+  //         this.diffs.push(diffs)
+  //       }
+  //       break
+  //     case 'delete':
+  //       {
+  //         const { start, length } = options
+  //         const diffs = this.delete(start, length, false)
+  //         this.diffs.push(diffs)
+  //       }
+  //       break
+  //     case 'format':
+  //       {
+  //         const { start, length, meta } = options
+  //         const diffs = this.format(start, length, meta, false)
+  //         this.diffs.push(diffs)
+  //       }
+  //       break
+  //     case 'redo':
+  //       {
+  //         const diffs = this.redo()
+  //         this.diffs.push(diffs)
+  //       }
+  //       break
+  //     case 'undo':
+  //       {
+  //         const diffs = this.undo()
+  //         this.diffs.push(diffs)
+  //       }
+  //       break
+  //   }
+
+  //   return {
+  //     operate: this.operate,
+  //     end: this.operateEnd,
+  //   }
+  // }
+
+  // /**
+  //  * Operation End
+  //  */
+  // protected operateEnd(): Diff[][] {
+  //   this.changeStack.endChange()
+  //   const diffs = this.diffs
+  //   this.diffs = []
+  //   return diffs
+  // }
+
+  /**
+   * Mark as operation started
+   * operations between start and end will redo\undo in same operation
+   */
+  startOperation() {
     this.changeStack.startChange()
   }
 
-  endChange() {
+  /**
+   * Mark as operation end
+   */
+  endOperation() {
     this.changeStack.endChange()
   }
 
@@ -145,7 +218,6 @@ export class PieceTree extends PieceTreeBase {
         const formatChange = change as FormatChange
         return this.format(formatChange.startOffset, formatChange.length, formatChange.meta, true)
     }
-    // return change.diffs
   }
 
   // ------------------- Atomic Operation ---------------------- //
