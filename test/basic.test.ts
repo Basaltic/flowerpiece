@@ -1,17 +1,14 @@
-import { PieceTree } from '../src/flowerpiece'
-
-it('init from json', () => {
-  const tree = new PieceTree()
-
-  // Format
-})
+import { PieceTree, PieceMeta } from '../src/flowerpiece'
 
 it('format 1', () => {
   const tree = new PieceTree()
 
   tree.insert(0, 'abc defg hijk \n', { color: 'red' })
 
-  tree.format(2, 2, { color: 'blue' })
+  const meta: any = new PieceMeta()
+  meta.color = 'blue'
+
+  tree.format(2, 2, meta)
 
   const line = tree.getLine(1)
   if (line[0].meta) expect(line[0].meta.color).toBe('red')

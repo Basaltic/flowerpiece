@@ -12,7 +12,7 @@ import Change, {
   PiecePatch,
   ChangeStack,
 } from './change'
-import { PieceMeta, mergeMeta } from './meta'
+import { IPieceMeta, mergeMeta } from './meta'
 import { Diff } from './diff'
 import { applyPatches } from 'immer'
 
@@ -110,14 +110,14 @@ export class PieceTree extends PieceTreeBase {
    * Mark as operation started
    * operations between start and end will redo\undo in same operation
    */
-  startOperation() {
+  startChange() {
     this.changeStack.startChange()
   }
 
   /**
    * Mark as operation end
    */
-  endOperation() {
+  endChange() {
     this.changeStack.endChange()
   }
 
@@ -445,7 +445,7 @@ export class PieceTree extends PieceTreeBase {
   /**
    * Format The Content. Only change the meta
    */
-  format(start: number, length: number, meta: PieceMeta, disableChange: boolean = false): Diff[] {
+  format(start: number, length: number, meta: IPieceMeta, disableChange: boolean = false): Diff[] {
     const piecePatches: PiecePatch[] = []
 
     // format
@@ -476,7 +476,7 @@ export class PieceTree extends PieceTreeBase {
     return diffs
   }
 
-  private formatInner(start: number, length: number, node: PieceTreeNode, meta: PieceMeta, piecePatches: PiecePatch[]) {
+  private formatInner(start: number, length: number, node: PieceTreeNode, meta: IPieceMeta, piecePatches: PiecePatch[]) {
     let lineFeedCnt: number = 0
 
     if (length > 0) {

@@ -1,5 +1,5 @@
 import { Patch } from 'immer'
-import { PieceMeta } from './meta'
+import { IPieceMeta } from './meta'
 import Piece from './piece'
 import { Diff, mergeDiffs } from './diff'
 
@@ -17,7 +17,7 @@ export interface InsertChange extends IChange {
   length: number
   // [bufferIndex, start, length]
   text: number[]
-  meta: PieceMeta
+  meta: IPieceMeta
 }
 
 /**
@@ -38,7 +38,7 @@ export interface FormatChange extends IChange {
   type: 'format'
   startOffset: number
   length: number
-  meta: PieceMeta
+  meta: IPieceMeta
   // reverse meta change for every piece
 
   piecePatches: PiecePatch[]
@@ -50,7 +50,7 @@ export interface PiecePatch {
   inversePatches: Patch[]
 }
 
-export function createInsertChange(startOffset: number, text: number[], meta: PieceMeta, diffs: Diff[]): InsertChange {
+export function createInsertChange(startOffset: number, text: number[], meta: IPieceMeta, diffs: Diff[]): InsertChange {
   return { type: 'insert', startOffset, length: text[2], text, meta, diffs }
 }
 
@@ -61,7 +61,7 @@ export function createDeleteChange(startOffset: number, length: number, pieces: 
 export function createFormatChange(
   startOffset: number,
   length: number,
-  meta: PieceMeta,
+  meta: IPieceMeta,
   piecePatches: PiecePatch[],
   diffs: Diff[],
 ): FormatChange {
