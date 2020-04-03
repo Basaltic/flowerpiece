@@ -25,8 +25,9 @@ const EOL = '\n'
  * view ---> operation ---> diff
  *   |<-----------------------|
  *
- * piece1 - piece2 - /n - piece3 - piece4 - /n
- *
+ * /n - piece1 - piece2 - /n - piece3 - piece4 - /n
+ *  |
+ * start
  */
 export class PieceTree extends PieceTreeBase {
   // A Stack to manage the changes
@@ -226,6 +227,7 @@ export class PieceTree extends PieceTreeBase {
    * Insert Content Which will cause offset change, piece increment, piece split
    * 1. Always create a new piece while having meta
    * 2. Coninuesly input only text, append to same node
+   * 3. LineBreak(\n) will in a new piece.
    */
   insert(offset: number, text: string, meta?: any, disableChange?: boolean): Diff[] {
     const diffs: Diff[] = []
@@ -565,6 +567,8 @@ export class PieceTree extends PieceTreeBase {
    */
   forEachPiece(callback: (piece: IPiece, index: number) => void) {
     let node = this.root.findMin()
+    if (node === SENTINEL) return
+
     let index = 0
     while (node.isNotNil) {
       const { length, meta } = node.piece
