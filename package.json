@@ -1,6 +1,6 @@
 {
   "name": "flowerpiece",
-  "version": "0.0.13",
+  "version": "0.0.14",
   "description": "",
   "keywords": [],
   "main": "dist/flowerpiece.umd.js",
@@ -123,6 +123,7 @@
   },
   "dependencies": {
     "immer": "^6.0.2",
+    "lodash.clonedeep": "^4.5.0",
     "lodash.isequal": "^4.5.0",
     "lodash.merge": "^4.6.2"
   },

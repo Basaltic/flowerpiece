@@ -15,6 +15,7 @@ import Change, {
 import { IPieceMeta, mergeMeta } from './meta'
 import { Diff } from './diff'
 import { applyPatches } from 'immer'
+import cloneDeep from 'lodash.clonedeep'
 
 const EOL = '\n'
 
@@ -722,7 +723,7 @@ export class PieceTree extends PieceTreeBase {
     const leftStr = this.buffers[bufferIndex].buffer.substring(start, start + reminder)
     const leftLineFeedsCnt = computeLineFeedCnt(leftStr)
 
-    const leftPiece = new Piece(bufferIndex, start, reminder, leftLineFeedsCnt, meta ? { ...meta } : meta)
+    const leftPiece = new Piece(bufferIndex, start, reminder, leftLineFeedsCnt, meta ? cloneDeep(meta) : meta)
 
     node.piece.start += reminder
     node.piece.length -= reminder
