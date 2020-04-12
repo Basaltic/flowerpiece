@@ -5,7 +5,7 @@
 
 A Piece Table Text Sequence Implementation
 
-**Warning: Before 1.0.0 release, the api may change.**
+**Warning: Before 1.0.0 release, the api may change. It's not prepared for production now.**
 
 # Features
 
