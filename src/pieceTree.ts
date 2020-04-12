@@ -48,64 +48,19 @@ export class PieceTree extends PieceTreeBase {
     }
   }
 
-  // /**
-  //  * Cascade Operation
-  //  * @param type
-  //  * @param options
-  //  */
-  // operate(type: 'insert' | 'delete' | 'format' | 'redo' | 'undo', options: any) {
-  //   this.changeStack.startChange()
-  //   switch (type) {
-  //     case 'insert':
-  //       {
-  //         const { offset, text, meta } = options
-  //         const diffs = this.insert(offset, text, meta, false)
-  //         this.diffs.push(diffs)
-  //       }
-  //       break
-  //     case 'delete':
-  //       {
-  //         const { start, length } = options
-  //         const diffs = this.delete(start, length, false)
-  //         this.diffs.push(diffs)
-  //       }
-  //       break
-  //     case 'format':
-  //       {
-  //         const { start, length, meta } = options
-  //         const diffs = this.format(start, length, meta, false)
-  //         this.diffs.push(diffs)
-  //       }
-  //       break
-  //     case 'redo':
-  //       {
-  //         const diffs = this.redo()
-  //         this.diffs.push(diffs)
-  //       }
-  //       break
-  //     case 'undo':
-  //       {
-  //         const diffs = this.undo()
-  //         this.diffs.push(diffs)
-  //       }
-  //       break
-  //   }
+  /**
+   * Change.
+   * @param callback
+   */
+  change(callback: (...args: any) => void) {
+    this.startChange()
 
-  //   return {
-  //     operate: this.operate,
-  //     end: this.operateEnd,
-  //   }
-  // }
+    try {
+      callback()
+    } catch (e) {}
 
-  // /**
-  //  * Operation End
-  //  */
-  // protected operateEnd(): Diff[][] {
-  //   this.changeStack.endChange()
-  //   const diffs = this.diffs
-  //   this.diffs = []
-  //   return diffs
-  // }
+    this.endChange()
+  }
 
   /**
    * Mark as operation started

@@ -42,6 +42,7 @@ tree.endChange()
 
 ## Piece Tree API
 
+- change(callback: (...args: any) => void)
 - startChange()
 - endChange()
 
@@ -66,6 +67,13 @@ tree.redo()
 - redo()
 - undo()
 - insert(offset: number, length: number, text: string, meta: PieceMeta | null): Diff[]
+
+```typescript
+const tree = new PieceTree()
+
+tree.insert(0, 'This is an example')
+```
+
 - delete(offset: number, length: number): Diff[]
 - format(offset: number, length: number, meta: PieceMeta): Diff[]
 - getAllText()
@@ -113,7 +121,11 @@ export interface Diff {
 ## PieceMeta
 
 ```typescript
-export interface PieceMeta {
-  [key: string]: number | string | PieceMeta
+export interface IPieceMeta {
+  [key: string]: any
+}
+
+export class PieceMeta implements IPieceMeta {
+  [immerable] = true
 }
 ```
