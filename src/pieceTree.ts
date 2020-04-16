@@ -49,6 +49,17 @@ export class PieceTree extends PieceTreeBase {
   }
 
   /**
+   * Check if there's no content
+   */
+  isEmpty() {
+    if (this.getLength() <= 0) {
+      return true
+    }
+
+    return false
+  }
+
+  /**
    * Change.
    * @param callback
    */
@@ -246,10 +257,10 @@ export class PieceTree extends PieceTreeBase {
     // 2. Middle of the Node
     else if (startOffset + node.piece.length > offset) {
       // 2.1 Split to two node
-
       const [leftNode] = this.splitNode(node, reminder)
 
-      const middlePieces = this.createPiece(text, meta)
+      // 2.2 If no meta, only text. copy the meta
+      const middlePieces = this.createPiece(text, meta ? cloneDeep(meta) : meta)
       this.insertFixedRight(leftNode, middlePieces)
 
       // create diff
