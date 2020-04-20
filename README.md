@@ -3,7 +3,7 @@
 [![Build Status](https://travis-ci.org/Basaltic/flowerpiece.svg?branch=master)](https://travis-ci.org/Basaltic/flowerpiece)
 [![codecov](https://codecov.io/gh/Basaltic/flowerpiece/branch/master/graph/badge.svg)](https://codecov.io/gh/Basaltic/flowerpiece)
 
-A Piece Table Text Sequence Implementation
+A （Rich） Text Editor Core.
 
 **Warning: Before 1.0.0 release, the api may change. It's not prepared for production now.**
 

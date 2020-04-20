@@ -158,10 +158,8 @@ export default class PieceTreeNode {
 
   /**
    * Tree Successor
-   * 本节点的后继
    */
   successor() {
-    // 1. 有右子树，下一个就是右子树的最左节点
     if (this.right.isNotNil) {
       return this.right.findMin()
     }
@@ -180,7 +178,6 @@ export default class PieceTreeNode {
 
   /**
    * Tree Predecessor
-   * 本节点的前驱
    */
   predecessor() {
     if (this.left.isNotNil) {

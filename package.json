@@ -1,6 +1,6 @@
 {
   "name": "flowerpiece",
-  "version": "0.0.15",
+  "version": "0.0.16",
   "description": "",
   "keywords": [],
   "main": "dist/flowerpiece.umd.js",
@@ -26,6 +26,7 @@
     "test": "jest --coverage",
     "test:watch": "jest --coverage --watch",
     "test:prod": "npm run lint && npm run test -- --no-cache",
+    "jest": "jest",
     "deploy-docs": "ts-node tools/gh-pages-publish",
     "report-coverage": "cat ./coverage/lcov.info | coveralls",
     "commit": "git-cz",
