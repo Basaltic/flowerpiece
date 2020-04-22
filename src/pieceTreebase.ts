@@ -52,7 +52,23 @@ export default class PieceTreeBase {
     return false
   }
 
-  // ---- For Test ---- //
+  protected freeAll() {
+    this.free(this.root)
+    this.root = SENTINEL
+    this.buffers = [new StringBuffer(''), new StringBuffer('')]
+  }
+
+  protected free(node: PieceTreeNode) {
+    if (node.left !== SENTINEL) {
+      this.free(node.left)
+    }
+
+    if (node.right !== SENTINEL) {
+      this.free(node.right)
+    }
+
+    node.detach()
+  }
 
   /**
    * Find Node Position by Offset

@@ -39,65 +39,70 @@ it('Diff: Insert', () => {
   ])
 })
 
-// it('Insert Diff 2', () => {
-//   const tree = new PieceTree()
+it('Diff: Delete 1', () => {
+  const tree = new PieceTree()
 
-//   tree.insert(0, 'tttt\nssss\n')
+  tree.insert(0, 'tttt\nssss\nxxxx')
 
-//   let diff = tree.insert(10, 's')
-//   expect(diff).toEqual([{ type: 'replace', lineNumber: 3 }])
+  let diff = tree.delete(2, 10)
+  expect(diff).toEqual([
+    { type: 'replace', lineNumber: 1 },
+    { type: 'remove', lineNumber: 2 },
+    { type: 'remove', lineNumber: 3 },
+  ])
+})
 
-//   diff = tree.insert(11, 's\ns\n')
-//   expect(diff).toEqual([
-//     { type: 'replace', lineNumber: 3 },
-//     { type: 'insert', lineNumber: 4 },
-//     { type: 'insert', lineNumber: 5 },
-//   ])
-// })
+it('Diff: Delete 2', () => {
+  const tree = new PieceTree()
 
-// it('Format Diff 1', () => {
-//   const tree = new PieceTree()
+  tree.insert(0, 'tttt\nssss\nxxxx')
 
-//   tree.insert(0, 'tttt\nssss\nxxxx')
+  let diff = tree.delete(2, 1)
+  expect(diff).toEqual([{ type: 'replace', lineNumber: 1 }])
+})
 
-//   let diff = tree.format(2, 10, { color: 'red' })
-//   expect(diff).toEqual([
-//     { type: 'replace', lineNumber: 1 },
-//     { type: 'replace', lineNumber: 2 },
-//     { type: 'replace', lineNumber: 3 },
-//   ])
-// })
+it('Diff: Delete 3', () => {
+  const tree = new PieceTree()
 
-// it('Delete Diff 1', () => {
-//   const tree = new PieceTree()
+  tree.insert(0, 'tttt\nssss\nxxxx')
 
-//   tree.insert(0, 'tttt\nssss\nxxxx')
+  let diff = tree.delete(2, 4)
+  expect(diff).toEqual([
+    { type: 'replace', lineNumber: 1 },
+    { type: 'remove', lineNumber: 2 },
+  ])
+})
 
-//   let diff = tree.delete(2, 10)
-//   expect(diff).toEqual([
-//     { type: 'replace', lineNumber: 1 },
-//     { type: 'remove', lineNumber: 2 },
-//     { type: 'remove', lineNumber: 3 },
-//   ])
-// })
+it('Diff: Format', () => {
+  const tree = new PieceTree()
 
-// it('Delete Diff 2', () => {
-//   const tree = new PieceTree()
+  tree.insert(0, 'tttt\nssss\nxxxx')
 
-//   tree.insert(0, 'tttt\nssss\nxxxx')
+  let diff = tree.format(2, 1, { color: 'blue' })
+  expect(diff).toEqual([{ type: 'replace', lineNumber: 1 }])
 
-//   let diff = tree.delete(2, 1)
-//   expect(diff).toEqual([{ type: 'replace', lineNumber: 1 }])
-// })
+  diff = tree.format(2, 3, { color: 'blue' })
+  expect(diff).toEqual([
+    { type: 'replace', lineNumber: 1 },
+    { type: 'replace', lineNumber: 2 },
+  ])
 
-// it('Delete Diff 3', () => {
-//   const tree = new PieceTree()
+  diff = tree.format(2, 10, { color: 'red' })
+  expect(diff).toEqual([
+    { type: 'replace', lineNumber: 1 },
+    { type: 'replace', lineNumber: 2 },
+    { type: 'replace', lineNumber: 3 },
+  ])
 
-//   tree.insert(0, 'tttt\nssss\nxxxx')
+  diff = tree.format(6, 2, { color: 'blue' })
+  expect(diff).toEqual([{ type: 'replace', lineNumber: 2 }])
 
-//   let diff = tree.delete(2, 3)
-//   expect(diff).toEqual([
-//     { type: 'replace', lineNumber: 1 },
-//     { type: 'remove', lineNumber: 2 },
-//   ])
-// })
+  diff = tree.format(6, 5, { color: 'red' })
+  expect(diff).toEqual([
+    { type: 'replace', lineNumber: 2 },
+    { type: 'replace', lineNumber: 3 },
+  ])
+
+  diff = tree.format(11, 2, { color: 'red' })
+  expect(diff).toEqual([{ type: 'replace', lineNumber: 3 }])
+})

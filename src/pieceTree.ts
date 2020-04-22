@@ -39,7 +39,7 @@ export class PieceTree extends PieceTreeBase {
 
     // Defaultly add a eol
     if (pieces) {
-      this.init(pieces)
+      this.initialize(pieces)
     }
   }
 
@@ -47,8 +47,8 @@ export class PieceTree extends PieceTreeBase {
    * Init the piece tree
    * @param pieces
    */
-  init(pieces: IPiece[]) {
-    this.root = SENTINEL
+  initialize(pieces: IPiece[]) {
+    this.freeAll()
     for (const piece of pieces) {
       if (piece.text) {
         const buffer = new StringBuffer(piece.text)
@@ -335,16 +335,8 @@ export class PieceTree extends PieceTreeBase {
     // diffs
     const diffs: Diff[] = []
     for (let i = 0; i <= formattedLineFeeds; i++) {
-      if (i === 0)
-        diffs.push({
-          type: 'replace',
-          lineNumber: startLineFeedCnt + 1 + i,
-        })
-      else
-        diffs.push({
-          type: 'remove',
-          lineNumber: startLineFeedCnt + 1 + i,
-        })
+      if (i === 0) diffs.push({ type: 'replace', lineNumber: startLineFeedCnt + 1 + i })
+      else diffs.push({ type: 'remove', lineNumber: startLineFeedCnt + 1 + i })
     }
 
     // changes
@@ -398,7 +390,7 @@ export class PieceTree extends PieceTreeBase {
         length = 0
       }
 
-      this.deleteInner(start, length, node, pieceChange)
+      lineFeedCnt += this.deleteInner(start, length, node, pieceChange)
     }
 
     return lineFeedCnt
@@ -495,21 +487,14 @@ export class PieceTree extends PieceTreeBase {
       const { piece } = node
       const { meta, length } = piece
 
-      const text = this.getTextInPiece(piece)
       if (piece.lineFeedCnt === 0) {
+        const text = this.getTextInPiece(piece)
         line.push({ text, length, meta })
       } else {
-        const texts = text.split(EOL)
-        for (let i = 0; i < texts.length; i++) {
-          const txt = texts[i]
-          if (txt) line.push({ text: txt, length: txt.length, meta })
+        callback(line, lineNumber)
 
-          if (i < texts.length - 1) {
-            callback(line, lineNumber)
-            line = []
-            lineNumber += 1
-          }
-        }
+        line = []
+        lineNumber++
       }
 
       node = node.successor()
