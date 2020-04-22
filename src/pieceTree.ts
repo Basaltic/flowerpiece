@@ -39,7 +39,13 @@ export class PieceTree extends PieceTreeBase {
 
     // Defaultly add a eol
     if (pieces) {
-      this.initialize(pieces)
+      for (const piece of pieces) {
+        if (piece.text) {
+          const buffer = new StringBuffer(piece.text)
+          this.buffers.push(buffer)
+          this.insertRightest(new Piece(this.buffers.length - 1, 0, buffer.length, computeLineFeedCnt(piece.text), piece.meta))
+        }
+      }
     }
   }
 

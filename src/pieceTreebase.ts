@@ -53,12 +53,15 @@ export default class PieceTreeBase {
   }
 
   protected freeAll() {
-    this.free(this.root)
+    this.free(this.root.left)
+    this.free(this.root.right)
     this.root = SENTINEL
     this.buffers = [new StringBuffer(''), new StringBuffer('')]
   }
 
   protected free(node: PieceTreeNode) {
+    if (node === SENTINEL) return
+
     if (node.left !== SENTINEL) {
       this.free(node.left)
     }
