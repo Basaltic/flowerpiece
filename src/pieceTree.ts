@@ -1,4 +1,4 @@
-import Piece, { IPiece, Line } from './piece'
+import NodePiece, { Piece, Line } from './piece'
 import PieceTreeBase, { StringBuffer } from './pieceTreebase'
 import PieceTreeNode, { SENTINEL } from './pieceTreeNode'
 import Change, {
@@ -34,7 +34,7 @@ export class PieceTree extends PieceTreeBase {
   // A Stack to manage the changes
   private changeStack: ChangeStack = new ChangeStack()
 
-  constructor(pieces?: IPiece[]) {
+  constructor(pieces?: Piece[]) {
     super()
 
     // Defaultly add a eol
@@ -43,7 +43,7 @@ export class PieceTree extends PieceTreeBase {
         if (piece.text) {
           const buffer = new StringBuffer(piece.text)
           this.buffers.push(buffer)
-          this.insertRightest(new Piece(this.buffers.length - 1, 0, buffer.length, computeLineFeedCnt(piece.text), piece.meta))
+          this.insertRightest(new NodePiece(this.buffers.length - 1, 0, buffer.length, computeLineFeedCnt(piece.text), piece.meta))
         }
       }
     }
@@ -53,13 +53,13 @@ export class PieceTree extends PieceTreeBase {
    * Init the piece tree
    * @param pieces
    */
-  initialize(pieces: IPiece[]) {
+  initialize(pieces: Piece[]) {
     this.freeAll()
     for (const piece of pieces) {
       if (piece.text) {
         const buffer = new StringBuffer(piece.text)
         this.buffers.push(buffer)
-        this.insertRightest(new Piece(this.buffers.length - 1, 0, buffer.length, computeLineFeedCnt(piece.text), piece.meta))
+        this.insertRightest(new NodePiece(this.buffers.length - 1, 0, buffer.length, computeLineFeedCnt(piece.text), piece.meta))
       }
     }
   }
@@ -322,7 +322,7 @@ export class PieceTree extends PieceTreeBase {
    * Delete Content
    */
   delete(start: number, length: number, disableChange?: boolean): Diff[] {
-    const pieceChange: Piece[] = []
+    const pieceChange: NodePiece[] = []
 
     // delete
     const startNodePosition = this.findByOffset(start)
@@ -353,7 +353,7 @@ export class PieceTree extends PieceTreeBase {
     return diffs
   }
 
-  private deleteInner(start: number, length: number, node: PieceTreeNode, pieceChange: Piece[]) {
+  private deleteInner(start: number, length: number, node: PieceTreeNode, pieceChange: NodePiece[]) {
     let lineFeedCnt: number = 0
 
     if (length > 0) {
@@ -390,7 +390,7 @@ export class PieceTree extends PieceTreeBase {
         lineFeedCnt += originalLineFeedCnt - node.piece.lineFeedCnt
 
         // record the delete change
-        pieceChange.push(new Piece(node.piece.bufferIndex, originalStart, length, originalLineFeedCnt - node.piece.lineFeedCnt))
+        pieceChange.push(new NodePiece(node.piece.bufferIndex, originalStart, length, originalLineFeedCnt - node.piece.lineFeedCnt))
 
         // set to 0 to force the recursive end
         length = 0
@@ -518,7 +518,7 @@ export class PieceTree extends PieceTreeBase {
    * Interate all the pieces
    * @param callback
    */
-  forEachPiece(callback: (piece: IPiece, index: number) => void) {
+  forEachPiece(callback: (piece: Piece, index: number) => void) {
     let node = this.root.findMin()
     if (node === SENTINEL) return
 
@@ -582,8 +582,8 @@ export class PieceTree extends PieceTreeBase {
   /**
    * Get All the pieces of this tree
    */
-  getPieces(): IPiece[] {
-    const pieces: IPiece[] = []
+  getPieces(): Piece[] {
+    const pieces: Piece[] = []
     this.forEachPiece(piece => {
       pieces.push(piece)
     })
@@ -598,7 +598,7 @@ export class PieceTree extends PieceTreeBase {
    *
    * @param piece
    */
-  protected getTextInPiece(piece: Piece) {
+  protected getTextInPiece(piece: NodePiece) {
     const { bufferIndex, start, length } = piece
     return this.getTextInBuffer(bufferIndex, start, length)
   }
@@ -618,31 +618,21 @@ export class PieceTree extends PieceTreeBase {
   }
 
   /**
-   * Append New Content in the tree
-   * @param node
-   * @param text
-   * @param meta
-   */
-  protected appendPiece(node: PieceTreeNode, text: string, meta: IPieceMeta) {
-    // 1.continous input.
-  }
-
-  /**
    * Create New Piece
    * @param type
    * @param meta
    */
-  protected createPiece(text: string, meta: any, lineFeedCnt: number): Piece {
+  protected createPiece(text: string, meta: IPieceMeta | null, lineFeedCnt: number): NodePiece {
     if (text) {
       const start = this.buffers[0].length
       const length = text.length
-      const piece = new Piece(0, start, length, lineFeedCnt, meta)
+      const piece = new NodePiece(0, start, length, lineFeedCnt, meta ? cloneDeep(meta) : meta)
 
       this.buffers[0].buffer += text
 
       return piece
     } else {
-      const piece = new Piece(-1, 0, 1, 0, meta)
+      const piece = new NodePiece(-1, 0, 1, 0, meta ? cloneDeep(meta) : meta)
       return piece
     }
   }
@@ -657,7 +647,7 @@ export class PieceTree extends PieceTreeBase {
     const leftStr = this.buffers[bufferIndex].buffer.substring(start, start + reminder)
     const leftLineFeedsCnt = computeLineFeedCnt(leftStr)
 
-    const leftPiece = new Piece(bufferIndex, start, reminder, leftLineFeedsCnt, meta ? cloneDeep(meta) : meta)
+    const leftPiece = new NodePiece(bufferIndex, start, reminder, leftLineFeedsCnt, meta ? cloneDeep(meta) : meta)
 
     node.piece.start += reminder
     node.piece.length -= reminder
@@ -671,7 +661,7 @@ export class PieceTree extends PieceTreeBase {
    * Recompute how much line feeds in passed piece
    * @param piece
    */
-  protected recomputeLineFeedsCntInPiece(piece: Piece) {
+  protected recomputeLineFeedsCntInPiece(piece: NodePiece) {
     const { bufferIndex, start, length } = piece
     if (bufferIndex < 0 || bufferIndex > this.buffers.length - 1) return 0
 

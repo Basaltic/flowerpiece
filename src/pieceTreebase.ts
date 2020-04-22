@@ -1,6 +1,6 @@
 import PieceTreeNode, { SENTINEL, createPieceTreeNode } from './pieceTreeNode'
 import { NodeColor, NodePosition } from './common'
-import Piece from './piece'
+import NodePiece from './piece'
 
 /**
  * Text String Buffer
@@ -109,7 +109,7 @@ export default class PieceTreeBase {
    * Append the piece
    * @param piece
    */
-  protected insertRightest(piece: Piece) {
+  protected insertRightest(piece: NodePiece) {
     const node = this.root.findMax()
     this.insertFixedRight(node, piece)
   }
@@ -119,7 +119,7 @@ export default class PieceTreeBase {
    * @param node Insert After This Node
    * @param piece
    */
-  protected insertFixedLeft(node: PieceTreeNode, piece: Piece): PieceTreeNode {
+  protected insertFixedLeft(node: PieceTreeNode, piece: NodePiece): PieceTreeNode {
     const newNode = createPieceTreeNode(piece)
     if (node.isNil) {
       this.root = newNode
@@ -140,7 +140,7 @@ export default class PieceTreeBase {
    * @param node
    * @param piece
    */
-  protected insertFixedRight(node: PieceTreeNode, piece: Piece) {
+  protected insertFixedRight(node: PieceTreeNode, piece: NodePiece) {
     const newNode = createPieceTreeNode(piece)
     if (node.isNil) {
       this.root = newNode

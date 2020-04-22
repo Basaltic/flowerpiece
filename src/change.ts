@@ -1,6 +1,6 @@
 import { Patch } from 'immer'
 import { IPieceMeta } from './meta'
-import Piece from './piece'
+import NodePiece from './piece'
 import { Diff, mergeDiffs } from './diff'
 
 export default interface IChange {
@@ -28,7 +28,7 @@ export interface DeleteChange extends IChange {
   startOffset: number
   length: number
   // Deleted part of piece, only the text string need to be stored. [bufferIndex, start, length]
-  pieces: Piece[]
+  pieces: NodePiece[]
 }
 
 /**
@@ -54,7 +54,7 @@ export function createInsertChange(startOffset: number, text: number[], meta: IP
   return { type: 'insert', startOffset, length: text[2], text, meta, diffs }
 }
 
-export function createDeleteChange(startOffset: number, length: number, pieces: Piece[], diffs: Diff[]): DeleteChange {
+export function createDeleteChange(startOffset: number, length: number, pieces: NodePiece[], diffs: Diff[]): DeleteChange {
   return { type: 'delete', startOffset, length, pieces: pieces, diffs }
 }
 

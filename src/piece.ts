@@ -2,8 +2,13 @@ import { PieceMeta, IPieceMeta } from './meta'
 
 /**
  * A Piece Refer a piece of text content of the document
+ *
+ * 1. text piece: bufferIndex > 0 && length > 0
+ * 2. line break piece: lineFeedCnt === 1
+ * 3. non-text piece: bufferIndex < 0
+ *
  */
-export default class Piece {
+export default class NodePiece {
   // Buffer Index
   bufferIndex: number
   // Raw Content Start in Current Buffer
@@ -28,7 +33,7 @@ export default class Piece {
 /**
  * Piece Type for
  */
-export interface IPiece {
+export interface Piece {
   // Text Content
   text: string
   // Length of this piece
@@ -40,4 +45,4 @@ export interface IPiece {
 /**
  * A Line of Content is a list of pieces
  */
-export declare type Line = IPiece[]
+export declare type Line = Piece[]

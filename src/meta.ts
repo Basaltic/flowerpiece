@@ -24,7 +24,7 @@ export class PieceMeta implements IPieceMeta {
  */
 export function mergeMeta(target: IPieceMeta | null, source: IPieceMeta | null): [IPieceMeta, Patch[]] | null {
   if (source) {
-    if (target === null) target = new PieceMeta()
+    if (target === null) target = {}
 
     const [nextState, , inversePatches] = produceWithPatches(target, draft => {
       merge(draft, source)

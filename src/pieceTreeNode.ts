@@ -1,4 +1,4 @@
-import Piece from './piece'
+import NodePiece from './piece'
 import { NodeColor, NodePosition, LineNodePosition } from './common'
 
 /**
@@ -20,9 +20,9 @@ export default class PieceTreeNode {
   rightLineFeeds!: number
 
   // Every Node Store The Text Piece
-  piece!: Piece
+  piece!: NodePiece
 
-  constructor(piece: Piece, color?: NodeColor) {
+  constructor(piece: NodePiece, color?: NodeColor) {
     this.piece = piece
     this.leftSize = 0
     this.leftLineFeeds = 0
@@ -78,7 +78,7 @@ export default class PieceTreeNode {
   }
 
   /**
-   * 把一个节点正好插入本节点的按 in order 顺序的左侧
+   * Prepend
    * @param node
    */
   prepend(node: PieceTreeNode) {
@@ -93,7 +93,7 @@ export default class PieceTreeNode {
   }
 
   /**
-   * 把一个节点正好插入本节点的按 in order 顺序的右侧
+   * Append
    * @param node
    */
   append(node: PieceTreeNode) {
@@ -108,7 +108,7 @@ export default class PieceTreeNode {
   }
 
   /**
-   * 找到某个换行标记所在的节点
+   * Find the node where the line starts
    * @param lineNumber
    */
   findByLineNumber(lineNumber: number, startOffset: number = 0): LineNodePosition {
@@ -218,18 +218,15 @@ export default class PieceTreeNode {
   }
 
   /**
-   * 自底向上，以该节点开始，向上递归，更新节点的子树 偏移数据
-   * 都需要调用，重新计算
+   * Update Node Meta Recursively
    *
    * O(logn)
    *
    * @param this
    */
   updateMetaUpward(stopAnchor?: PieceTreeNode): boolean {
-    // 1. 更新左树 meta
     this.updateMeta()
 
-    // 2. 有父节点，继续向上递归
     if (this.parent.isNotNil && this !== stopAnchor) {
       this.parent.updateMetaUpward()
     }
@@ -245,14 +242,14 @@ export default class PieceTreeNode {
 }
 
 // Sentinel Node Which Refers to Black Nil Node
-export const SENTINEL = new PieceTreeNode(new Piece(1, 1, 0, 0, null), NodeColor.BLACK)
+export const SENTINEL = new PieceTreeNode(new NodePiece(1, 1, 0, 0, null), NodeColor.BLACK)
 
 /**
  * Create New Node
  * @param piece
  * @param color
  */
-export function createPieceTreeNode(piece: Piece, color?: NodeColor): PieceTreeNode {
+export function createPieceTreeNode(piece: NodePiece, color?: NodeColor): PieceTreeNode {
   const node = new PieceTreeNode(piece, color)
   node.left = SENTINEL
   node.right = SENTINEL

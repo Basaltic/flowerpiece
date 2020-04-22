@@ -1,4 +1,4 @@
-import { PieceTree } from '../src/flowerpiece'
+import { PieceTree, IPieceMeta } from '../src/flowerpiece'
 
 it('Insert At Start of Document', () => {
   const tree = new PieceTree()
@@ -45,4 +45,8 @@ it('Insert At Document: Continously Input, Middle And End Input', () => {
 
   tree.insert(txt.length + 4, 'ff\nff\n')
   expect(tree.getAllText()).toBe(`${txt}dee\nff\nff\nee\neddbbbbbb\nccc\n`)
+})
+
+it('Insert: Rich Text Case', () => {
+  const imageMeta: IPieceMeta = { type: 'image', style: {} }
 })
