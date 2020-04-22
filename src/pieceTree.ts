@@ -1,4 +1,3 @@
-import { LineNodePosition } from './common'
 import Piece, { IPiece, Line } from './piece'
 import PieceTreeBase, { StringBuffer } from './pieceTreebase'
 import PieceTreeNode, { SENTINEL } from './pieceTreeNode'
@@ -12,7 +11,7 @@ import Change, {
   PiecePatch,
   ChangeStack,
 } from './change'
-import { IPieceMeta, mergeMeta, PieceMeta } from './meta'
+import { IPieceMeta, mergeMeta } from './meta'
 import { Diff } from './diff'
 import { applyPatches } from 'immer'
 import cloneDeep from 'lodash.clonedeep'
@@ -39,27 +38,24 @@ export class PieceTree extends PieceTreeBase {
     super()
 
     // Defaultly add a eol
-
     if (pieces) {
-      for (const piece of pieces) {
-        if (piece.text) {
-          const buffer = new StringBuffer(piece.text)
-          this.buffers.push(buffer)
-          this.insertRightest(new Piece(this.buffers.length - 1, 0, buffer.length, computeLineFeedCnt(piece.text), piece.meta))
-        }
-      }
+      this.init(pieces)
     }
   }
 
   /**
-   * Check if there's no content
+   * Init the piece tree
+   * @param pieces
    */
-  isEmpty() {
-    if (this.getLength() <= 0) {
-      return true
+  init(pieces: IPiece[]) {
+    this.root = SENTINEL
+    for (const piece of pieces) {
+      if (piece.text) {
+        const buffer = new StringBuffer(piece.text)
+        this.buffers.push(buffer)
+        this.insertRightest(new Piece(this.buffers.length - 1, 0, buffer.length, computeLineFeedCnt(piece.text), piece.meta))
+      }
     }
-
-    return false
   }
 
   /**
@@ -114,8 +110,6 @@ export class PieceTree extends PieceTreeBase {
       case 'insert':
         const insertChange = change as InsertChange
         this.delete(insertChange.startOffset, insertChange.length, true)
-
-        //
         return change.diffs.map(diff => {
           if (diff.type === 'insert') {
             diff.type = 'remove'
@@ -210,38 +204,39 @@ export class PieceTree extends PieceTreeBase {
     if (offset <= 0) {
       let node = this.root.findMin()
 
-      // 1.1 Append Piece
       let txt = ''
       let lineFeedCnt = 0
-
-      for (let i = 0, length = text.length; i < length; i++) {
+      for (let i = 0, length = text.length, mLen = length - 1; i < length; i++) {
         let charCode = text.charCodeAt(i)
+
         if (charCode === CharCode.LineFeed) {
-          if (lineFeedCnt === 0) {
-            node = this.insertFixedLeft(node, this.createPiece(txt, meta))
-          } else {
-            node = this.insertFixedRight(node, this.createPiece(txt, meta))
+          if (lineFeedCnt === 0 && (txt || !isEmptyMeta)) {
+            node = this.insertFixedLeft(node, this.createPiece(txt, meta, 0))
+          } else if (txt) {
+            node = this.insertFixedRight(node, this.createPiece(txt, meta, 0))
           }
 
-          node = this.insertFixedRight(node, this.createPiece(EOL, meta))
+          node = this.insertFixedRight(node, this.createPiece(EOL, meta, 1))
 
-          lineFeedCnt++
           txt = ''
+          lineFeedCnt++
         } else {
           txt += text[i]
         }
       }
 
-      if (lineFeedCnt === 0) {
-        this.insertFixedLeft(node, this.createPiece(txt, meta))
+      if (lineFeedCnt === 0 && (txt || !isEmptyMeta)) {
+        node = this.insertFixedLeft(node, this.createPiece(txt, meta, 0))
       } else if (txt) {
-        this.insertFixedRight(node, this.createPiece(txt, meta))
+        this.insertFixedRight(node, this.createPiece(txt, meta, 0))
       }
 
-      // TODO 1.2 Create Diffs
-      for (let i = 0; i < lineFeedCnt + 1; i++) {
-        const lineNumber = 1 + i
-        diffs.push({ type: 'insert', lineNumber })
+      for (let i = 0; i <= lineFeedCnt; i++) {
+        if (i === lineFeedCnt) {
+          diffs.push({ type: 'replace', lineNumber: lineFeedCnt + 1 })
+        } else {
+          diffs.push({ type: 'insert', lineNumber: i + 1 })
+        }
       }
     }
     // 2. Middle of the Document
@@ -249,95 +244,62 @@ export class PieceTree extends PieceTreeBase {
       const nodePosition = this.findByOffset(offset)
       let { node, reminder, startOffset, startLineFeedCnt } = nodePosition
 
-      // 2.1. In the Middle of Node
-      if (startOffset + node.piece.length > offset) {
-        // 2.2.1 Split to two node
+      if (startOffset === offset) {
+        node = node.predecessor()
+      } else if (offset > startOffset && offset < startOffset + node.piece.length) {
         const [leftNode] = this.splitNode(node, reminder)
         node = leftNode
-
-        // 2.2.2 If no meta, only text. copy the meta
-        let txt = ''
-        let lineFeedCnt = 0
-
-        for (let i = 0, length = text.length; i < length; i++) {
-          let charCode = text.charCodeAt(i)
-          if (charCode === CharCode.LineFeed) {
-            node = this.insertFixedRight(node, this.createPiece(txt, meta ? cloneDeep(meta) : meta))
-
-            // TODO: line meta?
-            node = this.insertFixedRight(node, this.createPiece(EOL, meta ? cloneDeep(meta) : meta))
-
-            lineFeedCnt++
-            txt = ''
-          } else {
-            txt += text[i]
-          }
-        }
-
-        if (lineFeedCnt === 0) {
-          this.insertFixedRight(node, this.createPiece(txt, meta ? cloneDeep(meta) : meta))
-        } else if (txt) {
-          this.insertFixedRight(node, this.createPiece(txt, meta ? cloneDeep(meta) : meta))
-        }
-
-        txt = ''
-
-        // 2.2.3 create diff
-        for (let i = 0; i < lineFeedCnt + 1; i++) {
-          const lineNumber = startLineFeedCnt + leftNode.leftLineFeeds + 1 + i
-          if (i === 0) diffs.push({ type: 'replace', lineNumber })
-          else diffs.push({ type: 'insert', lineNumber })
-        }
       } else {
-        if (startOffset === offset) {
-          node = node.predecessor()
-        }
+        startLineFeedCnt += node.piece.lineFeedCnt
+      }
 
-        const isNotLinkBreak = node.piece.lineFeedCnt <= 0
-        const isContinousInput = node.isNotNil && node.piece.bufferIndex === 0 && addBuffer.length === node.piece.start + node.piece.length
+      const isNotLinkBreak = node.piece.lineFeedCnt <= 0
+      const isContinousInput = node.isNotNil && node.piece.bufferIndex === 0 && addBuffer.length === node.piece.start + node.piece.length
 
-        let txt = ''
-        let lineFeedCnt = 0
+      let txt = ''
+      let lineFeedCnt = 0
 
-        for (let i = 0, length = text.length; i < length; i++) {
-          let charCode = text.charCodeAt(i)
-          if (charCode === CharCode.LineFeed) {
-            if (isContinousInput && lineFeedCnt === 0 && isEmptyMeta && isNotLinkBreak) {
+      for (let i = 0, length = text.length; i < length; i++) {
+        let charCode = text.charCodeAt(i)
+        if (charCode === CharCode.LineFeed) {
+          if (lineFeedCnt === 0) {
+            if (isContinousInput && isEmptyMeta && isNotLinkBreak && txt) {
               addBuffer.buffer += txt
               node.piece.length += txt.length
               node.updateMetaUpward()
-            } else {
-              node = this.insertFixedRight(node, this.createPiece(txt, meta))
+            } else if (txt || !isEmptyMeta) {
+              node = this.insertFixedRight(node, this.createPiece(txt, meta, 0))
             }
-
-            // TODO: line meta?
-            node = this.insertFixedRight(node, this.createPiece(EOL, meta))
-
-            lineFeedCnt++
-            txt = ''
-          } else {
-            txt += text[i]
+          } else if (txt) {
+            node = this.insertFixedRight(node, this.createPiece(txt, meta, 0))
           }
+
+          node = this.insertFixedRight(node, this.createPiece(EOL, meta, 1))
+
+          txt = ''
+          lineFeedCnt++
+        } else {
+          txt += text[i]
         }
+      }
 
-        if (lineFeedCnt === 0 && isEmptyMeta && isNotLinkBreak) {
-          if (txt) {
-            addBuffer.buffer += txt
-            node.piece.length += txt.length
-            node.updateMetaUpward()
-          } else {
-            this.insertFixedRight(node, this.createPiece(txt, meta))
-          }
-        } else if (txt) {
-          this.insertFixedRight(node, this.createPiece(txt, meta))
+      if (lineFeedCnt === 0) {
+        if (isContinousInput && isEmptyMeta && isNotLinkBreak && txt) {
+          addBuffer.buffer += txt
+          node.piece.length += txt.length
+          node.updateMetaUpward()
+        } else if (txt || !isEmptyMeta) {
+          this.insertFixedRight(node, this.createPiece(txt, meta, 0))
         }
+      } else if (txt) {
+        this.insertFixedRight(node, this.createPiece(txt, meta, 0))
+      }
 
-        txt = ''
-
-        // TODO: Create Diffs
-        for (let i = 0; i < lineFeedCnt + 1; i++) {
-          const lineNumber = startLineFeedCnt + node.piece.lineFeedCnt + 1 + i
-          diffs.push({ type: 'insert', lineNumber })
+      for (let i = 0; i <= lineFeedCnt; i++) {
+        if (i === 0) {
+          diffs.push({ type: 'replace', lineNumber: startLineFeedCnt + 1 })
+        } else {
+          diffs.push({ type: 'insert', lineNumber: startLineFeedCnt + i + 1 })
         }
       }
     }
@@ -369,8 +331,6 @@ export class PieceTree extends PieceTreeBase {
       }
     }
     const formattedLineFeeds = this.deleteInner(start, length, node, pieceChange)
-
-    // startNodePosition.node.updateMetaUpward()
 
     // diffs
     const diffs: Diff[] = []
@@ -647,7 +607,7 @@ export class PieceTree extends PieceTreeBase {
    *
    * @param piece
    */
-  private getTextInPiece(piece: Piece) {
+  protected getTextInPiece(piece: Piece) {
     const { bufferIndex, start, length } = piece
     return this.getTextInBuffer(bufferIndex, start, length)
   }
@@ -681,12 +641,11 @@ export class PieceTree extends PieceTreeBase {
    * @param type
    * @param meta
    */
-  protected createPiece(text: string, meta: any): Piece {
+  protected createPiece(text: string, meta: any, lineFeedCnt: number): Piece {
     if (text) {
       const start = this.buffers[0].length
       const length = text.length
-      const lineFeedsCnt = computeLineFeedCnt(text)
-      const piece = new Piece(0, start, length, lineFeedsCnt, meta)
+      const piece = new Piece(0, start, length, lineFeedCnt, meta)
 
       this.buffers[0].buffer += text
 

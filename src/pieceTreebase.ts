@@ -43,6 +43,18 @@ export default class PieceTreeBase {
   }
 
   /**
+   * Check if there's no content
+   */
+  isEmpty() {
+    if (this.getLength() <= 0) {
+      return true
+    }
+    return false
+  }
+
+  // ---- For Test ---- //
+
+  /**
    * Find Node Position by Offset
    * @param offset
    */
@@ -65,7 +77,7 @@ export default class PieceTreeBase {
 
         offset -= node.leftSize + node.piece.length
         startOffset += node.leftSize + node.piece.length
-        startLineFeedCnt += node.leftLineFeeds
+        startLineFeedCnt += node.leftLineFeeds + node.piece.lineFeedCnt
 
         node = node.right
       }
