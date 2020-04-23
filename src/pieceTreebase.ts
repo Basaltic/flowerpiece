@@ -1,28 +1,16 @@
 import PieceTreeNode, { SENTINEL, createPieceTreeNode } from './pieceTreeNode'
 import { NodeColor, NodePosition } from './common'
-import NodePiece from './piece'
+import NodePiece, { determinePureTextSize } from './piece'
+import StringBuffer from './stringBuffer'
 
 /**
- * Text String Buffer
+ * Piece Tree Base
  */
-export class StringBuffer {
-  // Text String
-  buffer: string
-
-  get length() {
-    return this.buffer.length
-  }
-
-  constructor(buffer: string) {
-    this.buffer = buffer
-  }
-}
-
 export default class PieceTreeBase {
   public buffers: StringBuffer[]
   public root: PieceTreeNode = SENTINEL
 
-  constructor(stringBuffers?: StringBuffer[]) {
+  constructor() {
     const addedTextBuffer = new StringBuffer('')
     this.buffers = [addedTextBuffer, new StringBuffer('')]
   }
@@ -39,6 +27,13 @@ export default class PieceTreeBase {
    */
   getLineCount() {
     return this.root.leftLineFeeds + this.root.rightLineFeeds + this.root.piece.lineFeedCnt + 1
+  }
+
+  /**
+   * Pure Text Count
+   */
+  getPureTextCount() {
+    return this.root.leftTextSize + this.root.rightTextSize + determinePureTextSize(this.root.piece)
   }
 
   /**

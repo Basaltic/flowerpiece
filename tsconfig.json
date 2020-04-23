@@ -26,5 +26,5 @@
     "outDir": "dist/lib",
     "typeRoots": ["node_modules/@types"]
   },
-  "include": ["src", "test/pieceTreeTestHelper.ts"]
+  "include": ["src", "test/pieceTreeTestHelper.ts", "test/statistic.test.ts"]
 }

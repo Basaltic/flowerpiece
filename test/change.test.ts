@@ -1,9 +1,7 @@
 import { PieceTree } from '../src/flowerpiece'
 
-const log = console.log
-
 // insert undo redo test
-it('flower piece: redo undo insert', () => {
+it('redo undo insert', () => {
   const tree = new PieceTree()
 
   tree.insert(0, 'test', {})
@@ -19,7 +17,7 @@ it('flower piece: redo undo insert', () => {
 })
 
 // Delete undo redo test
-it('flower piece: redo undo delete', () => {
+it('redo undo delete', () => {
   const tree = new PieceTree()
 
   tree.insert(0, 'test', {}, true)
@@ -50,7 +48,7 @@ it('flower piece: redo undo delete', () => {
 })
 
 // Format undo redo test
-it('flower piece: redo undo format', () => {
+it('redo undo format', () => {
   const tree = new PieceTree()
 
   tree.insert(0, 'test', {}, true)

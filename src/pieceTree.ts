@@ -1,5 +1,5 @@
 import NodePiece, { Piece, Line } from './piece'
-import PieceTreeBase, { StringBuffer } from './pieceTreebase'
+import PieceTreeBase from './pieceTreebase'
 import PieceTreeNode, { SENTINEL } from './pieceTreeNode'
 import Change, {
   InsertChange,
@@ -13,9 +13,10 @@ import Change, {
 } from './change'
 import { IPieceMeta, mergeMeta } from './meta'
 import { Diff } from './diff'
+import StringBuffer from './stringBuffer'
+import { CharCode } from 'charCode'
 import { applyPatches } from 'immer'
 import cloneDeep from 'lodash.clonedeep'
-import { CharCode } from 'charCode'
 
 const EOL = '\n'
 
@@ -29,6 +30,9 @@ const EOL = '\n'
  * /n - piece1 - piece2 - /n - piece3 - piece4 - /n
  *  |
  * start
+ *
+ * Every Line Start with a line feed symbol.
+ *
  */
 export class PieceTree extends PieceTreeBase {
   // A Stack to manage the changes
@@ -63,6 +67,8 @@ export class PieceTree extends PieceTreeBase {
       }
     }
   }
+
+  // ------------- Change -------------- //
 
   /**
    * Change.
@@ -191,6 +197,51 @@ export class PieceTree extends PieceTreeBase {
     }
   }
 
+  // ---------------- Extra Operations To Make Life Easier --------------- //
+
+  /**
+   * Break The Content into two lines
+   * @param offset
+   * @param meta
+   */
+  insertLineBreak(offset: number, meta: IPieceMeta | null = null) {
+    this.insert(offset, EOL, meta)
+  }
+
+  /**
+   * Insert A Complete new Line in Offset
+   * @param offset
+   * @param meta
+   */
+  insertLine(offset: number, meta: IPieceMeta | null = null) {
+    this.insertLineBreak(offset, null)
+    this.insert(offset, '', meta)
+    this.insertLineBreak(offset + 2, null)
+  }
+
+  /**
+   * Insert Plain Text
+   * @param offset
+   * @param text
+   * @param meta
+   */
+  insertText(offset: number, text: string, meta: IPieceMeta | null = null) {
+    if (text === '') {
+      throw new Error('cannot pass empty text')
+    }
+
+    this.insert(offset, text, meta)
+  }
+
+  /**
+   * Insert Non Text
+   * @param offset
+   * @param meta
+   */
+  insertNonText(offset: number, meta: IPieceMeta) {
+    this.insert(offset, '', meta)
+  }
+
   // ------------------- Atomic Operation ---------------------- //
 
   /**
@@ -212,7 +263,7 @@ export class PieceTree extends PieceTreeBase {
 
       let txt = ''
       let lineFeedCnt = 0
-      for (let i = 0, length = text.length, mLen = length - 1; i < length; i++) {
+      for (let i = 0, length = text.length; i < length; i++) {
         let charCode = text.charCodeAt(i)
 
         if (charCode === CharCode.LineFeed) {
@@ -476,8 +527,6 @@ export class PieceTree extends PieceTreeBase {
 
     return lineFeedCnt
   }
-
-  // ----------------------- Atomic Operation End ------------------------ //
 
   // ----------------------- Iterate ------------------------------- //
 

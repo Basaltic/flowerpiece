@@ -1,4 +1,4 @@
-import NodePiece from './piece'
+import NodePiece, { determinePureTextSize } from './piece'
 import { NodeColor, NodePosition, LineNodePosition } from './common'
 
 /**
@@ -19,6 +19,13 @@ export default class PieceTreeNode {
   // Right sub-tree Accumulate Lind Feed Size
   rightLineFeeds!: number
 
+  // --- Statistic Purpose Variables --- //
+
+  // Left sub-tree Pure Text Size
+  leftTextSize: number
+  // Right sub-tree Pure Text Size
+  rightTextSize: number
+
   // Every Node Store The Text Piece
   piece!: NodePiece
 
@@ -28,6 +35,9 @@ export default class PieceTreeNode {
     this.leftLineFeeds = 0
     this.rightSize = 0
     this.rightLineFeeds = 0
+
+    this.leftTextSize = 0
+    this.rightTextSize = 0
 
     this.color = color || NodeColor.RED
     this.parent = this
@@ -203,17 +213,25 @@ export default class PieceTreeNode {
     if (this.left.isNil) {
       this.leftSize = 0
       this.leftLineFeeds = 0
+
+      this.leftTextSize = 0
     } else {
       this.leftSize = this.left.leftSize + this.left.rightSize + this.left.piece.length
       this.leftLineFeeds = this.left.leftLineFeeds + this.left.rightLineFeeds + this.left.piece.lineFeedCnt
+
+      this.leftTextSize = this.left.leftTextSize + this.left.rightTextSize + determinePureTextSize(this.left.piece)
     }
 
     if (this.right.isNil) {
       this.rightSize = 0
       this.rightLineFeeds = 0
+
+      this.rightTextSize = 0
     } else {
       this.rightSize = this.right.leftSize + this.right.rightSize + this.right.piece.length
       this.rightLineFeeds = this.right.leftLineFeeds + this.right.rightLineFeeds + this.right.piece.lineFeedCnt
+
+      this.rightTextSize = this.right.leftTextSize + this.right.rightTextSize + determinePureTextSize(this.right.piece)
     }
   }
 

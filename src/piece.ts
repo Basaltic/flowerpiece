@@ -37,6 +37,18 @@ export enum PieceType {
 }
 
 /**
+ * Return The Pure Text Size in Piece
+ */
+export function determinePureTextSize(piece: NodePiece): number {
+  const type = determinePieceType(piece)
+  if (type === PieceType.TEXT) {
+    return piece.length
+  }
+
+  return 0
+}
+
+/**
  * Determine The Piece Type
  *
  * @param piece
