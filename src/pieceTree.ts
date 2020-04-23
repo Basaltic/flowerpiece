@@ -105,6 +105,7 @@ export class PieceTree extends PieceTreeBase {
    * Redo the operation
    */
   redo(): Diff[] {
+    console.log('redo')
     return this.changeStack.applayRedo(change => this.doRedo(change))
   }
 
@@ -133,7 +134,6 @@ export class PieceTree extends PieceTreeBase {
       case 'delete':
         {
           const deleteChange = change as DeleteChange
-          console.log(deleteChange)
 
           let offset = deleteChange.startOffset
           if (offset <= 0) {
@@ -180,7 +180,10 @@ export class PieceTree extends PieceTreeBase {
         if (formatChange.piecePatches.length > 0) {
           for (const patch of formatChange.piecePatches) {
             const { startOffset, inversePatches } = patch
-            let { node, reminder } = this.findByOffset(startOffset)
+            let offset = startOffset
+
+            let { node, reminder } = this.findByOffset(offset)
+
             if (reminder === node.piece.length) node = node.successor()
             node.piece.meta = applyPatches(node.piece.meta || {}, inversePatches)
           }
@@ -204,6 +207,7 @@ export class PieceTree extends PieceTreeBase {
         return this.delete(deleteChange.startOffset, deleteChange.length, true)
       case 'format':
         const formatChange = change as FormatChange
+        console.log(formatChange)
         return this.format(formatChange.startOffset, formatChange.length, formatChange.meta, true)
     }
   }
@@ -215,8 +219,8 @@ export class PieceTree extends PieceTreeBase {
    * @param offset
    * @param meta
    */
-  insertLineBreak(offset: number, meta: IPieceMeta | null = null) {
-    this.insert(offset, EOL, meta)
+  insertLineBreak(offset: number, meta: IPieceMeta | null = null): Diff[] {
+    return this.insert(offset, EOL, meta)
   }
 
   /**
@@ -224,10 +228,11 @@ export class PieceTree extends PieceTreeBase {
    * @param offset
    * @param meta
    */
-  insertLine(offset: number, meta: IPieceMeta | null = null) {
-    this.insertLineBreak(offset, null)
-    this.insert(offset, '', meta)
-    this.insertLineBreak(offset + 2, null)
+  insertLine(offset: number, meta: IPieceMeta | null = null): Diff[] {
+    const diff1 = this.insertLineBreak(offset, null)
+    const diff2 = this.insert(offset, '', meta)
+    const diff3 = this.insertLineBreak(offset + 2, null)
+    return [...diff1, ...diff2, ...diff3]
   }
 
   /**
@@ -236,12 +241,12 @@ export class PieceTree extends PieceTreeBase {
    * @param text
    * @param meta
    */
-  insertText(offset: number, text: string, meta: IPieceMeta | null = null) {
+  insertText(offset: number, text: string, meta: IPieceMeta | null = null): Diff[] {
     if (text === '') {
       throw new Error('cannot pass empty text')
     }
 
-    this.insert(offset, text, meta)
+    return this.insert(offset, text, meta)
   }
 
   /**
@@ -251,6 +256,16 @@ export class PieceTree extends PieceTreeBase {
    */
   insertNonText(offset: number, meta: IPieceMeta) {
     this.insert(offset, '', meta)
+  }
+
+  /**
+   * Format Specific Line
+   * @param lineNumber
+   * @param meta
+   */
+  formatLine(lineNumber: number, meta: IPieceMeta): Diff[] {
+    const { startOffset } = this.findByLineNumber(lineNumber)
+    return this.format(startOffset - 1, 1, meta)
   }
 
   // ------------------- Atomic Operation ---------------------- //
@@ -350,6 +365,7 @@ export class PieceTree extends PieceTreeBase {
    */
   delete(offset: number, length: number, disableChange?: boolean): Diff[] {
     const pieceChange: NodePiece[] = []
+    const originalLength = length
 
     if (offset <= 0) {
       offset = 1
@@ -369,27 +385,10 @@ export class PieceTree extends PieceTreeBase {
         node = rightNode
       }
     }
-    const formattedLineFeeds = this.deleteInner(offset, length, node, pieceChange)
 
-    // diffs
-    const diffs: Diff[] = []
-    for (let i = 0; i <= formattedLineFeeds; i++) {
-      if (i === 0) diffs.push({ type: 'replace', lineNumber: startLineFeedCnt + i })
-      else diffs.push({ type: 'remove', lineNumber: startLineFeedCnt + i })
-    }
+    let lineFeedCnt = 0
 
-    // changes
-    if (!disableChange && pieceChange.length > 0) {
-      const change: DeleteChange = createDeleteChange(offset - 1, length, pieceChange, diffs)
-      this.changeStack.push(change)
-    }
-    return diffs
-  }
-
-  private deleteInner(start: number, length: number, node: PieceTreeNode, pieceChange: NodePiece[]) {
-    let lineFeedCnt: number = 0
-
-    if (length > 0) {
+    while (length > 0) {
       // 1. The length is actually same as the node length. just delete this node
       if (length === node.piece.length) {
         this.deleteNode(node)
@@ -428,11 +427,21 @@ export class PieceTree extends PieceTreeBase {
         // set to 0 to force the recursive end
         length = 0
       }
-
-      lineFeedCnt += this.deleteInner(start, length, node, pieceChange)
     }
 
-    return lineFeedCnt
+    // diffs
+    const diffs: Diff[] = []
+    for (let i = 0; i <= lineFeedCnt; i++) {
+      if (i === 0) diffs.push({ type: 'replace', lineNumber: startLineFeedCnt + i })
+      else diffs.push({ type: 'remove', lineNumber: startLineFeedCnt + i })
+    }
+
+    // changes
+    if (!disableChange && pieceChange.length > 0) {
+      const change: DeleteChange = createDeleteChange(offset - 1, originalLength, pieceChange, diffs)
+      this.changeStack.push(change)
+    }
+    return diffs
   }
 
   /**
@@ -440,6 +449,8 @@ export class PieceTree extends PieceTreeBase {
    */
   format(offset: number, length: number, meta: IPieceMeta, disableChange: boolean = false): Diff[] {
     const piecePatches: PiecePatch[] = []
+    const originalOffset = offset
+    const originalLength = length
 
     if (offset <= 0) {
       offset = 1
@@ -455,27 +466,9 @@ export class PieceTree extends PieceTreeBase {
       node = rightNode
       startLineFeedCnt += leftNode.piece.lineFeedCnt
     }
-    const formattedLineFeeds = this.formatInner(offset, length, node, meta, piecePatches)
 
-    // diffs
-    const diffs: Diff[] = []
-    for (let i = 0; i <= formattedLineFeeds; i++) {
-      diffs.push({ type: 'replace', lineNumber: startLineFeedCnt + i })
-    }
-
-    // changes
-    if (!disableChange) {
-      const change: FormatChange = createFormatChange(offset - 1, length, meta, piecePatches, diffs)
-      this.changeStack.push(change)
-    }
-
-    return diffs
-  }
-
-  private formatInner(start: number, length: number, node: PieceTreeNode, meta: IPieceMeta, piecePatches: PiecePatch[]) {
     let lineFeedCnt: number = 0
-
-    if (length > 0) {
+    while (length > 0) {
       if (length >= node.piece.length) {
         // Line feeds counting. Meta Merge
         lineFeedCnt += node.piece.lineFeedCnt
@@ -483,11 +476,11 @@ export class PieceTree extends PieceTreeBase {
         if (mergeResult !== null) {
           const [target, inversePatches] = mergeResult
           node.piece.meta = target
-          piecePatches.push({ startOffset: start, length: node.piece.length, inversePatches })
+          piecePatches.push({ startOffset: offset, length: node.piece.length, inversePatches })
         }
 
         length -= node.piece.length
-        start += node.piece.length
+        offset += node.piece.length
 
         node = node.successor()
       } else {
@@ -500,17 +493,27 @@ export class PieceTree extends PieceTreeBase {
         if (mergeResult !== null) {
           const [target, inversePatches] = mergeResult
           node.piece.meta = target
-          piecePatches.push({ startOffset: start, length: node.piece.length, inversePatches })
+          piecePatches.push({ startOffset: offset, length: node.piece.length, inversePatches })
         }
 
         length -= node.piece.length
-        start += node.piece.length
+        offset += node.piece.length
       }
-
-      lineFeedCnt += this.formatInner(start, length, node, meta, piecePatches)
     }
 
-    return lineFeedCnt
+    // diffs
+    const diffs: Diff[] = []
+    for (let i = 0; i <= lineFeedCnt; i++) {
+      diffs.push({ type: 'replace', lineNumber: startLineFeedCnt + i })
+    }
+
+    // changes
+    if (!disableChange) {
+      const change: FormatChange = createFormatChange(originalOffset, originalLength, meta, piecePatches, diffs)
+      this.changeStack.push(change)
+    }
+
+    return diffs
   }
 
   // ----------------------- Iterate ------------------------------- //

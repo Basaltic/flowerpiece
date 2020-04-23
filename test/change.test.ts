@@ -60,25 +60,37 @@ it('redo undo format', () => {
   expect(tree.getAllText()).toBe('teyxist')
 
   tree.format(1, 5, { color: 'red' })
-  tree.forEachPiece((piece, index) => {
-    if (index > 0 && index < 6) {
-      if (piece.meta) expect(piece.meta.color).toBe('red')
-    }
-  })
+  expect(tree.getPieces()).toEqual([
+    { text: 't', length: 1, meta: {} },
+    { text: 'e', length: 1, meta: { color: 'red' } },
+    { text: 'y', length: 1, meta: { color: 'red' } },
+    { text: 'x', length: 1, meta: { color: 'red' } },
+    { text: 'i', length: 1, meta: { color: 'red' } },
+    { text: 's', length: 1, meta: { color: 'red' } },
+    { text: 't', length: 1, meta: {} },
+  ])
 
   tree.undo()
-  tree.forEachPiece((piece, index) => {
-    if (index > 0 && index < 6) {
-      if (piece.meta) expect(piece.meta.color).toBe(undefined)
-    }
-  })
+  expect(tree.getPieces()).toEqual([
+    { text: 't', length: 1, meta: {} },
+    { text: 'e', length: 1, meta: {} },
+    { text: 'y', length: 1, meta: {} },
+    { text: 'x', length: 1, meta: {} },
+    { text: 'i', length: 1, meta: {} },
+    { text: 's', length: 1, meta: {} },
+    { text: 't', length: 1, meta: {} },
+  ])
 
   tree.redo()
-  tree.forEachPiece((piece, index) => {
-    if (index > 0 && index < 6) {
-      if (piece.meta) expect(piece.meta.color).toBe('red')
-    }
-  })
+  expect(tree.getPieces()).toEqual([
+    { text: 't', length: 1, meta: {} },
+    { text: 'e', length: 1, meta: { color: 'red' } },
+    { text: 'y', length: 1, meta: { color: 'red' } },
+    { text: 'x', length: 1, meta: { color: 'red' } },
+    { text: 'i', length: 1, meta: { color: 'red' } },
+    { text: 's', length: 1, meta: { color: 'red' } },
+    { text: 't', length: 1, meta: {} },
+  ])
 })
 
 // Chagne Cascade undo redo
