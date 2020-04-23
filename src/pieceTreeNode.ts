@@ -118,35 +118,6 @@ export default class PieceTreeNode {
   }
 
   /**
-   * Find the node where the line starts
-   * @param lineNumber
-   */
-  findByLineNumber(lineNumber: number, startOffset: number = 0): LineNodePosition {
-    if (this.leftLineFeeds >= lineNumber) {
-      return this.left.findByLineNumber(lineNumber)
-    } else if (this.leftLineFeeds + this.piece.lineFeedCnt >= lineNumber) {
-      lineNumber -= this.leftLineFeeds
-      return {
-        node: this,
-        remindLineCnt: lineNumber,
-        startOffset: startOffset + this.leftSize,
-      }
-    } else if (this.right.isNil) {
-      lineNumber = 0
-      return {
-        node: this,
-        remindLineCnt: lineNumber,
-        startOffset: startOffset + this.leftSize,
-      }
-    } else {
-      startOffset += this.leftSize + this.piece.length
-      lineNumber -= this.leftLineFeeds + this.piece.lineFeedCnt
-
-      return this.right.findByLineNumber(lineNumber, startOffset)
-    }
-  }
-
-  /**
    * 寻找本节点子树的最左侧节点
    */
   findMin(): PieceTreeNode {

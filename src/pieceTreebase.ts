@@ -26,7 +26,7 @@ export default class PieceTreeBase {
    * Get How many lines the document has
    */
   getLineCount() {
-    return this.root.leftLineFeeds + this.root.rightLineFeeds + this.root.piece.lineFeedCnt + 1
+    return this.root.leftLineFeeds + this.root.rightLineFeeds + this.root.piece.lineFeedCnt
   }
 
   /**
@@ -40,7 +40,7 @@ export default class PieceTreeBase {
    * Check if there's no content
    */
   isEmpty() {
-    if (this.getLength() <= 0) {
+    if (this.getLength() <= 1) {
       return true
     }
     return false
@@ -91,6 +91,37 @@ export default class PieceTreeBase {
         offset -= node.leftSize + node.piece.length
         startOffset += node.leftSize + node.piece.length
         startLineFeedCnt += node.leftLineFeeds + node.piece.lineFeedCnt
+
+        node = node.right
+      }
+    }
+
+    return { node, reminder, startOffset, startLineFeedCnt }
+  }
+
+  /**
+   * Find The Specific Line Start Node
+   */
+  protected findByLineNumber(lineNumber: number): NodePosition {
+    let node = this.root
+    let reminder = 0
+    let startOffset = 0
+    let startLineFeedCnt = lineNumber
+
+    if (lineNumber <= 0) lineNumber = 1
+    if (lineNumber > this.getLineCount()) lineNumber = this.getLineCount()
+
+    while (node !== SENTINEL) {
+      if (node.leftLineFeeds >= lineNumber) {
+        node = node.left
+      } else if (node.leftLineFeeds + node.piece.lineFeedCnt >= lineNumber) {
+        startOffset += node.leftSize
+        break
+      } else {
+        if (node.right === SENTINEL) break
+
+        lineNumber -= node.leftLineFeeds + node.piece.lineFeedCnt
+        startOffset += node.leftSize + node.piece.length
 
         node = node.right
       }

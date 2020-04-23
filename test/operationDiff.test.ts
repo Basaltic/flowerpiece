@@ -5,17 +5,17 @@ it('Diff: Insert', () => {
 
   let diff = tree.insert(0, 'a\nb\n')
   expect(diff).toEqual([
-    { type: 'insert', lineNumber: 1 },
+    { type: 'replace', lineNumber: 1 },
     { type: 'insert', lineNumber: 2 },
-    { type: 'replace', lineNumber: 3 },
+    { type: 'insert', lineNumber: 3 },
   ])
 
   expect(tree.getAllText()).toBe('a\nb\n')
 
   diff = tree.insert(0, 'a\nb')
   expect(diff).toEqual([
-    { type: 'insert', lineNumber: 1 },
-    { type: 'replace', lineNumber: 2 },
+    { type: 'replace', lineNumber: 1 },
+    { type: 'insert', lineNumber: 2 },
   ])
 
   diff = tree.insert(0, 'cc')

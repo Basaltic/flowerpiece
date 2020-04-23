@@ -41,6 +41,8 @@ export class PieceTree extends PieceTreeBase {
   constructor(pieces?: Piece[]) {
     super()
 
+    this.insertLineBreak(0)
+
     // Defaultly add a eol
     if (pieces) {
       for (const piece of pieces) {
@@ -131,9 +133,18 @@ export class PieceTree extends PieceTreeBase {
       case 'delete':
         {
           const deleteChange = change as DeleteChange
-          const nodePosition = this.findByOffset(deleteChange.startOffset)
+          console.log(deleteChange)
+
+          let offset = deleteChange.startOffset
+          if (offset <= 0) {
+            offset = 1
+          } else {
+            offset += 1
+          }
+
+          const nodePosition = this.findByOffset(offset)
           // Start of node
-          if (nodePosition.startOffset === deleteChange.startOffset) {
+          if (nodePosition.startOffset === offset) {
             let node = nodePosition.node.predecessor()
 
             if (node === SENTINEL) {
@@ -257,112 +268,77 @@ export class PieceTree extends PieceTreeBase {
 
     const isEmptyMeta = meta === undefined || meta === null
 
-    // 1. Start of the document
     if (offset <= 0) {
-      let node = this.root.findMin()
+      offset = 1
+    } else {
+      offset += 1
+    }
 
-      let txt = ''
-      let lineFeedCnt = 0
-      for (let i = 0, length = text.length; i < length; i++) {
-        let charCode = text.charCodeAt(i)
+    const nodePosition = this.findByOffset(offset)
+    let { node, reminder, startOffset, startLineFeedCnt } = nodePosition
 
-        if (charCode === CharCode.LineFeed) {
-          if (lineFeedCnt === 0 && (txt || !isEmptyMeta)) {
-            node = this.insertFixedLeft(node, this.createPiece(txt, meta, 0))
-          } else if (txt) {
+    if (startOffset === offset) {
+      node = node.predecessor()
+    } else if (offset > startOffset && offset < startOffset + node.piece.length) {
+      const [leftNode] = this.splitNode(node, reminder)
+      node = leftNode
+    } else {
+      startLineFeedCnt += node.piece.lineFeedCnt
+    }
+
+    const isNotLinkBreak = node.piece.lineFeedCnt <= 0
+    const isContinousInput = node.isNotNil && node.piece.bufferIndex === 0 && addBuffer.length === node.piece.start + node.piece.length
+
+    let txt = ''
+    let lineFeedCnt = 0
+
+    for (let i = 0, length = text.length; i < length; i++) {
+      let charCode = text.charCodeAt(i)
+      if (charCode === CharCode.LineFeed) {
+        if (lineFeedCnt === 0) {
+          if (isContinousInput && isEmptyMeta && isNotLinkBreak && txt) {
+            addBuffer.buffer += txt
+            node.piece.length += txt.length
+            node.updateMetaUpward()
+          } else if (txt || !isEmptyMeta) {
             node = this.insertFixedRight(node, this.createPiece(txt, meta, 0))
           }
-
-          node = this.insertFixedRight(node, this.createPiece(EOL, meta, 1))
-
-          txt = ''
-          lineFeedCnt++
-        } else {
-          txt += text[i]
+        } else if (txt) {
+          node = this.insertFixedRight(node, this.createPiece(txt, meta, 0))
         }
-      }
 
-      if (lineFeedCnt === 0 && (txt || !isEmptyMeta)) {
-        node = this.insertFixedLeft(node, this.createPiece(txt, meta, 0))
-      } else if (txt) {
-        this.insertFixedRight(node, this.createPiece(txt, meta, 0))
-      }
+        node = this.insertFixedRight(node, this.createPiece(EOL, meta, 1))
 
-      for (let i = 0; i <= lineFeedCnt; i++) {
-        if (i === lineFeedCnt) {
-          diffs.push({ type: 'replace', lineNumber: lineFeedCnt + 1 })
-        } else {
-          diffs.push({ type: 'insert', lineNumber: i + 1 })
-        }
+        txt = ''
+        lineFeedCnt++
+      } else {
+        txt += text[i]
       }
     }
-    // 2. Middle of the Document
-    else {
-      const nodePosition = this.findByOffset(offset)
-      let { node, reminder, startOffset, startLineFeedCnt } = nodePosition
 
-      if (startOffset === offset) {
-        node = node.predecessor()
-      } else if (offset > startOffset && offset < startOffset + node.piece.length) {
-        const [leftNode] = this.splitNode(node, reminder)
-        node = leftNode
-      } else {
-        startLineFeedCnt += node.piece.lineFeedCnt
-      }
-
-      const isNotLinkBreak = node.piece.lineFeedCnt <= 0
-      const isContinousInput = node.isNotNil && node.piece.bufferIndex === 0 && addBuffer.length === node.piece.start + node.piece.length
-
-      let txt = ''
-      let lineFeedCnt = 0
-
-      for (let i = 0, length = text.length; i < length; i++) {
-        let charCode = text.charCodeAt(i)
-        if (charCode === CharCode.LineFeed) {
-          if (lineFeedCnt === 0) {
-            if (isContinousInput && isEmptyMeta && isNotLinkBreak && txt) {
-              addBuffer.buffer += txt
-              node.piece.length += txt.length
-              node.updateMetaUpward()
-            } else if (txt || !isEmptyMeta) {
-              node = this.insertFixedRight(node, this.createPiece(txt, meta, 0))
-            }
-          } else if (txt) {
-            node = this.insertFixedRight(node, this.createPiece(txt, meta, 0))
-          }
-
-          node = this.insertFixedRight(node, this.createPiece(EOL, meta, 1))
-
-          txt = ''
-          lineFeedCnt++
-        } else {
-          txt += text[i]
-        }
-      }
-
-      if (lineFeedCnt === 0) {
-        if (isContinousInput && isEmptyMeta && isNotLinkBreak && txt) {
-          addBuffer.buffer += txt
-          node.piece.length += txt.length
-          node.updateMetaUpward()
-        } else if (txt || !isEmptyMeta) {
-          this.insertFixedRight(node, this.createPiece(txt, meta, 0))
-        }
-      } else if (txt) {
+    if (lineFeedCnt === 0) {
+      if (isContinousInput && isEmptyMeta && isNotLinkBreak && txt) {
+        addBuffer.buffer += txt
+        node.piece.length += txt.length
+        node.updateMetaUpward()
+      } else if (txt || !isEmptyMeta) {
         this.insertFixedRight(node, this.createPiece(txt, meta, 0))
       }
+    } else if (txt) {
+      this.insertFixedRight(node, this.createPiece(txt, meta, 0))
+    }
 
-      for (let i = 0; i <= lineFeedCnt; i++) {
-        if (i === 0) {
-          diffs.push({ type: 'replace', lineNumber: startLineFeedCnt + 1 })
-        } else {
-          diffs.push({ type: 'insert', lineNumber: startLineFeedCnt + i + 1 })
-        }
+    // Create Diffs
+    for (let i = 0; i <= lineFeedCnt; i++) {
+      if (i === 0) {
+        diffs.push({ type: 'replace', lineNumber: startLineFeedCnt })
+      } else {
+        diffs.push({ type: 'insert', lineNumber: startLineFeedCnt + i })
       }
     }
 
     if (!disableChange && text.length > 0) {
-      const change: InsertChange = createInsertChange(offset, [0, addBuffer.length - text.length, text.length], meta, diffs)
+      const change: InsertChange = createInsertChange(offset - 1, [0, addBuffer.length - text.length, text.length], meta, diffs)
       this.changeStack.push(change)
     }
 
@@ -372,14 +348,20 @@ export class PieceTree extends PieceTreeBase {
   /**
    * Delete Content
    */
-  delete(start: number, length: number, disableChange?: boolean): Diff[] {
+  delete(offset: number, length: number, disableChange?: boolean): Diff[] {
     const pieceChange: NodePiece[] = []
 
+    if (offset <= 0) {
+      offset = 1
+    } else {
+      offset += 1
+    }
+
     // delete
-    const startNodePosition = this.findByOffset(start)
+    const startNodePosition = this.findByOffset(offset)
     let { node, startOffset, startLineFeedCnt } = startNodePosition
-    if (start !== startOffset) {
-      const reminder = start - startOffset
+    if (offset !== startOffset) {
+      const reminder = offset - startOffset
       if (reminder === node.piece.length) {
         node = node.successor()
       } else {
@@ -387,18 +369,18 @@ export class PieceTree extends PieceTreeBase {
         node = rightNode
       }
     }
-    const formattedLineFeeds = this.deleteInner(start, length, node, pieceChange)
+    const formattedLineFeeds = this.deleteInner(offset, length, node, pieceChange)
 
     // diffs
     const diffs: Diff[] = []
     for (let i = 0; i <= formattedLineFeeds; i++) {
-      if (i === 0) diffs.push({ type: 'replace', lineNumber: startLineFeedCnt + 1 + i })
-      else diffs.push({ type: 'remove', lineNumber: startLineFeedCnt + 1 + i })
+      if (i === 0) diffs.push({ type: 'replace', lineNumber: startLineFeedCnt + i })
+      else diffs.push({ type: 'remove', lineNumber: startLineFeedCnt + i })
     }
 
     // changes
     if (!disableChange && pieceChange.length > 0) {
-      const change: DeleteChange = createDeleteChange(start, length, pieceChange, diffs)
+      const change: DeleteChange = createDeleteChange(offset - 1, length, pieceChange, diffs)
       this.changeStack.push(change)
     }
     return diffs
@@ -456,31 +438,34 @@ export class PieceTree extends PieceTreeBase {
   /**
    * Format The Content. Only change the meta
    */
-  format(start: number, length: number, meta: IPieceMeta, disableChange: boolean = false): Diff[] {
+  format(offset: number, length: number, meta: IPieceMeta, disableChange: boolean = false): Diff[] {
     const piecePatches: PiecePatch[] = []
 
+    if (offset <= 0) {
+      offset = 1
+    } else {
+      offset += 1
+    }
+
     // format
-    let { node, startOffset, startLineFeedCnt } = this.findByOffset(start)
-    if (start !== startOffset) {
-      const reminder = start - startOffset
+    let { node, startOffset, startLineFeedCnt } = this.findByOffset(offset)
+    if (offset !== startOffset) {
+      const reminder = offset - startOffset
       const [leftNode, rightNode] = this.splitNode(node, reminder)
       node = rightNode
       startLineFeedCnt += leftNode.piece.lineFeedCnt
     }
-    const formattedLineFeeds = this.formatInner(start, length, node, meta, piecePatches)
+    const formattedLineFeeds = this.formatInner(offset, length, node, meta, piecePatches)
 
     // diffs
     const diffs: Diff[] = []
     for (let i = 0; i <= formattedLineFeeds; i++) {
-      diffs.push({
-        type: 'replace',
-        lineNumber: startLineFeedCnt + 1 + i,
-      })
+      diffs.push({ type: 'replace', lineNumber: startLineFeedCnt + i })
     }
 
     // changes
     if (!disableChange) {
-      const change: FormatChange = createFormatChange(start, length, meta, piecePatches, diffs)
+      const change: FormatChange = createFormatChange(offset - 1, length, meta, piecePatches, diffs)
       this.changeStack.push(change)
     }
 
@@ -538,6 +523,8 @@ export class PieceTree extends PieceTreeBase {
     let node = this.root.findMin()
     let line: Line = []
     let lineNumber: number = 1
+
+    node = node.successor()
     while (node.isNotNil) {
       const { piece } = node
       const { meta, length } = piece
@@ -569,6 +556,7 @@ export class PieceTree extends PieceTreeBase {
    */
   forEachPiece(callback: (piece: Piece, index: number) => void) {
     let node = this.root.findMin()
+    node = node.successor()
     if (node === SENTINEL) return
 
     let index = 0
@@ -603,20 +591,10 @@ export class PieceTree extends PieceTreeBase {
   getLine(lineNumber: number): Line {
     const line: Line = []
 
-    let node = this.root
-    if (lineNumber <= 1) {
-      node = this.root.findMin()
-    } else if (lineNumber >= this.root.leftLineFeeds + this.root.piece.lineFeedCnt + this.root.rightLineFeeds + 1) {
-      lineNumber = this.root.leftLineFeeds + this.root.piece.lineFeedCnt + this.root.rightLineFeeds
-      const anchorNodePostion = this.root.findByLineNumber(lineNumber)
-      node = anchorNodePostion.node.successor()
-    } else {
-      lineNumber -= 1
-      const anchorNodePostion = this.root.findByLineNumber(lineNumber)
-      node = anchorNodePostion.node.successor()
-    }
+    let { node } = this.findByLineNumber(lineNumber)
+    node = node.successor()
 
-    while (node.isNotNil && node.piece.lineFeedCnt <= 0) {
+    while (node !== SENTINEL && node.piece.lineFeedCnt <= 0) {
       line.push({ text: this.getTextInPiece(node.piece), length: node.piece.length, meta: node.piece.meta })
       node = node.successor()
     }

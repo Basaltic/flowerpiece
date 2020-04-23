@@ -1,8 +1,6 @@
 import { PieceTree } from '../src/flowerpiece'
 import { Piece } from '../src/piece'
 
-const log = console.log
-
 it('iterate test 1', () => {
   const tree = new PieceTree()
 
