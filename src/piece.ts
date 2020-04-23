@@ -78,4 +78,7 @@ export interface Piece {
 /**
  * A Line of Content is a list of pieces
  */
-export declare type Line = Piece[]
+export interface Line {
+  pieces: Piece[]
+  meta: IPieceMeta | null
+}

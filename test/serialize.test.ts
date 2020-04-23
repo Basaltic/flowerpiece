@@ -1,21 +1,21 @@
 import { PieceTree } from '../src/flowerpiece'
-import { Piece } from '../src/piece'
+import { Piece, Line } from '../src/piece'
 
 it('serialize deserialize', () => {
   const tree = new PieceTree()
 
-  for (let i = 0; i < 26; i++) {
-    const t = String.fromCharCode(i + 97)
-    tree.insert(0, t)
+  let txt = ''
+  for (let i = 0; i < 5; i++) {
+    txt += 'a\n'
+    tree.insert(0, 'a\n')
   }
 
-  expect(tree.getAllText()).toBe('zyxwvutsrqponmlkjihgfedcba')
+  expect(tree.getAllText()).toBe(txt)
 
-  // interate and serialize to json
-  const pieces = tree.getPieces()
-  const pieceStr = JSON.stringify(pieces)
-  const deserializePieces = JSON.parse(pieceStr) as Piece[]
+  const lines = tree.getLines()
+  const linesStr = JSON.stringify(lines)
+  const deserializeLines = JSON.parse(linesStr) as Line[]
 
-  const tree2 = new PieceTree(deserializePieces)
-  expect(tree2.getAllText()).toBe('zyxwvutsrqponmlkjihgfedcba')
+  const tree2 = new PieceTree({ initialLines: deserializeLines })
+  expect(tree2.getAllText()).toBe(txt)
 })

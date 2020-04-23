@@ -102,11 +102,10 @@ export class ChangeStack {
     if (this.changing) {
       const len = this.undoChangesStack.length - 1
       this.undoChangesStack[len].push(change)
-    } else {
-      this.undoChangesStack.push([change])
-    }
-    if (this.redoChangesStack.length > 0) {
-      this.redoChangesStack = []
+
+      if (this.redoChangesStack.length > 0) {
+        this.redoChangesStack = []
+      }
     }
   }
 
@@ -135,7 +134,7 @@ export class ChangeStack {
    */
   applayUndo(callback: (change: IChange) => Diff[]) {
     const changes = this.undoChangesStack.pop()
-    if (changes) {
+    if (changes !== undefined) {
       const diffs: Diff[][] = []
       for (let i = changes.length - 1; i >= 0; i--) {
         diffs.push(callback(changes[i]))

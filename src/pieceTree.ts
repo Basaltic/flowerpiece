@@ -20,6 +20,10 @@ import cloneDeep from 'lodash.clonedeep'
 
 const EOL = '\n'
 
+export interface PieceTreeConfig {
+  initialLines?: Line[]
+}
+
 /**
  * Piece Tree Implementation
  *
@@ -38,28 +42,50 @@ export class PieceTree extends PieceTreeBase {
   // A Stack to manage the changes
   private changeStack: ChangeStack = new ChangeStack()
 
-  constructor(pieces?: Piece[]) {
+  constructor(config: PieceTreeConfig = {}) {
     super()
 
-    this.insertLineBreak(0)
+    const { initialLines } = config
 
     // Defaultly add a eol
-    if (pieces) {
-      for (const piece of pieces) {
-        if (piece.text) {
-          const buffer = new StringBuffer(piece.text)
-          this.buffers.push(buffer)
-          this.insertRightest(new NodePiece(this.buffers.length - 1, 0, buffer.length, computeLineFeedCnt(piece.text), piece.meta))
+    if (initialLines) {
+      const lineBreakStringBuffer = new StringBuffer(EOL)
+      this.buffers.push(lineBreakStringBuffer)
+      const linBreakBufferindex = this.buffers.length - 1
+      let node = this.root
+      for (const line of initialLines) {
+        const lbPiece = new NodePiece(linBreakBufferindex, 0, 1, 1, line.meta)
+        node = this.insertFixedRight(node, lbPiece)
+
+        for (const ipiece of line.pieces) {
+          const { text, length, meta } = ipiece
+
+          let bufferIndex = -1
+          if (text) {
+            const buffer = new StringBuffer(text)
+            this.buffers.push(buffer)
+            bufferIndex = this.buffers.length - 1
+          }
+
+          const nodePiece = new NodePiece(bufferIndex, 0, length, 0, meta)
+          node = this.insertFixedRight(node, nodePiece)
         }
       }
+    } else {
+      this.insert(0, EOL, null)
     }
   }
+
+  /**
+   * Create a Instance of Piece Tree
+   */
+  static create() {}
 
   /**
    * Init the piece tree
    * @param pieces
    */
-  initialize(pieces: Piece[]) {
+  reload(pieces: Piece[]) {
     this.freeAll()
     for (const piece of pieces) {
       if (piece.text) {
@@ -105,7 +131,6 @@ export class PieceTree extends PieceTreeBase {
    * Redo the operation
    */
   redo(): Diff[] {
-    console.log('redo')
     return this.changeStack.applayRedo(change => this.doRedo(change))
   }
 
@@ -124,7 +149,7 @@ export class PieceTree extends PieceTreeBase {
     switch (change.type) {
       case 'insert':
         const insertChange = change as InsertChange
-        this.delete(insertChange.startOffset, insertChange.length, true)
+        this.delete(insertChange.startOffset, insertChange.length)
         return change.diffs.map(diff => {
           if (diff.type === 'insert') {
             diff.type = 'remove'
@@ -201,14 +226,13 @@ export class PieceTree extends PieceTreeBase {
       case 'insert':
         const { startOffset, text, meta } = change as InsertChange
         const txt = this.getTextInBuffer(text[0], text[1], text[2])
-        return this.insert(startOffset, txt, meta, true)
+        return this.insert(startOffset, txt, meta)
       case 'delete':
         const deleteChange = change as DeleteChange
-        return this.delete(deleteChange.startOffset, deleteChange.length, true)
+        return this.delete(deleteChange.startOffset, deleteChange.length)
       case 'format':
         const formatChange = change as FormatChange
-        console.log(formatChange)
-        return this.format(formatChange.startOffset, formatChange.length, formatChange.meta, true)
+        return this.format(formatChange.startOffset, formatChange.length, formatChange.meta)
     }
   }
 
@@ -276,7 +300,7 @@ export class PieceTree extends PieceTreeBase {
    * 2. Coninuesly input only text, append to same node
    * 3. LineBreak(\n) will in a new piece which used to store line data
    */
-  insert(offset: number, text: string = '', meta?: any, disableChange?: boolean): Diff[] {
+  insert(offset: number, text: string = '', meta?: any): Diff[] {
     const diffs: Diff[] = []
 
     const addBuffer = this.buffers[0]
@@ -352,10 +376,8 @@ export class PieceTree extends PieceTreeBase {
       }
     }
 
-    if (!disableChange && text.length > 0) {
-      const change: InsertChange = createInsertChange(offset - 1, [0, addBuffer.length - text.length, text.length], meta, diffs)
-      this.changeStack.push(change)
-    }
+    const change: InsertChange = createInsertChange(offset - 1, [0, addBuffer.length - text.length, text.length], meta, diffs)
+    this.changeStack.push(change)
 
     return diffs
   }
@@ -363,7 +385,7 @@ export class PieceTree extends PieceTreeBase {
   /**
    * Delete Content
    */
-  delete(offset: number, length: number, disableChange?: boolean): Diff[] {
+  delete(offset: number, length: number): Diff[] {
     const pieceChange: NodePiece[] = []
     const originalLength = length
 
@@ -437,17 +459,16 @@ export class PieceTree extends PieceTreeBase {
     }
 
     // changes
-    if (!disableChange && pieceChange.length > 0) {
-      const change: DeleteChange = createDeleteChange(offset - 1, originalLength, pieceChange, diffs)
-      this.changeStack.push(change)
-    }
+    const change: DeleteChange = createDeleteChange(offset - 1, originalLength, pieceChange, diffs)
+    this.changeStack.push(change)
+
     return diffs
   }
 
   /**
    * Format The Content. Only change the meta
    */
-  format(offset: number, length: number, meta: IPieceMeta, disableChange: boolean = false): Diff[] {
+  format(offset: number, length: number, meta: IPieceMeta): Diff[] {
     const piecePatches: PiecePatch[] = []
     const originalOffset = offset
     const originalLength = length
@@ -470,7 +491,6 @@ export class PieceTree extends PieceTreeBase {
     let lineFeedCnt: number = 0
     while (length > 0) {
       if (length >= node.piece.length) {
-        // Line feeds counting. Meta Merge
         lineFeedCnt += node.piece.lineFeedCnt
         const mergeResult = mergeMeta(node.piece.meta, meta)
         if (mergeResult !== null) {
@@ -508,10 +528,8 @@ export class PieceTree extends PieceTreeBase {
     }
 
     // changes
-    if (!disableChange) {
-      const change: FormatChange = createFormatChange(originalOffset, originalLength, meta, piecePatches, diffs)
-      this.changeStack.push(change)
-    }
+    const change: FormatChange = createFormatChange(originalOffset, originalLength, meta, piecePatches, diffs)
+    this.changeStack.push(change)
 
     return diffs
   }
@@ -524,8 +542,10 @@ export class PieceTree extends PieceTreeBase {
    */
   forEachLine(callback: (line: Line, lineNumber: number) => void) {
     let node = this.root.findMin()
-    let line: Line = []
+    let line: Line = { meta: {}, pieces: [] }
     let lineNumber: number = 1
+
+    line.meta = node.piece.meta
 
     node = node.successor()
     while (node.isNotNil) {
@@ -534,11 +554,11 @@ export class PieceTree extends PieceTreeBase {
 
       if (piece.lineFeedCnt === 0) {
         const text = this.getTextInPiece(piece)
-        line.push({ text, length, meta })
+        line.pieces.push({ text, length, meta })
       } else {
         callback(line, lineNumber)
 
-        line = []
+        line = { meta: node.piece.meta, pieces: [] }
         lineNumber++
       }
 
@@ -546,8 +566,8 @@ export class PieceTree extends PieceTreeBase {
     }
 
     // Empty Line
-    if (line.length === 0) {
-      line = [{ text: '', length: 0, meta: null }]
+    if (line.pieces.length === 0) {
+      line = { meta: null, pieces: [{ text: '', length: 0, meta: null }] }
     }
 
     callback(line, lineNumber)
@@ -557,7 +577,7 @@ export class PieceTree extends PieceTreeBase {
    * Interate all the pieces
    * @param callback
    */
-  forEachPiece(callback: (piece: Piece, index: number) => void) {
+  protected forEachPiece(callback: (piece: Piece, index: number) => void) {
     let node = this.root.findMin()
     node = node.successor()
     if (node === SENTINEL) return
@@ -592,21 +612,34 @@ export class PieceTree extends PieceTreeBase {
    * @param lineNumber
    */
   getLine(lineNumber: number): Line {
-    const line: Line = []
+    const line: Line = { meta: null, pieces: [] }
 
     let { node } = this.findByLineNumber(lineNumber)
     node = node.successor()
 
     while (node !== SENTINEL && node.piece.lineFeedCnt <= 0) {
-      line.push({ text: this.getTextInPiece(node.piece), length: node.piece.length, meta: node.piece.meta })
+      line.pieces.push({ text: this.getTextInPiece(node.piece), length: node.piece.length, meta: node.piece.meta })
       node = node.successor()
     }
 
-    if (line.length === 0) {
-      line.push({ text: '', length: 0, meta: null })
+    if (line.pieces.length === 0) {
+      line.pieces.push({ text: '', length: 0, meta: null })
     }
 
     return line
+  }
+
+  /**
+   * Get All Lines
+   */
+  getLines(): Line[] {
+    const lines: Line[] = []
+
+    this.forEachLine(line => {
+      lines.push(line)
+    })
+
+    return lines
   }
 
   /**

@@ -24,7 +24,12 @@ it('format 1', () => {
   tree.format(2, 2, meta)
 
   const line = tree.getLine(1)
-  if (line[0].meta) expect(line[0].meta.color).toBe('red')
-  if (line[1].meta) expect(line[1].meta.color).toBe('blue')
-  if (line[2].meta) expect(line[2].meta.color).toBe('red')
+  expect(line).toEqual({
+    meta: null,
+    pieces: [
+      { text: 'ab', length: 2, meta: { color: 'red' } },
+      { text: 'c ', length: 2, meta: { color: 'blue' } },
+      { text: 'defg hijk ', length: 10, meta: { color: 'red' } },
+    ],
+  })
 })

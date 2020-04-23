@@ -4,8 +4,13 @@ import { PieceTree } from '../src/flowerpiece'
 it('redo undo insert', () => {
   const tree = new PieceTree()
 
+  tree.startChange()
   tree.insert(0, 'test', {})
+  tree.endChange()
+
+  tree.startChange()
   tree.insert(2, 'i', {})
+  tree.endChange()
 
   tree.undo()
   let txt = tree.getAllText()
@@ -20,15 +25,17 @@ it('redo undo insert', () => {
 it('redo undo delete', () => {
   const tree = new PieceTree()
 
-  tree.insert(0, 'test', {}, true)
-  tree.insert(2, 'i', {}, true)
+  tree.insert(0, 'test', {})
+  tree.insert(2, 'i', {})
 
-  tree.insert(2, 'x', {}, true)
-  tree.insert(2, 'y', {}, true)
+  tree.insert(2, 'x', {})
+  tree.insert(2, 'y', {})
 
   expect(tree.getAllText()).toBe('teyxist')
 
+  tree.startChange()
   tree.delete(1, 5)
+  tree.endChange()
   expect(tree.getAllText()).toBe('tt')
 
   tree.undo()
@@ -40,7 +47,9 @@ it('redo undo delete', () => {
   tree.undo()
   expect(tree.getAllText()).toBe('teyxist')
 
+  tree.startChange()
   tree.delete(0, 5)
+  tree.endChange()
   expect(tree.getAllText()).toBe('st')
 
   tree.undo()
@@ -51,15 +60,17 @@ it('redo undo delete', () => {
 it('redo undo format', () => {
   const tree = new PieceTree()
 
-  tree.insert(0, 'test', {}, true)
-  tree.insert(2, 'i', {}, true)
+  tree.insert(0, 'test', {})
+  tree.insert(2, 'i', {})
 
-  tree.insert(2, 'x', {}, true)
-  tree.insert(2, 'y', {}, true)
+  tree.insert(2, 'x', {})
+  tree.insert(2, 'y', {})
 
   expect(tree.getAllText()).toBe('teyxist')
 
+  tree.startChange()
   tree.format(1, 5, { color: 'red' })
+  tree.endChange()
   expect(tree.getPieces()).toEqual([
     { text: 't', length: 1, meta: {} },
     { text: 'e', length: 1, meta: { color: 'red' } },
@@ -107,4 +118,11 @@ it('change cascade undo redo', () => {
 
   tree.redo()
   expect(tree.getAllText()).toBe('teist')
+
+  tree.redo()
+  expect(tree.getAllText()).toBe('teist')
+
+  tree.undo()
+  tree.undo()
+  expect(tree.getAllText()).toBe('')
 })
