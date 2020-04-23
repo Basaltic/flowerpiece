@@ -23,7 +23,6 @@ export default class PieceTreeBase {
   public root: PieceTreeNode = SENTINEL
 
   constructor(stringBuffers?: StringBuffer[]) {
-    // TODO 暂时默认，都是空的内容
     const addedTextBuffer = new StringBuffer('')
     this.buffers = [addedTextBuffer, new StringBuffer('')]
   }
