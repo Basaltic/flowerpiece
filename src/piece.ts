@@ -1,4 +1,4 @@
-import { PieceMeta, IPieceMeta } from './meta'
+import { IPieceMeta } from './meta'
 
 /**
  * A Piece Refer a piece of text content of the document
@@ -27,6 +27,27 @@ export default class NodePiece {
     this.length = length
     this.lineFeedCnt = lineFeedCnt
     this.meta = meta
+  }
+}
+
+export enum PieceType {
+  TEXT,
+  NON_TEXT,
+  LINE_FEED,
+}
+
+/**
+ * Determine The Piece Type
+ *
+ * @param piece
+ */
+export function determinePieceType(piece: NodePiece): PieceType {
+  if (piece.lineFeedCnt === 1) {
+    return PieceType.LINE_FEED
+  } else if (piece.bufferIndex < 0) {
+    return PieceType.NON_TEXT
+  } else {
+    return PieceType.TEXT
   }
 }
 

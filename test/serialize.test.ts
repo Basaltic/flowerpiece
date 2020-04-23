@@ -1,5 +1,5 @@
 import { PieceTree } from '../src/flowerpiece'
-import { IPiece } from '../src/piece'
+import { Piece } from '../src/piece'
 
 it('serialize deserialize', () => {
   const tree = new PieceTree()
@@ -14,7 +14,7 @@ it('serialize deserialize', () => {
   // interate and serialize to json
   const pieces = tree.getPieces()
   const pieceStr = JSON.stringify(pieces)
-  const deserializePieces = JSON.parse(pieceStr) as IPiece[]
+  const deserializePieces = JSON.parse(pieceStr) as Piece[]
 
   const tree2 = new PieceTree(deserializePieces)
   expect(tree2.getAllText()).toBe('zyxwvutsrqponmlkjihgfedcba')

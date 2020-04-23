@@ -1,7 +1,7 @@
 import { IPieceMeta, PieceTree } from '../src/flowerpiece'
 
 it('Insert: Rich Text Case', () => {
-  const textMeta: IPieceMeta = { type: 'text', stye: { fontSize: 16 } }
+  const textMeta: IPieceMeta = { type: 'text', style: { fontSize: 16 } }
   const imageMeta: IPieceMeta = { type: 'image', width: 500, height: 500, style: {} }
 
   const tree = new PieceTree()
@@ -39,11 +39,13 @@ it('Insert: Rich Text Case', () => {
   expect(pieces[2].meta === pieces[5].meta).toBe(false)
 
   // Format Text
-  tree.format(0, 3, textMeta)
+  const toRed = { style: { color: 'red' } }
+  tree.format(0, 3, toRed)
+  const newImageMeta = { type: 'image', width: 500, height: 500, style: { color: 'red' } }
   expect(tree.getPieces()).toEqual([
-    { text: 'a', length: 1, meta: textMeta },
-    { text: '\n', length: 1, meta: textMeta },
-    { text: '', length: 1, meta: imageMeta },
+    { text: 'a', length: 1, meta: toRed },
+    { text: '\n', length: 1, meta: toRed },
+    { text: '', length: 1, meta: newImageMeta },
     { text: '\n', length: 1, meta: null },
     { text: 'a', length: 1, meta: null },
     { text: '', length: 1, meta: imageMeta },

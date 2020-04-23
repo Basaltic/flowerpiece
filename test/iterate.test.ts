@@ -1,5 +1,5 @@
 import { PieceTree } from '../src/flowerpiece'
-import { IPiece } from '../src/piece'
+import { Piece } from '../src/piece'
 
 const log = console.log
 
@@ -11,9 +11,9 @@ it('iterate test 1', () => {
   tree.insert(0, text)
   expect(tree.getAllText()).toBe(text)
 
-  let lines: IPiece[][] = []
+  let lines: Piece[][] = []
   let num = 1
-  tree.forEachLine((line: IPiece[], lineNumber: number) => {
+  tree.forEachLine((line: Piece[], lineNumber: number) => {
     expect(lineNumber).toBe(num)
     num++
     lines.push(line)
@@ -28,7 +28,7 @@ it('iterate test 1', () => {
 
   lines = []
   num = 1
-  tree.forEachLine((line: IPiece[], lineNumber: number) => {
+  tree.forEachLine((line: Piece[], lineNumber: number) => {
     expect(lineNumber).toBe(num)
     num++
     lines.push(line)
