@@ -82,3 +82,23 @@ it('Get: Line and Pieces', () => {
     pieces: [{ text: '', length: 1, meta: imageMeta }],
   })
 })
+
+/**
+ * Test For Fetching Line Meta
+ */
+it('Get Line Meta', () => {
+  const tree = new PieceTree()
+
+  tree.insert(0, 'First Line\nSecond Line')
+
+  expect(tree.getLineMeta(1)).toBe(null)
+  expect(tree.getLineMeta(2)).toBe(null)
+
+  const testMeta = { testProperty: 'test' }
+  tree.formatLine(1, testMeta)
+  expect(tree.getLineMeta(1)).toEqual(testMeta)
+
+  const testMeta2 = { prop1: 'test' }
+  tree.formatLine(2, testMeta2)
+  expect(tree.getLineMeta(2)).toEqual(testMeta2)
+})

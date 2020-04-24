@@ -19,6 +19,7 @@ import { applyPatches } from 'immer'
 import cloneDeep from 'lodash.clonedeep'
 
 const EOL = '\n'
+const FIRST_LINE_SPECIAL_SYMBOL = -10000
 
 export interface PieceTreeConfig {
   initialLines?: Line[]
@@ -40,7 +41,7 @@ export interface PieceTreeConfig {
  */
 export class PieceTree extends PieceTreeBase {
   // A Stack to manage the changes
-  private changeStack: ChangeStack = new ChangeStack()
+  private changeHistory: ChangeStack = new ChangeStack()
 
   constructor(config: PieceTreeConfig = {}) {
     super()
@@ -76,26 +77,6 @@ export class PieceTree extends PieceTreeBase {
     }
   }
 
-  /**
-   * Create a Instance of Piece Tree
-   */
-  static create() {}
-
-  /**
-   * Init the piece tree
-   * @param pieces
-   */
-  reload(pieces: Piece[]) {
-    this.freeAll()
-    for (const piece of pieces) {
-      if (piece.text) {
-        const buffer = new StringBuffer(piece.text)
-        this.buffers.push(buffer)
-        this.insertRightest(new NodePiece(this.buffers.length - 1, 0, buffer.length, computeLineFeedCnt(piece.text), piece.meta))
-      }
-    }
-  }
-
   // ------------- Change -------------- //
 
   /**
@@ -117,28 +98,28 @@ export class PieceTree extends PieceTreeBase {
    * operations between start and end will redo\undo in same operation
    */
   startChange() {
-    this.changeStack.startChange()
+    this.changeHistory.startChange()
   }
 
   /**
    * Mark as operation end
    */
   endChange() {
-    this.changeStack.endChange()
+    this.changeHistory.endChange()
   }
 
   /**
    * Redo the operation
    */
   redo(): Diff[] {
-    return this.changeStack.applayRedo(change => this.doRedo(change))
+    return this.changeHistory.applayRedo(change => this.doRedo(change))
   }
 
   /**
    * Undo the operation
    */
   undo(): Diff[] {
-    return this.changeStack.applayUndo(change => this.doUndo(change))
+    return this.changeHistory.applayUndo(change => this.doUndo(change))
   }
 
   /**
@@ -288,6 +269,9 @@ export class PieceTree extends PieceTreeBase {
    * @param meta
    */
   formatLine(lineNumber: number, meta: IPieceMeta): Diff[] {
+    if (lineNumber === 1) {
+      return this.format(FIRST_LINE_SPECIAL_SYMBOL, 1, meta)
+    }
     const { startOffset } = this.findByLineNumber(lineNumber)
     return this.format(startOffset - 1, 1, meta)
   }
@@ -377,7 +361,7 @@ export class PieceTree extends PieceTreeBase {
     }
 
     const change: InsertChange = createInsertChange(offset - 1, [0, addBuffer.length - text.length, text.length], meta, diffs)
-    this.changeStack.push(change)
+    this.changeHistory.push(change)
 
     return diffs
   }
@@ -460,7 +444,7 @@ export class PieceTree extends PieceTreeBase {
 
     // changes
     const change: DeleteChange = createDeleteChange(offset - 1, originalLength, pieceChange, diffs)
-    this.changeStack.push(change)
+    this.changeHistory.push(change)
 
     return diffs
   }
@@ -473,7 +457,10 @@ export class PieceTree extends PieceTreeBase {
     const originalOffset = offset
     const originalLength = length
 
-    if (offset <= 0) {
+    // Notice: The Piece Tree will have a default line break piece. Adjust the offset
+    if (offset === FIRST_LINE_SPECIAL_SYMBOL) {
+      offset = 0
+    } else if (offset <= 0) {
       offset = 1
     } else {
       offset += 1
@@ -529,7 +516,7 @@ export class PieceTree extends PieceTreeBase {
 
     // changes
     const change: FormatChange = createFormatChange(originalOffset, originalLength, meta, piecePatches, diffs)
-    this.changeStack.push(change)
+    this.changeHistory.push(change)
 
     return diffs
   }
@@ -652,6 +639,18 @@ export class PieceTree extends PieceTreeBase {
     })
 
     return pieces
+  }
+
+  /**
+   * Get Specific Line Meta
+   */
+  getLineMeta(lineNumber: number): IPieceMeta | null {
+    const { node, startOffset } = this.findByLineNumber(lineNumber)
+    // console.log(startOffset, node.piece.lineFeedCnt)
+    if (node.piece.lineFeedCnt === 1) {
+      return node.piece.meta
+    }
+    return null
   }
 
   // ---- Fetch Operation End ---- //
