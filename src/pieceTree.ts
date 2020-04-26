@@ -523,6 +523,10 @@ export class PieceTree extends PieceTreeBase {
   }
 
   protected deleteInner(offset: number, length: number) {
+    if (this.isEmpty()) {
+      return []
+    }
+
     const pieceChange: NodePiece[] = []
     const originalLength = length
 
