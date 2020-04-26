@@ -9,6 +9,10 @@ A Rich Text Editor Data Model
 
 # Features
 
+##### Rich Text Manipulation Operations
+##### Build-in Redo/Undo
+##### Statistic / Counts
+
 # installing
 
 Using npm:
@@ -38,50 +42,7 @@ tree.delete(0, 10)
 tree.endChange()
 ```
 
-# APIs
-
-## Piece Tree API
-
-- initialize(pieces: Piece[])
-- change(callback: (...args: any) => void)
-- startChange()
-- endChange()
-
-```typescript
-// operations between 'startChange' and 'endChange' are considered as a operation combination.
-
-const tree = new PieceTree()
-
-tree.startChange()
-
-tree.insert(0, 'test')
-tree.insert(2, 'tt)
-
-tree.endChange()
-
-// Above two operations will redo and undo togethor
-tree.undo()
-tree.redo()
-
-```
-
-- redo()
-- undo()
-- insert(offset: number, length: number, text: string, meta: PieceMeta | null): Diff[]
-
-```typescript
-const tree = new PieceTree()
-
-tree.insert(0, 'This is an example')
-```
-
-- delete(offset: number, length: number): Diff[]
-- format(offset: number, length: number, meta: PieceMeta): Diff[]
-- getAllText()
-- getLine(lineNumber: number): Piece[]
-- getPieces(): Piece[]
-- forEachLine(callback: (line: IPiece[], lineNumber: number)
-- forEachPiece(callback: (piece: IPiece, index: number)
+# Objects
 
 ## Piece
 
@@ -103,7 +64,10 @@ export interface Piece {
 A Line is a list of pieces
 
 ```typescript
-declare type Line = Piece[]
+interface Line {
+  meta: PieceMeta
+  pieces: Piece[]
+}
 ```
 
 ## Diff
@@ -130,3 +94,34 @@ export class PieceMeta implements IPieceMeta {
   [immerable] = true
 }
 ```
+
+# APIs
+
+## Piece Tree API
+
+##### change(callback: (...args: any) => void)
+##### startChange()
+##### endChange()
+##### redo()
+##### undo()
+
+##### insertText(offset: number, text: string, meta: PieceMeta | null)
+##### insertLineBrea(offset: number, meta: PieceMeta | null)
+##### insertLine(offset: number, meta: PieceMeta | null)
+##### insertNonText(offset: number, meta: PieceMeta)
+##### deleteLine(lineNumber: number)
+##### formatLine(lineNumber: number, meta: PieceMeta)
+
+##### insert(offset: number, length: number, text: string, meta: PieceMeta | null): Diff[]
+##### delete(offset: number, length: number): Diff[]
+##### format(offset: number, length: number, meta: PieceMeta): Diff[]
+
+##### getAllText()
+##### getLine(lineNumber: number): Piece[]
+##### getLInes(): Line[]
+##### getLineMeta(lineNumber: number): PieceMeta | null
+##### getPieces(): Piece[]
+
+##### forEachLine(callback: (line: IPiece[], lineNumber: number)
+
+

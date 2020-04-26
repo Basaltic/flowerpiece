@@ -31,6 +31,7 @@ export default class NodePiece {
 }
 
 export enum PieceType {
+  ALL,
   TEXT,
   NON_TEXT,
   LINE_FEED,

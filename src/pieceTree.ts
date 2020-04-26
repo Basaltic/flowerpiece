@@ -1,4 +1,4 @@
-import NodePiece, { Piece, Line } from './piece'
+import NodePiece, { Piece, Line, PieceType, determinePieceType } from './piece'
 import PieceTreeBase from './pieceTreebase'
 import PieceTreeNode, { SENTINEL } from './pieceTreeNode'
 import Change, {
@@ -259,21 +259,149 @@ export class PieceTree extends PieceTreeBase {
    * @param offset
    * @param meta
    */
-  insertNonText(offset: number, meta: IPieceMeta) {
-    this.insert(offset, '', meta)
+  insertNonText(offset: number, meta: IPieceMeta): Diff[] {
+    return this.insert(offset, '', meta)
   }
 
   /**
-   * Format Specific Line
+   * Delete The Entire Line Contents
+   * @param lineNumber
+   */
+  deleteLine(lineNumber: number): Diff[] {
+    const cnt = this.getLength()
+    const lineCnt = this.getLineCount()
+
+    if (lineCnt === 1) {
+      if (lineNumber === 1) {
+        return this.deleteInner(1, cnt)
+      }
+      return []
+    } else {
+      if (lineNumber === lineCnt) {
+        const { startOffset } = this.findByLineNumber(lineNumber)
+        return this.deleteInner(startOffset, cnt)
+      } else if (lineNumber > lineCnt || lineNumber <= 0) {
+        return []
+      } else {
+        const posStart = this.findByLineNumber(lineNumber)
+        const posEnd = this.findByLineNumber(lineNumber + 1)
+
+        const len = posEnd.startOffset - posStart.startOffset
+        return this.deleteInner(posStart.startOffset, len)
+      }
+    }
+  }
+
+  /**
+   * Format the Specific Line
    * @param lineNumber
    * @param meta
    */
   formatLine(lineNumber: number, meta: IPieceMeta): Diff[] {
-    if (lineNumber === 1) {
-      return this.format(FIRST_LINE_SPECIAL_SYMBOL, 1, meta)
-    }
     const { startOffset } = this.findByLineNumber(lineNumber)
-    return this.format(startOffset - 1, 1, meta)
+    return this.formatInner(startOffset, 1, meta, PieceType.LINE_FEED)
+  }
+
+  /**
+   * Change All Piece Meta In The Line
+   */
+  formatAllOfLine(lineNumber: number, meta: IPieceMeta): Diff[] {
+    const cnt = this.getLength()
+    const lineCnt = this.getLineCount()
+
+    if (lineCnt === 1) {
+      if (lineNumber === 1) {
+        return this.formatInner(1, cnt, meta)
+      }
+      return []
+    } else {
+      if (lineNumber === lineCnt) {
+        const { startOffset } = this.findByLineNumber(lineNumber)
+        return this.formatInner(startOffset, cnt, meta)
+      } else if (lineNumber > 0 && lineNumber <= lineCnt) {
+        const posStart = this.findByLineNumber(lineNumber)
+        const posEnd = this.findByLineNumber(lineNumber + 1)
+
+        const len = posEnd.startOffset - posStart.startOffset
+        return this.formatInner(posStart.startOffset, len, meta)
+      } else {
+        return []
+      }
+    }
+  }
+
+  /**
+   * Change All Text Piece Meta In The Line
+   */
+  formatTextOfLine(lineNumber: number, meta: IPieceMeta): Diff[] {
+    const cnt = this.getLength()
+    const lineCnt = this.getLineCount()
+
+    if (lineCnt === 1) {
+      if (lineNumber === 1) {
+        return this.formatText(1, cnt, meta)
+      }
+      return []
+    } else {
+      if (lineNumber === lineCnt) {
+        const { startOffset } = this.findByLineNumber(lineNumber)
+        return this.formatText(startOffset, cnt, meta)
+      } else if (lineNumber > 0 && lineNumber <= lineCnt) {
+        const posStart = this.findByLineNumber(lineNumber)
+        const posEnd = this.findByLineNumber(lineNumber + 1)
+
+        const len = posEnd.startOffset - posStart.startOffset
+        return this.formatText(posStart.startOffset, len, meta)
+      } else {
+        return []
+      }
+    }
+  }
+
+  /**
+   * Change All Non-Text Piece Meta In The Line
+   */
+  formatNonTextOfLine(lineNumber: number, meta: IPieceMeta): Diff[] {
+    const cnt = this.getLength()
+    const lineCnt = this.getLineCount()
+
+    if (lineCnt === 1) {
+      if (lineNumber === 1) {
+        return this.formatNonText(1, cnt, meta)
+      }
+      return []
+    } else {
+      if (lineNumber === lineCnt) {
+        const { startOffset } = this.findByLineNumber(lineNumber)
+        return this.formatNonText(startOffset, cnt, meta)
+      } else if (lineNumber > 0 && lineNumber <= lineCnt) {
+        const posStart = this.findByLineNumber(lineNumber)
+        const posEnd = this.findByLineNumber(lineNumber + 1)
+
+        const len = posEnd.startOffset - posStart.startOffset
+        return this.formatNonText(posStart.startOffset, len, meta)
+      } else {
+        return []
+      }
+    }
+  }
+
+  /**
+   * Format Text Piece
+   * @param offset
+   */
+  formatText(offset: number, length: number, meta: IPieceMeta): Diff[] {
+    return this.formatInner(offset, length, meta, PieceType.TEXT)
+  }
+
+  /**
+   * Format Non-Text Pieces
+   * @param offset
+   * @param length
+   * @param meta
+   */
+  formatNonText(offset: number, length: number, meta: IPieceMeta): Diff[] {
+    return this.formatInner(offset, length, meta, PieceType.NON_TEXT)
   }
 
   // ------------------- Atomic Operation ---------------------- //
@@ -285,17 +413,50 @@ export class PieceTree extends PieceTreeBase {
    * 3. LineBreak(\n) will in a new piece which used to store line data
    */
   insert(offset: number, text: string = '', meta?: any): Diff[] {
-    const diffs: Diff[] = []
-
-    const addBuffer = this.buffers[0]
-
-    const isEmptyMeta = meta === undefined || meta === null
-
     if (offset <= 0) {
       offset = 1
     } else {
       offset += 1
     }
+
+    return this.insertInner(offset, text, meta)
+  }
+
+  /**
+   * Delete Content
+   */
+  delete(offset: number, length: number): Diff[] {
+    if (offset <= 0) {
+      offset = 1
+    } else {
+      offset += 1
+    }
+
+    return this.deleteInner(offset, length)
+  }
+
+  /**
+   * Format The Content. Only change the meta
+   */
+  format(offset: number, length: number, meta: IPieceMeta): Diff[] {
+    // Notice: The Piece Tree will have a default line break piece. Adjust the offset
+    if (offset === FIRST_LINE_SPECIAL_SYMBOL) {
+      offset = 0
+    } else if (offset <= 0) {
+      offset = 1
+    } else {
+      offset += 1
+    }
+
+    return this.formatInner(offset, length, meta)
+  }
+
+  protected insertInner(offset: number, text: string = '', meta?: any) {
+    const diffs: Diff[] = []
+
+    const addBuffer = this.buffers[0]
+
+    const isEmptyMeta = meta === undefined || meta === null
 
     const nodePosition = this.findByOffset(offset)
     let { node, reminder, startOffset, startLineFeedCnt } = nodePosition
@@ -366,18 +527,9 @@ export class PieceTree extends PieceTreeBase {
     return diffs
   }
 
-  /**
-   * Delete Content
-   */
-  delete(offset: number, length: number): Diff[] {
+  protected deleteInner(offset: number, length: number) {
     const pieceChange: NodePiece[] = []
     const originalLength = length
-
-    if (offset <= 0) {
-      offset = 1
-    } else {
-      offset += 1
-    }
 
     // delete
     const startNodePosition = this.findByOffset(offset)
@@ -449,25 +601,15 @@ export class PieceTree extends PieceTreeBase {
     return diffs
   }
 
-  /**
-   * Format The Content. Only change the meta
-   */
-  format(offset: number, length: number, meta: IPieceMeta): Diff[] {
+  protected formatInner(offset: number, length: number, meta: IPieceMeta, type: PieceType = PieceType.ALL): Diff[] {
     const piecePatches: PiecePatch[] = []
     const originalOffset = offset
     const originalLength = length
 
-    // Notice: The Piece Tree will have a default line break piece. Adjust the offset
-    if (offset === FIRST_LINE_SPECIAL_SYMBOL) {
-      offset = 0
-    } else if (offset <= 0) {
-      offset = 1
-    } else {
-      offset += 1
-    }
-
     // format
     let { node, startOffset, startLineFeedCnt } = this.findByOffset(offset)
+    console.log(offset, startOffset)
+
     if (offset !== startOffset) {
       const reminder = offset - startOffset
       const [leftNode, rightNode] = this.splitNode(node, reminder)
@@ -477,6 +619,21 @@ export class PieceTree extends PieceTreeBase {
 
     let lineFeedCnt: number = 0
     while (length > 0) {
+      // skip according to piece type
+      if (type !== PieceType.ALL) {
+        const determinedType = determinePieceType(node.piece)
+        if (determinedType !== type) {
+          length -= node.piece.length
+          offset += node.piece.length
+
+          node = node.successor()
+
+          continue
+        }
+      }
+
+      console.log(length, node.piece.length)
+
       if (length >= node.piece.length) {
         lineFeedCnt += node.piece.lineFeedCnt
         const mergeResult = mergeMeta(node.piece.meta, meta)
@@ -491,6 +648,7 @@ export class PieceTree extends PieceTreeBase {
 
         node = node.successor()
       } else {
+        console.log('here')
         const [leftNode] = this.splitNode(node, length)
         node = leftNode
 
@@ -630,18 +788,6 @@ export class PieceTree extends PieceTreeBase {
   }
 
   /**
-   * Get All the pieces of this tree
-   */
-  getPieces(): Piece[] {
-    const pieces: Piece[] = []
-    this.forEachPiece(piece => {
-      pieces.push(piece)
-    })
-
-    return pieces
-  }
-
-  /**
    * Get Specific Line Meta
    */
   getLineMeta(lineNumber: number): IPieceMeta | null {
@@ -651,6 +797,18 @@ export class PieceTree extends PieceTreeBase {
       return node.piece.meta
     }
     return null
+  }
+
+  /**
+   * Get All the pieces of this tree
+   */
+  getPieces(): Piece[] {
+    const pieces: Piece[] = []
+    this.forEachPiece(piece => {
+      pieces.push(piece)
+    })
+
+    return pieces
   }
 
   // ---- Fetch Operation End ---- //
