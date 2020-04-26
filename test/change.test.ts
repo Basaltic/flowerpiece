@@ -126,3 +126,17 @@ it('change cascade undo redo', () => {
   tree.undo()
   expect(tree.getText()).toBe('')
 })
+
+it('change', () => {
+  const tree = new PieceTree()
+
+  tree.change(() => {
+    tree.insert(0, 'aaa')
+    tree.insert(1, 'bbb')
+  })
+
+  expect(tree.getText()).toBe('abbbaa')
+
+  tree.undo()
+  expect(tree.getText()).toBe('')
+})
