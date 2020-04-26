@@ -8,12 +8,12 @@ export default class PieceTreeTest {
    * The Height Of The subtree
    * @param node
    */
-  height(node: PieceTreeNode) {
+  static height(node: PieceTreeNode) {
     if (node.isNil) {
       return 0
     } else {
-      const lh: number = this.height(node.left)
-      const rh: number = this.height(node.right)
+      const lh: number = PieceTreeTest.height(node.left)
+      const rh: number = PieceTreeTest.height(node.right)
 
       if (lh > rh) {
         return lh + 1
@@ -23,16 +23,16 @@ export default class PieceTreeTest {
     }
   }
 
-  printLevelOrder(root: PieceTreeNode) {
-    const h = this.height(root)
+  static printLevelOrder(root: PieceTreeNode) {
+    const h = PieceTreeTest.height(root)
     for (let i = 1; i <= h; i++) {
       const list: string[] = []
-      this.printGivenLevel(root, i, list)
+      PieceTreeTest.printGivenLevel(root, i, list)
       console.log(list.join('  '))
     }
   }
 
-  printGivenLevel(root: PieceTreeNode, level: number, list: string[]) {
+  static printGivenLevel(root: PieceTreeNode, level: number, list: string[]) {
     if (root.isNil) {
       list.push('n')
       return
@@ -42,8 +42,8 @@ export default class PieceTreeTest {
         `${root.leftLineFeeds},${root.leftSize},${root.piece.length},${root.rightSize},${root.rightLineFeeds},${root.piece.lineFeedCnt}`,
       )
     } else if (level > 1) {
-      this.printGivenLevel(root.left, level - 1, list)
-      this.printGivenLevel(root.right, level - 1, list)
+      PieceTreeTest.printGivenLevel(root.left, level - 1, list)
+      PieceTreeTest.printGivenLevel(root.right, level - 1, list)
     }
   }
 }

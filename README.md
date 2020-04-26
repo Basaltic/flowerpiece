@@ -110,7 +110,13 @@ export class PieceMeta implements IPieceMeta {
 ##### insertLine(offset: number, meta: PieceMeta | null)
 ##### insertNonText(offset: number, meta: PieceMeta)
 ##### deleteLine(lineNumber: number)
+
+##### formatText(offset: number, length: number, meta: PieceMeta): Diff[]
+##### formatNonText(offset: number, length: number, meta: PieceMeta): Diff[]
 ##### formatLine(lineNumber: number, meta: PieceMeta)
+##### formatInLine(lineNumber: number, meta: PieceMeta)
+##### formatTextInLine(lineNumber: number, meta: PieceMeta)
+##### formatNonTextInLine(linetNumber: number, meat: PieceMeta)
 
 ##### insert(offset: number, length: number, text: string, meta: PieceMeta | null): Diff[]
 ##### delete(offset: number, length: number): Diff[]

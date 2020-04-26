@@ -13,11 +13,11 @@ it('redo undo insert', () => {
   tree.endChange()
 
   tree.undo()
-  let txt = tree.getAllText()
+  let txt = tree.getText()
   expect(txt).toBe('test')
 
   tree.redo()
-  txt = tree.getAllText()
+  txt = tree.getText()
   expect(txt).toBe('teist')
 })
 
@@ -31,29 +31,29 @@ it('redo undo delete', () => {
   tree.insert(2, 'x', {})
   tree.insert(2, 'y', {})
 
-  expect(tree.getAllText()).toBe('teyxist')
+  expect(tree.getText()).toBe('teyxist')
 
   tree.startChange()
   tree.delete(1, 5)
   tree.endChange()
-  expect(tree.getAllText()).toBe('tt')
+  expect(tree.getText()).toBe('tt')
 
   tree.undo()
-  expect(tree.getAllText()).toBe('teyxist')
+  expect(tree.getText()).toBe('teyxist')
 
   tree.redo()
-  expect(tree.getAllText()).toBe('tt')
+  expect(tree.getText()).toBe('tt')
 
   tree.undo()
-  expect(tree.getAllText()).toBe('teyxist')
+  expect(tree.getText()).toBe('teyxist')
 
   tree.startChange()
   tree.delete(0, 5)
   tree.endChange()
-  expect(tree.getAllText()).toBe('st')
+  expect(tree.getText()).toBe('st')
 
   tree.undo()
-  expect(tree.getAllText()).toBe('teyxist')
+  expect(tree.getText()).toBe('teyxist')
 })
 
 // Format undo redo test
@@ -66,7 +66,7 @@ it('redo undo format', () => {
   tree.insert(2, 'x', {})
   tree.insert(2, 'y', {})
 
-  expect(tree.getAllText()).toBe('teyxist')
+  expect(tree.getText()).toBe('teyxist')
 
   tree.startChange()
   tree.format(1, 5, { color: 'red' })
@@ -114,15 +114,15 @@ it('change cascade undo redo', () => {
   tree.endChange()
 
   tree.undo()
-  expect(tree.getAllText()).toBe('')
+  expect(tree.getText()).toBe('')
 
   tree.redo()
-  expect(tree.getAllText()).toBe('teist')
+  expect(tree.getText()).toBe('teist')
 
   tree.redo()
-  expect(tree.getAllText()).toBe('teist')
+  expect(tree.getText()).toBe('teist')
 
   tree.undo()
   tree.undo()
-  expect(tree.getAllText()).toBe('')
+  expect(tree.getText()).toBe('')
 })

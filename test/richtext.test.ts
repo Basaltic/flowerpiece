@@ -12,19 +12,19 @@ it('Insert: Rich Text Case', () => {
     tree.insert(i, 'a', null)
     txt += 'a'
   }
-  expect(tree.getAllText()).toBe(txt)
+  expect(tree.getText()).toBe(txt)
   expect(tree.getPieces().length).toBe(1)
 
   // Insert Image
   tree.insert(2, '', imageMeta)
-  expect(tree.getAllText()).toBe(txt)
+  expect(tree.getText()).toBe(txt)
   expect(tree.getPieces()[1]).toEqual({ text: '', length: 1, meta: imageMeta })
 
   // Insert Image in a individual line
   tree.insert(1, '\n')
   tree.insert(2, '', imageMeta)
   tree.insert(3, '\n')
-  expect(tree.getAllText()).toBe('a\n\naaaa')
+  expect(tree.getText()).toBe('a\n\naaaa')
   expect(tree.getPieces()).toEqual([
     { text: 'a', length: 1, meta: null },
     { text: '\n', length: 1, meta: null },

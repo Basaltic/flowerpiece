@@ -91,7 +91,6 @@ export default class PieceTreeBase {
         offset -= node.leftSize + node.piece.length
         startOffset += node.leftSize + node.piece.length
         startLineFeedCnt += node.leftLineFeeds + node.piece.lineFeedCnt
-
         node = node.right
       }
     }

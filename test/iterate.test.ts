@@ -7,7 +7,7 @@ it('iterate test 1', () => {
   const text = 'This is a test paragraph.\n这是测试段落，只有文字\n'
 
   tree.insert(0, text)
-  expect(tree.getAllText()).toBe(text)
+  expect(tree.getText()).toBe(text)
 
   let lines: Line[] = tree.getLines()
   expect(lines).toEqual([

@@ -130,7 +130,7 @@ export class PieceTree extends PieceTreeBase {
     switch (change.type) {
       case 'insert':
         const insertChange = change as InsertChange
-        this.delete(insertChange.startOffset, insertChange.length)
+        this.deleteInner(insertChange.startOffset, insertChange.length)
         return change.diffs.map(diff => {
           if (diff.type === 'insert') {
             diff.type = 'remove'
@@ -142,11 +142,6 @@ export class PieceTree extends PieceTreeBase {
           const deleteChange = change as DeleteChange
 
           let offset = deleteChange.startOffset
-          if (offset <= 0) {
-            offset = 1
-          } else {
-            offset += 1
-          }
 
           const nodePosition = this.findByOffset(offset)
           // Start of node
@@ -207,13 +202,13 @@ export class PieceTree extends PieceTreeBase {
       case 'insert':
         const { startOffset, text, meta } = change as InsertChange
         const txt = this.getTextInBuffer(text[0], text[1], text[2])
-        return this.insert(startOffset, txt, meta)
+        return this.insertInner(startOffset, txt, meta)
       case 'delete':
         const deleteChange = change as DeleteChange
-        return this.delete(deleteChange.startOffset, deleteChange.length)
+        return this.deleteInner(deleteChange.startOffset, deleteChange.length)
       case 'format':
         const formatChange = change as FormatChange
-        return this.format(formatChange.startOffset, formatChange.length, formatChange.meta)
+        return this.formatInner(formatChange.startOffset, formatChange.length, formatChange.meta)
     }
   }
 
@@ -305,7 +300,7 @@ export class PieceTree extends PieceTreeBase {
   /**
    * Change All Piece Meta In The Line
    */
-  formatAllOfLine(lineNumber: number, meta: IPieceMeta): Diff[] {
+  formatInLine(lineNumber: number, meta: IPieceMeta): Diff[] {
     const cnt = this.getLength()
     const lineCnt = this.getLineCount()
 
@@ -317,13 +312,13 @@ export class PieceTree extends PieceTreeBase {
     } else {
       if (lineNumber === lineCnt) {
         const { startOffset } = this.findByLineNumber(lineNumber)
-        return this.formatInner(startOffset, cnt, meta)
+        return this.formatInner(startOffset + 1, cnt, meta)
       } else if (lineNumber > 0 && lineNumber <= lineCnt) {
         const posStart = this.findByLineNumber(lineNumber)
         const posEnd = this.findByLineNumber(lineNumber + 1)
 
         const len = posEnd.startOffset - posStart.startOffset
-        return this.formatInner(posStart.startOffset, len, meta)
+        return this.formatInner(posStart.startOffset + 1, len, meta)
       } else {
         return []
       }
@@ -333,7 +328,7 @@ export class PieceTree extends PieceTreeBase {
   /**
    * Change All Text Piece Meta In The Line
    */
-  formatTextOfLine(lineNumber: number, meta: IPieceMeta): Diff[] {
+  formatTextInLine(lineNumber: number, meta: IPieceMeta): Diff[] {
     const cnt = this.getLength()
     const lineCnt = this.getLineCount()
 
@@ -361,7 +356,7 @@ export class PieceTree extends PieceTreeBase {
   /**
    * Change All Non-Text Piece Meta In The Line
    */
-  formatNonTextOfLine(lineNumber: number, meta: IPieceMeta): Diff[] {
+  formatNonTextInLine(lineNumber: number, meta: IPieceMeta): Diff[] {
     const cnt = this.getLength()
     const lineCnt = this.getLineCount()
 
@@ -521,7 +516,7 @@ export class PieceTree extends PieceTreeBase {
       }
     }
 
-    const change: InsertChange = createInsertChange(offset - 1, [0, addBuffer.length - text.length, text.length], meta, diffs)
+    const change: InsertChange = createInsertChange(offset, [0, addBuffer.length - text.length, text.length], meta, diffs)
     this.changeHistory.push(change)
 
     return diffs
@@ -595,7 +590,7 @@ export class PieceTree extends PieceTreeBase {
     }
 
     // changes
-    const change: DeleteChange = createDeleteChange(offset - 1, originalLength, pieceChange, diffs)
+    const change: DeleteChange = createDeleteChange(offset, originalLength, pieceChange, diffs)
     this.changeHistory.push(change)
 
     return diffs
@@ -607,10 +602,12 @@ export class PieceTree extends PieceTreeBase {
     const originalLength = length
 
     // format
-    let { node, startOffset, startLineFeedCnt } = this.findByOffset(offset)
-    console.log(offset, startOffset)
+    let { node, startOffset, startLineFeedCnt, reminder } = this.findByOffset(offset)
 
-    if (offset !== startOffset) {
+    if (reminder === node.piece.length) {
+      node = node.successor()
+      startLineFeedCnt += node.piece.lineFeedCnt
+    } else if (reminder > 0 && reminder < node.piece.length) {
       const reminder = offset - startOffset
       const [leftNode, rightNode] = this.splitNode(node, reminder)
       node = rightNode
@@ -632,8 +629,6 @@ export class PieceTree extends PieceTreeBase {
         }
       }
 
-      console.log(length, node.piece.length)
-
       if (length >= node.piece.length) {
         lineFeedCnt += node.piece.lineFeedCnt
         const mergeResult = mergeMeta(node.piece.meta, meta)
@@ -648,7 +643,6 @@ export class PieceTree extends PieceTreeBase {
 
         node = node.successor()
       } else {
-        console.log('here')
         const [leftNode] = this.splitNode(node, length)
         node = leftNode
 
@@ -744,12 +738,54 @@ export class PieceTree extends PieceTreeBase {
   /**
    * Get the Whole Text
    */
-  getAllText(): string {
+  getText(): string {
     let txt = ''
     this.forEachPiece(piece => {
       txt += piece.text
     })
     return txt
+  }
+
+  /**
+   * Get Text String in Range
+   * @param from
+   * @param to
+   */
+  getTextInRange(from: number, to: number): string {
+    from++
+    to++
+    if (to > from && from >= 0) {
+      to = to - from
+      let text = ''
+      let { node, reminder } = this.findByOffset(from)
+
+      if (reminder === node.piece.length) {
+        node = node.successor()
+      } else if (reminder > 0 && reminder < node.piece.length) {
+        const { bufferIndex, start, length } = node.piece
+        const s = start + reminder
+        const len = length - reminder
+        text += this.getTextInBuffer(bufferIndex, s, len)
+        node = node.successor()
+        to -= len
+      }
+
+      while (node !== SENTINEL && to > 0) {
+        const { start, bufferIndex, length } = node.piece
+        if (to < node.piece.length) {
+          text += this.getTextInBuffer(bufferIndex, start, to)
+        } else {
+          text += this.getTextInPiece(node.piece)
+        }
+
+        to -= length
+        node = node.successor()
+      }
+
+      return text
+    } else {
+      return ''
+    }
   }
 
   /**
@@ -760,6 +796,8 @@ export class PieceTree extends PieceTreeBase {
     const line: Line = { meta: null, pieces: [] }
 
     let { node } = this.findByLineNumber(lineNumber)
+    line.meta = node.piece.meta
+
     node = node.successor()
 
     while (node !== SENTINEL && node.piece.lineFeedCnt <= 0) {
@@ -792,7 +830,6 @@ export class PieceTree extends PieceTreeBase {
    */
   getLineMeta(lineNumber: number): IPieceMeta | null {
     const { node, startOffset } = this.findByLineNumber(lineNumber)
-    // console.log(startOffset, node.piece.lineFeedCnt)
     if (node.piece.lineFeedCnt === 1) {
       return node.piece.meta
     }
@@ -809,6 +846,46 @@ export class PieceTree extends PieceTreeBase {
     })
 
     return pieces
+  }
+
+  /**
+   * Get Specific Range of Pieces
+   */
+  getPiecesInRange(from: number, to: number): Piece[] {
+    from++
+    to++
+    if (to > from && from >= 0) {
+      to = to - from
+      const pieces: Piece[] = []
+      let { node, reminder } = this.findByOffset(from)
+
+      if (reminder === node.piece.length) {
+        node = node.successor()
+      } else if (reminder > 0 && reminder < node.piece.length) {
+        const { bufferIndex, start, length, meta } = node.piece
+        const s = start + reminder
+        const len = length - reminder
+        pieces.push({ text: this.getTextInBuffer(bufferIndex, s, len), length: len, meta })
+        node = node.successor()
+        to -= len
+      }
+
+      while (node !== SENTINEL && to > 0) {
+        const { start, bufferIndex, length, meta } = node.piece
+        if (to < node.piece.length) {
+          pieces.push({ text: this.getTextInBuffer(bufferIndex, start, to), length: to, meta })
+        } else {
+          pieces.push({ text: this.getTextInPiece(node.piece), length, meta })
+        }
+
+        to -= length
+        node = node.successor()
+      }
+
+      return pieces
+    } else {
+      return []
+    }
   }
 
   // ---- Fetch Operation End ---- //

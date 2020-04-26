@@ -102,3 +102,38 @@ it('Get Line Meta', () => {
   tree.formatLine(2, testMeta2)
   expect(tree.getLineMeta(2)).toEqual(testMeta2)
 })
+
+/**
+ * GetPicesInRange Unit Test
+ */
+it('Get Pieces In Range', () => {
+  const tree = new PieceTree()
+
+  for (let i = 0; i < 10; i++) {
+    tree.insert(0, 'aa', { p: i })
+  }
+
+  expect(tree.getPiecesInRange(1, 3)).toEqual([
+    { text: 'a', length: 1, meta: { p: 9 } },
+    { text: 'a', length: 1, meta: { p: 8 } },
+  ])
+
+  expect(tree.getPiecesInRange(0, 2)).toEqual([{ text: 'aa', length: 2, meta: { p: 9 } }])
+})
+
+/**
+ * GetTextInRange Unit Test
+ */
+it('Get Pure Text In Range', () => {
+  const codeA = 'a'.charCodeAt(0)
+  const tree = new PieceTree()
+
+  for (let i = 0; i < 10; i++) {
+    const s = String.fromCharCode(codeA + i)
+    tree.insert(0, s + s, { p: i })
+  }
+
+  expect(tree.getTextInRange(1, 3)).toEqual('ji')
+
+  expect(tree.getTextInRange(0, 6)).toEqual('jjiihh')
+})

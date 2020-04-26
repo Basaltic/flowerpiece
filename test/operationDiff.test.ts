@@ -10,7 +10,7 @@ it('Diff: Insert', () => {
     { type: 'insert', lineNumber: 3 },
   ])
 
-  expect(tree.getAllText()).toBe('a\nb\n')
+  expect(tree.getText()).toBe('a\nb\n')
 
   diff = tree.insert(0, 'a\nb')
   expect(diff).toEqual([

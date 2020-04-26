@@ -10,12 +10,12 @@ it('serialize deserialize', () => {
     tree.insert(0, 'a\n')
   }
 
-  expect(tree.getAllText()).toBe(txt)
+  expect(tree.getText()).toBe(txt)
 
   const lines = tree.getLines()
   const linesStr = JSON.stringify(lines)
   const deserializeLines = JSON.parse(linesStr) as Line[]
 
   const tree2 = new PieceTree({ initialLines: deserializeLines })
-  expect(tree2.getAllText()).toBe(txt)
+  expect(tree2.getText()).toBe(txt)
 })
