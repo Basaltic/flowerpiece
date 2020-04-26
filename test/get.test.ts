@@ -110,15 +110,22 @@ it('Get Pieces In Range', () => {
   const tree = new PieceTree()
 
   for (let i = 0; i < 10; i++) {
-    tree.insert(0, 'aa', { p: i })
+    tree.insert(0, 'aaaa', { p: i })
   }
 
-  expect(tree.getPiecesInRange(1, 3)).toEqual([
-    { text: 'a', length: 1, meta: { p: 9 } },
-    { text: 'a', length: 1, meta: { p: 8 } },
+  expect(tree.getPiecesInRange(1, 6)).toEqual([
+    { text: 'aaa', length: 3, meta: { p: 9 } },
+    { text: 'aa', length: 2, meta: { p: 8 } },
   ])
 
   expect(tree.getPiecesInRange(0, 2)).toEqual([{ text: 'aa', length: 2, meta: { p: 9 } }])
+
+  expect(tree.getPiecesInRange(1, 3)).toEqual([{ text: 'aa', length: 2, meta: { p: 9 } }])
+
+  tree.insert(0, 'abcdefghijk', { p: 100 })
+  expect(tree.getPiecesInRange(2, 3)).toEqual([{ text: 'c', length: 1, meta: { p: 100 } }])
+
+  expect(tree.getPiecesInRange(2, 5)).toEqual([{ text: 'cde', length: 3, meta: { p: 100 } }])
 })
 
 /**

@@ -829,7 +829,7 @@ export class PieceTree extends PieceTreeBase {
    * Get Specific Line Meta
    */
   getLineMeta(lineNumber: number): IPieceMeta | null {
-    const { node, startOffset } = this.findByLineNumber(lineNumber)
+    const { node } = this.findByLineNumber(lineNumber)
     if (node.piece.lineFeedCnt === 1) {
       return node.piece.meta
     }
@@ -861,7 +861,17 @@ export class PieceTree extends PieceTreeBase {
 
       if (reminder === node.piece.length) {
         node = node.successor()
-      } else if (reminder > 0 && reminder < node.piece.length) {
+      }
+      // In The Piece
+      else if (reminder + to <= node.piece.length) {
+        const { bufferIndex, start, meta } = node.piece
+        const s = start + reminder
+        const len = to
+
+        pieces.push({ text: this.getTextInBuffer(bufferIndex, s, len), length: len, meta })
+
+        to = 0
+      } else if (reminder + to > node.piece.length) {
         const { bufferIndex, start, length, meta } = node.piece
         const s = start + reminder
         const len = length - reminder
