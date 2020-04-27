@@ -527,6 +527,10 @@ export class PieceTree extends PieceTreeBase {
       return []
     }
 
+    if (offset >= this.getLength()) {
+      return []
+    }
+
     const pieceChange: NodePiece[] = []
     const originalLength = length
 
