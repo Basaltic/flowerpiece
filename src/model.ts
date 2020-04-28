@@ -1,20 +1,30 @@
 import { Operations } from './operations'
 import { PieceTree } from './pieceTree'
 import { Queries } from './query'
+import { ChangeStack } from './change'
+import { Diff } from './diff'
+import { Line } from './piece'
 
-export interface ModelConfig {}
+export interface ModelConfig {
+  initialValue?: Line[]
+}
 
 /**
  * Data Model
  */
 export class Model {
-  private pieceTree: PieceTree
-
   operations: Operations
   queries: Queries
 
-  constructor() {
-    this.pieceTree = new PieceTree()
+  private pieceTree: PieceTree
+  // A Stack to manage the changes
+  private changeHistory: ChangeStack
+
+  constructor(config: ModelConfig = {}) {
+    const { initialValue } = config
+
+    this.changeHistory = new ChangeStack()
+    this.pieceTree = new PieceTree({ initialLines: initialValue }, this.changeHistory)
     this.operations = new Operations(this.pieceTree)
     this.queries = new Queries(this.pieceTree)
   }
@@ -24,20 +34,25 @@ export class Model {
    * @param callback
    */
   change(callback: (operations: Operations) => void) {
-    this.pieceTree.startChange()
+    this.changeHistory.startChange()
     try {
       callback(this.operations)
     } catch (error) {}
-
-    this.pieceTree.endChange()
+    this.changeHistory.endChange()
   }
 
-  redo() {
-    return this.pieceTree.redo()
+  /**
+   * Redo the operation
+   */
+  redo(): Diff[] {
+    return this.changeHistory.applayRedo(change => this.pieceTree.doRedo(change))
   }
 
-  undo() {
-    return this.pieceTree.undo()
+  /**
+   * Undo the operation
+   */
+  undo(): Diff[] {
+    return this.changeHistory.applayUndo(change => this.pieceTree.doUndo(change))
   }
 
   isEmpty() {

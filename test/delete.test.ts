@@ -21,4 +21,14 @@ it('Delete： Corner Case', () => {
   operations.insert(0, 'aaa')
 
   operations.delete(6, 1)
+
+  expect(operations.deleteLine(2)).toEqual([])
+
+  operations.deleteLine(1)
+  expect(model.isEmpty()).toBe(true)
+
+  operations.insert(0, 'abc\nabc\nabc')
+  operations.deleteLine(3)
+
+  expect(operations.deleteLine(100)).toEqual([])
 })

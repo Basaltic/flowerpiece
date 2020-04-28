@@ -11,6 +11,20 @@ export class Queries {
   }
 
   /**
+   * How many charactor in doc
+   */
+  getCountOfCharacter(): number {
+    return this.pieceTree.getPureTextCount()
+  }
+
+  /**
+   * How many lines in doc
+   */
+  getCountOfLine(): number {
+    return this.pieceTree.getLineCount()
+  }
+
+  /**
    * Get the Whole Text
    */
   getText(): string {

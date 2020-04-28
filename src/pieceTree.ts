@@ -19,7 +19,6 @@ import { applyPatches } from 'immer'
 import cloneDeep from 'lodash.clonedeep'
 
 export const EOL = '\n'
-const FIRST_LINE_SPECIAL_SYMBOL = -10000
 
 export interface PieceTreeConfig {
   initialLines?: Line[]
@@ -43,10 +42,12 @@ export interface PieceTreeConfig {
  */
 export class PieceTree extends PieceTreeBase {
   // A Stack to manage the changes
-  private changeHistory: ChangeStack = new ChangeStack()
+  private changeHistory: ChangeStack
 
-  constructor(config: PieceTreeConfig = {}) {
+  constructor(config: PieceTreeConfig = {}, history: ChangeStack) {
     super()
+
+    this.changeHistory = history
 
     const { initialLines } = config
 
@@ -83,42 +84,11 @@ export class PieceTree extends PieceTreeBase {
     }
   }
 
-  // ------------- Change -------------- //
-
-  /**
-   * Mark as operation started
-   * operations between start and end will redo\undo in same operation
-   */
-  startChange() {
-    this.changeHistory.startChange()
-  }
-
-  /**
-   * Mark as operation end
-   */
-  endChange() {
-    this.changeHistory.endChange()
-  }
-
-  /**
-   * Redo the operation
-   */
-  redo(): Diff[] {
-    return this.changeHistory.applayRedo(change => this.doRedo(change))
-  }
-
-  /**
-   * Undo the operation
-   */
-  undo(): Diff[] {
-    return this.changeHistory.applayUndo(change => this.doUndo(change))
-  }
-
   /**
    * Actual Operation to undo the change
    * @param change
    */
-  private doUndo(change: Change): Diff[] {
+  doUndo(change: Change): Diff[] {
     switch (change.type) {
       case 'insert':
         const insertChange = change as InsertChange
@@ -189,7 +159,7 @@ export class PieceTree extends PieceTreeBase {
    * Actual Operation to redo the change
    * @param change
    */
-  private doRedo(change: Change): Diff[] {
+  doRedo(change: Change): Diff[] {
     switch (change.type) {
       case 'insert':
         const { startOffset, text, meta } = change as InsertChange
@@ -306,7 +276,12 @@ export class PieceTree extends PieceTreeBase {
     // delete
     const startNodePosition = this.findByOffset(offset)
     let { node, startOffset, startLineFeedCnt } = startNodePosition
-    if (offset !== startOffset) {
+
+    if (startOffset === 0) {
+      node = node.successor()
+      startLineFeedCnt = 1
+      startOffset = 1
+    } else if (offset !== startOffset) {
       const reminder = offset - startOffset
       if (reminder === node.piece.length) {
         node = node.successor()

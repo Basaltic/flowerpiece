@@ -107,13 +107,13 @@ export class Operations {
 
     if (lineCnt === 1) {
       if (lineNumber === 1) {
-        return this.pieceTree.deleteInner(1, cnt)
+        return this.pieceTree.deleteInner(1, cnt - 1)
       }
       return []
     } else {
       if (lineNumber === lineCnt) {
         const { startOffset } = this.pieceTree.findByLineNumber(lineNumber)
-        return this.pieceTree.deleteInner(startOffset, cnt)
+        return this.pieceTree.deleteInner(startOffset, cnt - startOffset)
       } else if (lineNumber > lineCnt || lineNumber <= 0) {
         return []
       } else {
@@ -145,13 +145,13 @@ export class Operations {
 
     if (lineCnt === 1) {
       if (lineNumber === 1) {
-        return this.pieceTree.formatInner(1, cnt, meta)
+        return this.pieceTree.formatInner(1, cnt - 1, meta)
       }
       return []
     } else {
       if (lineNumber === lineCnt) {
         const { startOffset } = this.pieceTree.findByLineNumber(lineNumber)
-        return this.pieceTree.formatInner(startOffset + 1, cnt, meta)
+        return this.pieceTree.formatInner(startOffset + 1, cnt - startOffset - 1, meta)
       } else if (lineNumber > 0 && lineNumber <= lineCnt) {
         const posStart = this.pieceTree.findByLineNumber(lineNumber)
         const posEnd = this.pieceTree.findByLineNumber(lineNumber + 1)
@@ -173,13 +173,13 @@ export class Operations {
 
     if (lineCnt === 1) {
       if (lineNumber === 1) {
-        return this.formatText(1, cnt, meta)
+        return this.formatText(1, cnt - 1, meta)
       }
       return []
     } else {
       if (lineNumber === lineCnt) {
         const { startOffset } = this.pieceTree.findByLineNumber(lineNumber)
-        return this.formatText(startOffset, cnt, meta)
+        return this.formatText(startOffset + 1, cnt - startOffset - 1, meta)
       } else if (lineNumber > 0 && lineNumber <= lineCnt) {
         const posStart = this.pieceTree.findByLineNumber(lineNumber)
         const posEnd = this.pieceTree.findByLineNumber(lineNumber + 1)
@@ -201,13 +201,13 @@ export class Operations {
 
     if (lineCnt === 1) {
       if (lineNumber === 1) {
-        return this.formatNonText(1, cnt, meta)
+        return this.formatNonText(1, cnt - 1, meta)
       }
       return []
     } else {
       if (lineNumber === lineCnt) {
         const { startOffset } = this.pieceTree.findByLineNumber(lineNumber)
-        return this.formatNonText(startOffset, cnt, meta)
+        return this.formatNonText(startOffset + 1, cnt - startOffset - 1, meta)
       } else if (lineNumber > 0 && lineNumber <= lineCnt) {
         const posStart = this.pieceTree.findByLineNumber(lineNumber)
         const posEnd = this.pieceTree.findByLineNumber(lineNumber + 1)

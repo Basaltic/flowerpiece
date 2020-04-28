@@ -49,3 +49,10 @@ it('Insert At Document: Continously Input, Middle And End Input', () => {
   operations.insert(txt.length + 4, 'ff\nff\n')
   expect(queries.getText()).toBe(`${txt}dee\nff\nff\nee\neddbbbbbb\nccc\n`)
 })
+
+it('Advanced Insert', () => {
+  const model = new Model()
+  const { operations } = model
+
+  expect(() => operations.insertText(100, '', null)).toThrow(new Error('cannot pass empty text'))
+})

@@ -30,16 +30,16 @@ $ yarn add flowerpiece
 # Examples
 
 ```typescript
-import { PieceTree } from 'flowerpiece'
+import { Model } from 'flowerpiece'
 
-const tree = new PieceTree()
+cconst model = new Model()
+const { operations, queries } = model
 
-tree.startChange()
+model.change((operations) => {
+  operations.insert(0, 'test', {})
+})
 
-tree.insert(0, 'this is an example')
-tree.delete(0, 10)
 
-tree.endChange()
 ```
 
 # Objects
@@ -95,15 +95,11 @@ export class PieceMeta implements IPieceMeta {
 }
 ```
 
-# APIs
+# Model
 
-## Piece Tree API
+## Property
 
-##### change(callback: (...args: any) => void)
-##### startChange()
-##### endChange()
-##### redo()
-##### undo()
+#### operations: Operations
 
 ##### insertText(offset: number, text: string, meta: PieceMeta | null)
 ##### insertLineBrea(offset: number, meta: PieceMeta | null)
@@ -122,11 +118,21 @@ export class PieceMeta implements IPieceMeta {
 ##### delete(offset: number, length: number): Diff[]
 ##### format(offset: number, length: number, meta: PieceMeta): Diff[]
 
+#### queries: Queries
+
+##### getCountOfCharacter()
+##### getCountOfLine()
 ##### getAllText()
 ##### getLine(lineNumber: number): Piece[]
 ##### getLInes(): Line[]
 ##### getLineMeta(lineNumber: number): PieceMeta | null
 ##### getPieces(): Piece[]
+
+## Methods
+
+##### change(callback: (operations: operations) => void)
+##### redo()
+##### undo()
 
 ##### forEachLine(callback: (line: IPiece[], lineNumber: number)
 
