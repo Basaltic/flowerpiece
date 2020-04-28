@@ -1,77 +1,80 @@
-import { PieceTree } from '../src/flowerpiece'
+import { PieceTree, Operations, Model } from '../src/flowerpiece'
 
 // insert undo redo test
 it('redo undo insert', () => {
-  const tree = new PieceTree()
+  const model = new Model()
+  const { operations, queries } = model
 
-  tree.startChange()
-  tree.insert(0, 'test', {})
-  tree.endChange()
+  model.change(() => {
+    operations.insert(0, 'test', {})
+  })
 
-  tree.startChange()
-  tree.insert(2, 'i', {})
-  tree.endChange()
+  model.change(() => {
+    operations.insert(2, 'i', {})
+  })
 
-  tree.undo()
-  let txt = tree.getText()
+  model.undo()
+  let txt = queries.getText()
   expect(txt).toBe('test')
 
-  tree.redo()
-  txt = tree.getText()
+  model.redo()
+  txt = queries.getText()
   expect(txt).toBe('teist')
 })
 
 // Delete undo redo test
 it('redo undo delete', () => {
-  const tree = new PieceTree()
+  const model = new Model()
+  const { operations, queries } = model
 
-  tree.insert(0, 'test', {})
-  tree.insert(2, 'i', {})
+  operations.insert(0, 'test', {})
+  operations.insert(2, 'i', {})
 
-  tree.insert(2, 'x', {})
-  tree.insert(2, 'y', {})
+  operations.insert(2, 'x', {})
+  operations.insert(2, 'y', {})
 
-  expect(tree.getText()).toBe('teyxist')
+  expect(queries.getText()).toBe('teyxist')
 
-  tree.startChange()
-  tree.delete(1, 5)
-  tree.endChange()
-  expect(tree.getText()).toBe('tt')
+  model.change(() => {
+    operations.delete(1, 5)
+  })
+  expect(queries.getText()).toBe('tt')
 
-  tree.undo()
-  expect(tree.getText()).toBe('teyxist')
+  model.undo()
+  expect(queries.getText()).toBe('teyxist')
 
-  tree.redo()
-  expect(tree.getText()).toBe('tt')
+  model.redo()
+  expect(queries.getText()).toBe('tt')
 
-  tree.undo()
-  expect(tree.getText()).toBe('teyxist')
+  model.undo()
+  expect(queries.getText()).toBe('teyxist')
 
-  tree.startChange()
-  tree.delete(0, 5)
-  tree.endChange()
-  expect(tree.getText()).toBe('st')
+  model.change(() => {
+    operations.delete(0, 5)
+  })
+  expect(queries.getText()).toBe('st')
 
-  tree.undo()
-  expect(tree.getText()).toBe('teyxist')
+  model.undo()
+  expect(queries.getText()).toBe('teyxist')
 })
 
 // Format undo redo test
 it('redo undo format', () => {
-  const tree = new PieceTree()
+  const model = new Model()
+  const { operations, queries } = model
 
-  tree.insert(0, 'test', {})
-  tree.insert(2, 'i', {})
+  operations.insert(0, 'test', {})
+  operations.insert(2, 'i', {})
 
-  tree.insert(2, 'x', {})
-  tree.insert(2, 'y', {})
+  operations.insert(2, 'x', {})
+  operations.insert(2, 'y', {})
 
-  expect(tree.getText()).toBe('teyxist')
+  expect(queries.getText()).toBe('teyxist')
 
-  tree.startChange()
-  tree.format(1, 5, { color: 'red' })
-  tree.endChange()
-  expect(tree.getPieces()).toEqual([
+  model.change(() => {
+    operations.format(1, 5, { color: 'red' })
+  })
+  expect(queries.getPieces()).toEqual([
     { text: 't', length: 1, meta: {} },
     { text: 'e', length: 1, meta: { color: 'red' } },
     { text: 'y', length: 1, meta: { color: 'red' } },
@@ -81,8 +84,8 @@ it('redo undo format', () => {
     { text: 't', length: 1, meta: {} },
   ])
 
-  tree.undo()
-  expect(tree.getPieces()).toEqual([
+  model.undo()
+  expect(queries.getPieces()).toEqual([
     { text: 't', length: 1, meta: {} },
     { text: 'e', length: 1, meta: {} },
     { text: 'y', length: 1, meta: {} },
@@ -92,8 +95,8 @@ it('redo undo format', () => {
     { text: 't', length: 1, meta: {} },
   ])
 
-  tree.redo()
-  expect(tree.getPieces()).toEqual([
+  model.redo()
+  expect(queries.getPieces()).toEqual([
     { text: 't', length: 1, meta: {} },
     { text: 'e', length: 1, meta: { color: 'red' } },
     { text: 'y', length: 1, meta: { color: 'red' } },
@@ -106,37 +109,39 @@ it('redo undo format', () => {
 
 // Chagne Cascade undo redo
 it('change cascade undo redo', () => {
-  const tree = new PieceTree()
+  const model = new Model()
+  const { operations, queries } = model
 
-  tree.startChange()
-  tree.insert(0, 'test', {})
-  tree.insert(2, 'i', {})
-  tree.endChange()
+  model.change(() => {
+    operations.insert(0, 'test', {})
+    operations.insert(2, 'i', {})
+  })
 
-  tree.undo()
-  expect(tree.getText()).toBe('')
+  model.undo()
+  expect(queries.getText()).toBe('')
 
-  tree.redo()
-  expect(tree.getText()).toBe('teist')
+  model.redo()
+  expect(queries.getText()).toBe('teist')
 
-  tree.redo()
-  expect(tree.getText()).toBe('teist')
+  model.redo()
+  expect(queries.getText()).toBe('teist')
 
-  tree.undo()
-  tree.undo()
-  expect(tree.getText()).toBe('')
+  model.undo()
+  model.undo()
+  expect(queries.getText()).toBe('')
 })
 
 it('change', () => {
-  const tree = new PieceTree()
+  const model = new Model()
+  const { operations, queries } = model
 
-  tree.change(() => {
-    tree.insert(0, 'aaa')
-    tree.insert(1, 'bbb')
+  model.change(() => {
+    operations.insert(0, 'aaa')
+    operations.insert(1, 'bbb')
   })
 
-  expect(tree.getText()).toBe('abbbaa')
+  expect(queries.getText()).toBe('abbbaa')
 
-  tree.undo()
-  expect(tree.getText()).toBe('')
+  model.undo()
+  expect(queries.getText()).toBe('')
 })

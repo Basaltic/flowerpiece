@@ -71,7 +71,7 @@ export default class PieceTreeBase {
    * Find Node Position by Offset
    * @param offset
    */
-  protected findByOffset(offset: number): NodePosition {
+  findByOffset(offset: number): NodePosition {
     let node = this.root
     let reminder = 0
     let startOffset = 0
@@ -101,7 +101,7 @@ export default class PieceTreeBase {
   /**
    * Find The Specific Line Start Node
    */
-  protected findByLineNumber(lineNumber: number): NodePosition {
+  findByLineNumber(lineNumber: number): NodePosition {
     let node = this.root
     let reminder = 0
     let startOffset = 0

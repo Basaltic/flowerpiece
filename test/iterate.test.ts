@@ -1,15 +1,16 @@
-import { PieceTree } from '../src/flowerpiece'
+import { Model } from '../src/flowerpiece'
 import { Line } from '../src/piece'
 
 it('iterate test 1', () => {
-  const tree = new PieceTree()
+  const model = new Model()
+  const { operations, queries } = model
 
   const text = 'This is a test paragraph.\n这是测试段落，只有文字\n'
 
-  tree.insert(0, text)
-  expect(tree.getText()).toBe(text)
+  operations.insert(0, text)
+  expect(queries.getText()).toBe(text)
 
-  let lines: Line[] = tree.getLines()
+  let lines: Line[] = queries.getLines()
   expect(lines).toEqual([
     {
       meta: null,
@@ -19,9 +20,9 @@ it('iterate test 1', () => {
     { meta: null, pieces: [{ text: '', length: 0, meta: null }] },
   ])
 
-  tree.insert(2, 'abc')
+  operations.insert(2, 'abc')
 
-  lines = tree.getLines()
+  lines = queries.getLines()
   expect(lines).toEqual([
     {
       meta: null,

@@ -1,22 +1,24 @@
-import { PieceTree } from '../src/pieceTree'
+import { Model } from '../src/flowerpiece'
 
 it('Delete Line', () => {
-  const tree = new PieceTree()
+  const model = new Model()
+  const { operations } = model
 
-  tree.insert(0, 'aaaa\nbbbb\ncccc\ndddd\n')
+  operations.insert(0, 'aaaa\nbbbb\ncccc\ndddd\n')
 
-  tree.deleteLine(1)
+  operations.deleteLine(1)
 })
 
 it('Delete： Corner Case', () => {
-  const tree = new PieceTree()
+  const model = new Model()
+  const { operations } = model
 
-  tree.insert(0, 'aa')
+  operations.insert(0, 'aa')
 
-  tree.delete(0, 2)
-  tree.delete(0, 1)
+  operations.delete(0, 2)
+  operations.delete(0, 1)
 
-  tree.insert(0, 'aaa')
+  operations.insert(0, 'aaa')
 
-  tree.delete(6, 1)
+  operations.delete(6, 1)
 })

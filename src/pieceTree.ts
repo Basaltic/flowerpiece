@@ -18,7 +18,7 @@ import { CharCode } from 'charCode'
 import { applyPatches } from 'immer'
 import cloneDeep from 'lodash.clonedeep'
 
-const EOL = '\n'
+export const EOL = '\n'
 const FIRST_LINE_SPECIAL_SYMBOL = -10000
 
 export interface PieceTreeConfig {
@@ -27,6 +27,8 @@ export interface PieceTreeConfig {
 
 /**
  * Piece Tree Implementation
+ *
+ * Fundenmental Data Structure To Manage Pieces
  *
  *
  * view ---> operation ---> diff
@@ -73,25 +75,15 @@ export class PieceTree extends PieceTreeBase {
         }
       }
     } else {
-      this.insert(0, EOL, null)
+      const lineBreakStringBuffer = new StringBuffer(EOL)
+      this.buffers.push(lineBreakStringBuffer)
+      const linBreakBufferindex = this.buffers.length - 1
+      const lbPiece = new NodePiece(linBreakBufferindex, 0, 1, 1)
+      this.insertFixedRight(this.root, lbPiece)
     }
   }
 
   // ------------- Change -------------- //
-
-  /**
-   * Change.
-   * @param callback
-   */
-  change(callback: (...args: any) => void) {
-    this.startChange()
-
-    try {
-      callback()
-    } catch (e) {}
-
-    this.endChange()
-  }
 
   /**
    * Mark as operation started
@@ -212,241 +204,13 @@ export class PieceTree extends PieceTreeBase {
     }
   }
 
-  // ---------------- Extra Operations To Make Life Easier --------------- //
-
   /**
-   * Break The Content into two lines
-   * @param offset
-   * @param meta
-   */
-  insertLineBreak(offset: number, meta: IPieceMeta | null = null): Diff[] {
-    return this.insert(offset, EOL, meta)
-  }
-
-  /**
-   * Insert A Complete new Line in Offset
-   * @param offset
-   * @param meta
-   */
-  insertLine(offset: number, meta: IPieceMeta | null = null): Diff[] {
-    const diff1 = this.insertLineBreak(offset, null)
-    const diff2 = this.insert(offset, '', meta)
-    const diff3 = this.insertLineBreak(offset + 2, null)
-    return [...diff1, ...diff2, ...diff3]
-  }
-
-  /**
-   * Insert Plain Text
+   * Insert Content
    * @param offset
    * @param text
    * @param meta
    */
-  insertText(offset: number, text: string, meta: IPieceMeta | null = null): Diff[] {
-    if (text === '') {
-      throw new Error('cannot pass empty text')
-    }
-
-    return this.insert(offset, text, meta)
-  }
-
-  /**
-   * Insert Non Text
-   * @param offset
-   * @param meta
-   */
-  insertNonText(offset: number, meta: IPieceMeta): Diff[] {
-    return this.insert(offset, '', meta)
-  }
-
-  /**
-   * Delete The Entire Line Contents
-   * @param lineNumber
-   */
-  deleteLine(lineNumber: number): Diff[] {
-    const cnt = this.getLength()
-    const lineCnt = this.getLineCount()
-
-    if (lineCnt === 1) {
-      if (lineNumber === 1) {
-        return this.deleteInner(1, cnt)
-      }
-      return []
-    } else {
-      if (lineNumber === lineCnt) {
-        const { startOffset } = this.findByLineNumber(lineNumber)
-        return this.deleteInner(startOffset, cnt)
-      } else if (lineNumber > lineCnt || lineNumber <= 0) {
-        return []
-      } else {
-        const posStart = this.findByLineNumber(lineNumber)
-        const posEnd = this.findByLineNumber(lineNumber + 1)
-
-        const len = posEnd.startOffset - posStart.startOffset
-        return this.deleteInner(posStart.startOffset, len)
-      }
-    }
-  }
-
-  /**
-   * Format the Specific Line
-   * @param lineNumber
-   * @param meta
-   */
-  formatLine(lineNumber: number, meta: IPieceMeta): Diff[] {
-    const { startOffset } = this.findByLineNumber(lineNumber)
-    return this.formatInner(startOffset, 1, meta, PieceType.LINE_FEED)
-  }
-
-  /**
-   * Change All Piece Meta In The Line
-   */
-  formatInLine(lineNumber: number, meta: IPieceMeta): Diff[] {
-    const cnt = this.getLength()
-    const lineCnt = this.getLineCount()
-
-    if (lineCnt === 1) {
-      if (lineNumber === 1) {
-        return this.formatInner(1, cnt, meta)
-      }
-      return []
-    } else {
-      if (lineNumber === lineCnt) {
-        const { startOffset } = this.findByLineNumber(lineNumber)
-        return this.formatInner(startOffset + 1, cnt, meta)
-      } else if (lineNumber > 0 && lineNumber <= lineCnt) {
-        const posStart = this.findByLineNumber(lineNumber)
-        const posEnd = this.findByLineNumber(lineNumber + 1)
-
-        const len = posEnd.startOffset - posStart.startOffset
-        return this.formatInner(posStart.startOffset + 1, len, meta)
-      } else {
-        return []
-      }
-    }
-  }
-
-  /**
-   * Change All Text Piece Meta In The Line
-   */
-  formatTextInLine(lineNumber: number, meta: IPieceMeta): Diff[] {
-    const cnt = this.getLength()
-    const lineCnt = this.getLineCount()
-
-    if (lineCnt === 1) {
-      if (lineNumber === 1) {
-        return this.formatText(1, cnt, meta)
-      }
-      return []
-    } else {
-      if (lineNumber === lineCnt) {
-        const { startOffset } = this.findByLineNumber(lineNumber)
-        return this.formatText(startOffset, cnt, meta)
-      } else if (lineNumber > 0 && lineNumber <= lineCnt) {
-        const posStart = this.findByLineNumber(lineNumber)
-        const posEnd = this.findByLineNumber(lineNumber + 1)
-
-        const len = posEnd.startOffset - posStart.startOffset
-        return this.formatText(posStart.startOffset, len, meta)
-      } else {
-        return []
-      }
-    }
-  }
-
-  /**
-   * Change All Non-Text Piece Meta In The Line
-   */
-  formatNonTextInLine(lineNumber: number, meta: IPieceMeta): Diff[] {
-    const cnt = this.getLength()
-    const lineCnt = this.getLineCount()
-
-    if (lineCnt === 1) {
-      if (lineNumber === 1) {
-        return this.formatNonText(1, cnt, meta)
-      }
-      return []
-    } else {
-      if (lineNumber === lineCnt) {
-        const { startOffset } = this.findByLineNumber(lineNumber)
-        return this.formatNonText(startOffset, cnt, meta)
-      } else if (lineNumber > 0 && lineNumber <= lineCnt) {
-        const posStart = this.findByLineNumber(lineNumber)
-        const posEnd = this.findByLineNumber(lineNumber + 1)
-
-        const len = posEnd.startOffset - posStart.startOffset
-        return this.formatNonText(posStart.startOffset, len, meta)
-      } else {
-        return []
-      }
-    }
-  }
-
-  /**
-   * Format Text Piece
-   * @param offset
-   */
-  formatText(offset: number, length: number, meta: IPieceMeta): Diff[] {
-    return this.formatInner(offset, length, meta, PieceType.TEXT)
-  }
-
-  /**
-   * Format Non-Text Pieces
-   * @param offset
-   * @param length
-   * @param meta
-   */
-  formatNonText(offset: number, length: number, meta: IPieceMeta): Diff[] {
-    return this.formatInner(offset, length, meta, PieceType.NON_TEXT)
-  }
-
-  // ------------------- Atomic Operation ---------------------- //
-
-  /**
-   * Insert Content Which will cause offset change, piece increment, piece split
-   * 1. Always create a new piece while having meta
-   * 2. Coninuesly input only text, append to same node
-   * 3. LineBreak(\n) will in a new piece which used to store line data
-   */
-  insert(offset: number, text: string = '', meta?: any): Diff[] {
-    if (offset <= 0) {
-      offset = 1
-    } else {
-      offset += 1
-    }
-
-    return this.insertInner(offset, text, meta)
-  }
-
-  /**
-   * Delete Content
-   */
-  delete(offset: number, length: number): Diff[] {
-    if (offset <= 0) {
-      offset = 1
-    } else {
-      offset += 1
-    }
-
-    return this.deleteInner(offset, length)
-  }
-
-  /**
-   * Format The Content. Only change the meta
-   */
-  format(offset: number, length: number, meta: IPieceMeta): Diff[] {
-    // Notice: The Piece Tree will have a default line break piece. Adjust the offset
-    if (offset === FIRST_LINE_SPECIAL_SYMBOL) {
-      offset = 0
-    } else if (offset <= 0) {
-      offset = 1
-    } else {
-      offset += 1
-    }
-
-    return this.formatInner(offset, length, meta)
-  }
-
-  protected insertInner(offset: number, text: string = '', meta?: any) {
+  insertInner(offset: number, text: string = '', meta?: any) {
     const diffs: Diff[] = []
 
     const addBuffer = this.buffers[0]
@@ -522,7 +286,12 @@ export class PieceTree extends PieceTreeBase {
     return diffs
   }
 
-  protected deleteInner(offset: number, length: number) {
+  /**
+   * Delete Content
+   * @param offset
+   * @param length
+   */
+  deleteInner(offset: number, length: number) {
     if (this.isEmpty()) {
       return []
     }
@@ -604,7 +373,14 @@ export class PieceTree extends PieceTreeBase {
     return diffs
   }
 
-  protected formatInner(offset: number, length: number, meta: IPieceMeta, type: PieceType = PieceType.ALL): Diff[] {
+  /**
+   * Format Content
+   * @param offset
+   * @param length
+   * @param meta
+   * @param type
+   */
+  formatInner(offset: number, length: number, meta: IPieceMeta, type: PieceType = PieceType.ALL): Diff[] {
     const piecePatches: PiecePatch[] = []
     const originalOffset = offset
     const originalLength = length
@@ -724,7 +500,7 @@ export class PieceTree extends PieceTreeBase {
    * Interate all the pieces
    * @param callback
    */
-  protected forEachPiece(callback: (piece: Piece, index: number) => void) {
+  forEachPiece(callback: (piece: Piece, index: number) => void) {
     let node = this.root.findMin()
     node = node.successor()
     if (node === SENTINEL) return
@@ -743,169 +519,6 @@ export class PieceTree extends PieceTreeBase {
 
   // ---- Fetch Operation ---- //
 
-  /**
-   * Get the Whole Text
-   */
-  getText(): string {
-    let txt = ''
-    this.forEachPiece(piece => {
-      txt += piece.text
-    })
-    return txt
-  }
-
-  /**
-   * Get Text String in Range
-   * @param from
-   * @param to
-   */
-  getTextInRange(from: number, to: number): string {
-    from++
-    to++
-    if (to > from && from >= 0) {
-      to = to - from
-      let text = ''
-      let { node, reminder } = this.findByOffset(from)
-
-      if (reminder === node.piece.length) {
-        node = node.successor()
-      } else if (reminder > 0 && reminder < node.piece.length) {
-        const { bufferIndex, start, length } = node.piece
-        const s = start + reminder
-        const len = length - reminder
-        text += this.getTextInBuffer(bufferIndex, s, len)
-        node = node.successor()
-        to -= len
-      }
-
-      while (node !== SENTINEL && to > 0) {
-        const { start, bufferIndex, length } = node.piece
-        if (to < node.piece.length) {
-          text += this.getTextInBuffer(bufferIndex, start, to)
-        } else {
-          text += this.getTextInPiece(node.piece)
-        }
-
-        to -= length
-        node = node.successor()
-      }
-
-      return text
-    } else {
-      return ''
-    }
-  }
-
-  /**
-   * get piece list of some line
-   * @param lineNumber
-   */
-  getLine(lineNumber: number): Line {
-    const line: Line = { meta: null, pieces: [] }
-
-    let { node } = this.findByLineNumber(lineNumber)
-    line.meta = node.piece.meta
-
-    node = node.successor()
-
-    while (node !== SENTINEL && node.piece.lineFeedCnt <= 0) {
-      line.pieces.push({ text: this.getTextInPiece(node.piece), length: node.piece.length, meta: node.piece.meta })
-      node = node.successor()
-    }
-
-    if (line.pieces.length === 0) {
-      line.pieces.push({ text: '', length: 0, meta: null })
-    }
-
-    return line
-  }
-
-  /**
-   * Get All Lines
-   */
-  getLines(): Line[] {
-    const lines: Line[] = []
-
-    this.forEachLine(line => {
-      lines.push(line)
-    })
-
-    return lines
-  }
-
-  /**
-   * Get Specific Line Meta
-   */
-  getLineMeta(lineNumber: number): IPieceMeta | null {
-    const { node } = this.findByLineNumber(lineNumber)
-    if (node.piece.lineFeedCnt === 1) {
-      return node.piece.meta
-    }
-    return null
-  }
-
-  /**
-   * Get All the pieces of this tree
-   */
-  getPieces(): Piece[] {
-    const pieces: Piece[] = []
-    this.forEachPiece(piece => {
-      pieces.push(piece)
-    })
-
-    return pieces
-  }
-
-  /**
-   * Get Specific Range of Pieces
-   */
-  getPiecesInRange(from: number, to: number): Piece[] {
-    from++
-    to++
-    if (to > from && from >= 0) {
-      to = to - from
-      const pieces: Piece[] = []
-      let { node, reminder } = this.findByOffset(from)
-
-      if (reminder === node.piece.length) {
-        node = node.successor()
-      }
-      // In The Piece
-      else if (reminder + to <= node.piece.length) {
-        const { bufferIndex, start, meta } = node.piece
-        const s = start + reminder
-        const len = to
-
-        pieces.push({ text: this.getTextInBuffer(bufferIndex, s, len), length: len, meta })
-
-        to = 0
-      } else if (reminder + to > node.piece.length) {
-        const { bufferIndex, start, length, meta } = node.piece
-        const s = start + reminder
-        const len = length - reminder
-        pieces.push({ text: this.getTextInBuffer(bufferIndex, s, len), length: len, meta })
-        node = node.successor()
-        to -= len
-      }
-
-      while (node !== SENTINEL && to > 0) {
-        const { start, bufferIndex, length, meta } = node.piece
-        if (to < node.piece.length) {
-          pieces.push({ text: this.getTextInBuffer(bufferIndex, start, to), length: to, meta })
-        } else {
-          pieces.push({ text: this.getTextInPiece(node.piece), length, meta })
-        }
-
-        to -= length
-        node = node.successor()
-      }
-
-      return pieces
-    } else {
-      return []
-    }
-  }
-
   // ---- Fetch Operation End ---- //
 
   /**
@@ -913,7 +526,7 @@ export class PieceTree extends PieceTreeBase {
    *
    * @param piece
    */
-  protected getTextInPiece(piece: NodePiece) {
+  getTextInPiece(piece: NodePiece) {
     const { bufferIndex, start, length } = piece
     return this.getTextInBuffer(bufferIndex, start, length)
   }
@@ -925,7 +538,7 @@ export class PieceTree extends PieceTreeBase {
    * @param start
    * @param length
    */
-  protected getTextInBuffer(bufferIndex: number, start: number, length: number) {
+  getTextInBuffer(bufferIndex: number, start: number, length: number) {
     if (bufferIndex < 0) return ''
     const buffer = this.buffers[bufferIndex]
     const value = buffer.buffer.substring(start, start + length)

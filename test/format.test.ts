@@ -1,11 +1,11 @@
-import { PieceTree } from '../src/pieceTree'
 import { PieceMeta } from '../src/meta'
-import PieceTreeHelper from './pieceTreeTestHelper'
+import { Model } from '../src/flowerpiece'
 
 it('Basic Format', () => {
-  const tree = new PieceTree()
+  const model = new Model()
+  const { operations } = model
 
-  tree.insert(0, 'abc defg hijk \n', { color: 'red' })
+  operations.insert(0, 'abc defg hijk \n', { color: 'red' })
 
   const meta: any = new PieceMeta()
   meta.color = 'blue'
@@ -24,7 +24,9 @@ it('Basic Format', () => {
 })
 
 it('Advanced Format', () => {
-  const tree = new PieceTree()
+  const model = new Model()
+  const { operations, queries } = model
+
   const meta1 = { property: 'test' }
   const meta2 = { property2: 't2' }
   const meta3 = { p: 3 }
@@ -33,16 +35,16 @@ it('Advanced Format', () => {
 
   const imageMeta = { type: 'image' }
 
-  tree.insert(0, 'aaa\nbbb\nccc\nddd\n')
-  tree.insert(2, '', imageMeta)
+  operations.insert(0, 'aaa\nbbb\nccc\nddd\n')
+  operations.insert(2, '', imageMeta)
 
-  tree.formatLine(2, meta1)
-  expect(tree.getLineMeta(2)).toEqual(meta1)
+  operations.formatLine(2, meta1)
+  expect(queries.getLineMeta(2)).toEqual(meta1)
 
-  tree.formatLine(2, meta2)
-  expect(tree.getLineMeta(2)).toEqual({ ...meta1, ...meta2 })
+  operations.formatLine(2, meta2)
+  expect(queries.getLineMeta(2)).toEqual({ ...meta1, ...meta2 })
 
-  expect(tree.getLine(1)).toEqual({
+  expect(queries.getLine(1)).toEqual({
     meta: null,
     pieces: [
       { text: 'aa', length: 2, meta: null },
@@ -51,14 +53,14 @@ it('Advanced Format', () => {
     ],
   })
 
-  tree.formatInLine(2, meta3)
-  expect(tree.getLine(2)).toEqual({
+  operations.formatInLine(2, meta3)
+  expect(queries.getLine(2)).toEqual({
     meta: { ...meta1, ...meta2 },
     pieces: [{ text: 'bbb', length: 3, meta: meta3 }],
   })
 
-  tree.formatTextInLine(1, meta4)
-  expect(tree.getLine(1)).toEqual({
+  operations.formatTextInLine(1, meta4)
+  expect(queries.getLine(1)).toEqual({
     meta: null,
     pieces: [
       { text: 'aa', length: 2, meta: meta4 },
@@ -67,8 +69,8 @@ it('Advanced Format', () => {
     ],
   })
 
-  tree.formatNonTextInLine(1, meta5)
-  expect(tree.getLine(1)).toEqual({
+  operations.formatNonTextInLine(1, meta5)
+  expect(queries.getLine(1)).toEqual({
     meta: null,
     pieces: [
       { text: 'aa', length: 2, meta: meta4 },

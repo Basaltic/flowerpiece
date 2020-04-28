@@ -1,14 +1,15 @@
-import { PieceTree, PieceMeta } from '../src/flowerpiece'
+import { Model } from '../src/flowerpiece'
 
 it('isEmpty Test', () => {
-  const tree = new PieceTree()
+  const model = new Model()
+  const { operations } = model
 
-  expect(tree.isEmpty()).toBe(true)
+  expect(model.isEmpty()).toBe(true)
 
-  tree.insert(0, 'x')
+  operations.insert(0, 'x')
 
-  expect(tree.isEmpty()).toBe(false)
+  expect(model.isEmpty()).toBe(false)
 
-  tree.delete(0, 1)
-  expect(tree.isEmpty()).toBe(true)
+  operations.delete(0, 1)
+  expect(model.isEmpty()).toBe(true)
 })
