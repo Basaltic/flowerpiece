@@ -1,4 +1,4 @@
-import PieceTreeNode from '../src/pieceTreeNode'
+import PieceTreeNode from '../pieceTreeNode'
 
 /**
  * Helper Functions to make debuger easier
