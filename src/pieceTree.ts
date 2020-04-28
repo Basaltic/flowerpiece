@@ -304,7 +304,7 @@ export class PieceTree extends PieceTreeBase {
         pieceChange.push(node.piece)
       }
       // 2. The length is larger than node length. just delete this ndoe and go deeper
-      else if (length >= node.piece.length) {
+      else if (length > node.piece.length) {
         const currentNode = node
         node = node.successor()
 
@@ -322,7 +322,7 @@ export class PieceTree extends PieceTreeBase {
 
         node.piece.start += length
         node.piece.length -= length
-        node.piece.lineFeedCnt = this.recomputeLineFeedsCntInPiece(node.piece)
+        node.piece.lineFeedCnt = 0
 
         lineFeedCnt += originalLineFeedCnt - node.piece.lineFeedCnt
 
@@ -435,43 +435,6 @@ export class PieceTree extends PieceTreeBase {
   // ----------------------- Iterate ------------------------------- //
 
   /**
-   * Iterate the line in this piece tree
-   * @param callback
-   */
-  forEachLine(callback: (line: Line, lineNumber: number) => void) {
-    let node = this.root.findMin()
-    let line: Line = { meta: {}, pieces: [] }
-    let lineNumber: number = 1
-
-    line.meta = node.piece.meta
-
-    node = node.successor()
-    while (node.isNotNil) {
-      const { piece } = node
-      const { meta, length } = piece
-
-      if (piece.lineFeedCnt === 0) {
-        const text = this.getTextInPiece(piece)
-        line.pieces.push({ text, length, meta })
-      } else {
-        callback(line, lineNumber)
-
-        line = { meta: node.piece.meta, pieces: [] }
-        lineNumber++
-      }
-
-      node = node.successor()
-    }
-
-    // Empty Line
-    if (line.pieces.length === 0) {
-      line = { meta: null, pieces: [{ text: '', length: 0, meta: null }] }
-    }
-
-    callback(line, lineNumber)
-  }
-
-  /**
    * Interate all the pieces
    * @param callback
    */
@@ -547,43 +510,14 @@ export class PieceTree extends PieceTreeBase {
    */
   protected splitNode(node: PieceTreeNode, reminder: number) {
     const { bufferIndex, start, meta } = node.piece
-    const leftStr = this.buffers[bufferIndex].buffer.substring(start, start + reminder)
-    const leftLineFeedsCnt = computeLineFeedCnt(leftStr)
 
-    const leftPiece = new NodePiece(bufferIndex, start, reminder, leftLineFeedsCnt, meta ? cloneDeep(meta) : meta)
+    const leftPiece = new NodePiece(bufferIndex, start, reminder, 0, meta ? cloneDeep(meta) : meta)
 
     node.piece.start += reminder
     node.piece.length -= reminder
-    node.piece.lineFeedCnt -= leftLineFeedsCnt
+    node.piece.lineFeedCnt -= 0
 
     const leftNode = this.insertFixedLeft(node, leftPiece)
     return [leftNode, node]
   }
-
-  /**
-   * Recompute how much line feeds in passed piece
-   * @param piece
-   */
-  protected recomputeLineFeedsCntInPiece(piece: NodePiece) {
-    const { bufferIndex, start, length } = piece
-    if (bufferIndex < 0 || bufferIndex > this.buffers.length - 1) return 0
-
-    const str = this.buffers[bufferIndex].buffer.substring(start, start + length)
-    const cnt = computeLineFeedCnt(str)
-    return cnt
-  }
-}
-
-// ---------- Utils ------------ //
-
-/**
- * 计算字符串中的换行符数量
- * @param str
- */
-export function computeLineFeedCnt(str: string) {
-  const matches = str.match(/\n/gm)
-  if (matches) {
-    return matches.length
-  }
-  return 0
 }

@@ -131,7 +131,7 @@ it('change cascade undo redo', () => {
   expect(queries.getText()).toBe('')
 })
 
-it('change', () => {
+it('change corner case', () => {
   const model = new Model()
   const { operations, queries } = model
 
@@ -144,4 +144,6 @@ it('change', () => {
 
   model.undo()
   expect(queries.getText()).toBe('')
+
+  model.change(() => {})
 })

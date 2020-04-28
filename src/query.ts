@@ -107,7 +107,7 @@ export class Queries {
   getLines(): Line[] {
     const lines: Line[] = []
 
-    this.pieceTree.forEachLine(line => {
+    this.forEachLine(line => {
       lines.push(line)
     })
 
@@ -185,5 +185,42 @@ export class Queries {
     } else {
       return []
     }
+  }
+
+  /**
+   * Iterate the line in this piece tree
+   * @param callback
+   */
+  forEachLine(callback: (line: Line, lineNumber: number) => void) {
+    let node = this.pieceTree.root.findMin()
+    let line: Line = { meta: {}, pieces: [] }
+    let lineNumber: number = 1
+
+    line.meta = node.piece.meta
+
+    node = node.successor()
+    while (node.isNotNil) {
+      const { piece } = node
+      const { meta, length } = piece
+
+      if (piece.lineFeedCnt === 0) {
+        const text = this.pieceTree.getTextInPiece(piece)
+        line.pieces.push({ text, length, meta })
+      } else {
+        callback(line, lineNumber)
+
+        line = { meta: node.piece.meta, pieces: [] }
+        lineNumber++
+      }
+
+      node = node.successor()
+    }
+
+    // Empty Line
+    if (line.pieces.length === 0) {
+      line = { meta: null, pieces: [{ text: '', length: 0, meta: null }] }
+    }
+
+    callback(line, lineNumber)
   }
 }

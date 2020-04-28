@@ -55,6 +55,9 @@ export class Model {
     return this.changeHistory.applayUndo(change => this.pieceTree.doUndo(change))
   }
 
+  /**
+   * Check If there's no content
+   */
   isEmpty() {
     return this.pieceTree.isEmpty()
   }

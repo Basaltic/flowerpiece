@@ -137,14 +137,23 @@ it('FormatNonTextInLine Corner Case', () => {
   const meta2 = { color: 'r2' }
 
   operations.insert(0, 'aaa')
+  operations.insert(0, '', { t: 'image' })
 
-  operations.formatInLine(1, meta1)
-  expect(queries.getLine(1).pieces).toEqual([{ text: 'aaa', length: 3, meta: meta1 }])
-  expect(operations.formatInLine(100, meta1)).toEqual([])
+  operations.formatNonTextInLine(1, meta1)
+  expect(queries.getLine(1).pieces).toEqual([
+    { text: '', length: 1, meta: { t: 'image', ...meta1 } },
+    { text: 'aaa', length: 3, meta: null },
+  ])
+  expect(operations.formatNonTextInLine(100, meta1)).toEqual([])
 
-  operations.insert(3, '\nbbb')
+  operations.insert(4, '\nbbb')
+  operations.insert(6, '', { t: 'image' })
 
-  operations.formatInLine(2, meta2)
-  expect(queries.getLine(2).pieces).toEqual([{ text: 'bbb', length: 3, meta: meta2 }])
-  expect(operations.formatInLine(100, meta1)).toEqual([])
+  operations.formatNonTextInLine(2, meta2)
+  expect(queries.getLine(2).pieces).toEqual([
+    { text: 'b', length: 1, meta: null },
+    { text: '', length: 1, meta: { t: 'image', ...meta2 } },
+    { text: 'bb', length: 2, meta: null },
+  ])
+  expect(operations.formatNonTextInLine(100, meta1)).toEqual([])
 })
