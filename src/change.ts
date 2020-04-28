@@ -80,6 +80,14 @@ export class ChangeStack {
   // indicate if piece tree is under the changing mode.
   private changing: boolean = false
 
+  /**
+   * Clear all changes
+   */
+  clear() {
+    this.undoChangesStack = []
+    this.redoChangesStack = []
+  }
+
   startChange() {
     this.changing = true
     this.undoChangesStack.push([])

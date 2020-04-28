@@ -52,12 +52,16 @@ export class PieceTree extends PieceTreeBase {
     const { initialLines } = config
 
     // Defaultly add a eol
-    if (initialLines) {
+    this.initByLines(initialLines)
+  }
+
+  initByLines(lines?: Line[]) {
+    if (lines) {
       const lineBreakStringBuffer = new StringBuffer(EOL)
       this.buffers.push(lineBreakStringBuffer)
       const linBreakBufferindex = this.buffers.length - 1
       let node = this.root
-      for (const line of initialLines) {
+      for (const line of lines) {
         const lbPiece = new NodePiece(linBreakBufferindex, 0, 1, 1, line.meta)
         node = this.insertFixedRight(node, lbPiece)
 
@@ -81,6 +85,13 @@ export class PieceTree extends PieceTreeBase {
       const linBreakBufferindex = this.buffers.length - 1
       const lbPiece = new NodePiece(linBreakBufferindex, 0, 1, 1)
       this.insertFixedRight(this.root, lbPiece)
+    }
+  }
+
+  resetByLines(lines?: Line[]) {
+    this.freeAll()
+    if (lines) {
+      this.initByLines(lines)
     }
   }
 

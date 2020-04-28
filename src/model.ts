@@ -30,6 +30,15 @@ export class Model {
   }
 
   /**
+   * Reset Contents
+   * @param lines
+   */
+  resetContent(lines: Line[]) {
+    this.changeHistory.clear()
+    this.pieceTree.resetByLines(lines)
+  }
+
+  /**
    * Combine Multiple Operations into one Change.
    * @param callback
    */
