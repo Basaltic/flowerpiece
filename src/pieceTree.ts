@@ -12,7 +12,7 @@ import {
   PiecePatch,
   ChangeStack,
 } from './change'
-import { IPieceMeta, mergeMeta } from './meta'
+import { PieceMeta, mergeMeta } from './meta'
 import { Diff } from './diff'
 import StringBuffer from './stringBuffer'
 import { CharCode } from 'charCode'
@@ -377,7 +377,7 @@ export class PieceTree extends PieceTreeBase {
    * @param meta
    * @param type
    */
-  formatInner(offset: number, length: number, meta: IPieceMeta, type: PieceType = PieceType.ALL): DocumentChange {
+  formatInner(offset: number, length: number, meta: PieceMeta, type: PieceType = PieceType.ALL): DocumentChange {
     const piecePatches: PiecePatch[] = []
     const originalOffset = offset
     const originalLength = length
@@ -510,7 +510,7 @@ export class PieceTree extends PieceTreeBase {
    * @param type
    * @param meta
    */
-  protected createPiece(text: string, meta: IPieceMeta | null, lineFeedCnt: number): NodePiece {
+  protected createPiece(text: string, meta: PieceMeta | null, lineFeedCnt: number): NodePiece {
     if (text) {
       const start = this.buffers[0].length
       const length = text.length

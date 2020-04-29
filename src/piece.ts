@@ -1,4 +1,4 @@
-import { IPieceMeta } from './meta'
+import { PieceMeta } from './meta'
 
 /**
  * A Piece Refer a piece of text content of the document
@@ -19,9 +19,9 @@ export default class NodePiece {
   // How Many Line Break In This Piece.
   lineFeedCnt: number
 
-  meta: IPieceMeta | null
+  meta: PieceMeta | null
 
-  constructor(bufferIndex: number, start: number, length: number, lineFeedCnt: number, meta: IPieceMeta | null = null) {
+  constructor(bufferIndex: number, start: number, length: number, lineFeedCnt: number, meta: PieceMeta | null = null) {
     this.bufferIndex = bufferIndex
     this.start = start
     this.length = length
@@ -73,7 +73,7 @@ export interface Piece {
   // Length of this piece
   length: number
   // Meta info of this piece
-  meta: IPieceMeta | null
+  meta: PieceMeta | null
 }
 
 /**
@@ -81,5 +81,5 @@ export interface Piece {
  */
 export interface Line {
   pieces: Piece[]
-  meta: IPieceMeta | null
+  meta: PieceMeta | null
 }

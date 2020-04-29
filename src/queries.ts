@@ -1,7 +1,7 @@
 import { PieceTree } from './pieceTree'
 import { SENTINEL } from './pieceTreeNode'
 import { Line, Piece } from './piece'
-import { IPieceMeta } from './meta'
+import { PieceMeta } from './meta'
 
 export class Queries {
   private pieceTree: PieceTree
@@ -124,7 +124,7 @@ export class Queries {
   /**
    * Get Specific Line Meta
    */
-  getLineMeta(lineNumber: number): IPieceMeta | null {
+  getLineMeta(lineNumber: number): PieceMeta | null {
     const { node } = this.pieceTree.findByLineNumber(lineNumber)
     if (node.piece.lineFeedCnt === 1) {
       return node.piece.meta

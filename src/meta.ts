@@ -1,20 +1,12 @@
 import merge from 'lodash.merge'
-import { enableES5, enablePatches, enableMapSet, produceWithPatches, Patch, immerable } from 'immer'
+import { enableES5, enablePatches, enableMapSet, produceWithPatches, Patch } from 'immer'
 
 enableES5()
 enablePatches()
 enableMapSet()
 
-export interface IPieceMeta {
+export interface PieceMeta {
   [key: string]: any
-}
-
-/**
- * Keep One Level. No nest object
- * TODO: Must Be Plain Object
- */
-export class PieceMeta implements IPieceMeta {
-  [immerable] = true
 }
 
 /**
@@ -22,7 +14,7 @@ export class PieceMeta implements IPieceMeta {
  * @param target
  * @param source
  */
-export function mergeMeta(target: IPieceMeta | null, source: IPieceMeta | null): [IPieceMeta, Patch[]] | null {
+export function mergeMeta(target: PieceMeta | null, source: PieceMeta | null): [PieceMeta, Patch[]] | null {
   if (source) {
     if (target === null) target = {}
 

@@ -1,6 +1,6 @@
 import { PieceTree, EOL } from './pieceTree'
 import { Diff } from './diff'
-import { IPieceMeta } from './meta'
+import { PieceMeta } from './meta'
 import { PieceType } from './piece'
 import { DocumentChange } from 'flowerpiece'
 
@@ -43,7 +43,7 @@ export class Operations {
   /**
    * Format The Content. Only change the meta
    */
-  format(offset: number, length: number, meta: IPieceMeta): DocumentChange {
+  format(offset: number, length: number, meta: PieceMeta): DocumentChange {
     // Notice: The Piece Tree will have a default line break piece. Adjust the offset
     if (offset <= 0) {
       offset = 1
@@ -59,7 +59,7 @@ export class Operations {
    * @param offset
    * @param meta
    */
-  insertLineBreak(offset: number, meta: IPieceMeta | null = null): DocumentChange {
+  insertLineBreak(offset: number, meta: PieceMeta | null = null): DocumentChange {
     return this.insert(offset, EOL, meta)
   }
 
@@ -69,7 +69,7 @@ export class Operations {
    * @param text
    * @param meta
    */
-  insertText(offset: number, text: string, meta: IPieceMeta | null = null): DocumentChange {
+  insertText(offset: number, text: string, meta: PieceMeta | null = null): DocumentChange {
     if (text === '') {
       throw new Error('cannot pass empty text')
     }
@@ -82,7 +82,7 @@ export class Operations {
    * @param offset
    * @param meta
    */
-  insertNonText(offset: number, meta: IPieceMeta): DocumentChange {
+  insertNonText(offset: number, meta: PieceMeta): DocumentChange {
     return this.insert(offset, '', meta)
   }
 
@@ -120,7 +120,7 @@ export class Operations {
    * @param lineNumber
    * @param meta
    */
-  formatLine(lineNumber: number, meta: IPieceMeta): DocumentChange {
+  formatLine(lineNumber: number, meta: PieceMeta): DocumentChange {
     const { startOffset } = this.pieceTree.findByLineNumber(lineNumber)
     return this.pieceTree.formatInner(startOffset, 1, meta, PieceType.LINE_FEED)
   }
@@ -128,7 +128,7 @@ export class Operations {
   /**
    * Change All Piece Meta In The Line
    */
-  formatInLine(lineNumber: number, meta: IPieceMeta): DocumentChange | null {
+  formatInLine(lineNumber: number, meta: PieceMeta): DocumentChange | null {
     const cnt = this.pieceTree.getLength()
     const lineCnt = this.pieceTree.getLineCount()
 
@@ -156,7 +156,7 @@ export class Operations {
   /**
    * Change All Text Piece Meta In The Line
    */
-  formatTextInLine(lineNumber: number, meta: IPieceMeta): DocumentChange | null {
+  formatTextInLine(lineNumber: number, meta: PieceMeta): DocumentChange | null {
     const cnt = this.pieceTree.getLength()
     const lineCnt = this.pieceTree.getLineCount()
 
@@ -184,7 +184,7 @@ export class Operations {
   /**
    * Change All Non-Text Piece Meta In The Line
    */
-  formatNonTextInLine(lineNumber: number, meta: IPieceMeta): DocumentChange | null {
+  formatNonTextInLine(lineNumber: number, meta: PieceMeta): DocumentChange | null {
     const cnt = this.pieceTree.getLength()
     const lineCnt = this.pieceTree.getLineCount()
 
@@ -213,7 +213,7 @@ export class Operations {
    * Format Text Piece
    * @param offset
    */
-  formatText(offset: number, length: number, meta: IPieceMeta): DocumentChange {
+  formatText(offset: number, length: number, meta: PieceMeta): DocumentChange {
     return this.pieceTree.formatInner(offset, length, meta, PieceType.TEXT)
   }
 
@@ -223,7 +223,7 @@ export class Operations {
    * @param length
    * @param meta
    */
-  formatNonText(offset: number, length: number, meta: IPieceMeta): DocumentChange {
+  formatNonText(offset: number, length: number, meta: PieceMeta): DocumentChange {
     return this.pieceTree.formatInner(offset, length, meta, PieceType.NON_TEXT)
   }
 }
