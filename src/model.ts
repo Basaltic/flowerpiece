@@ -54,6 +54,7 @@ export class Model {
    * Redo the operation
    */
   redo(): Diff[] {
+    this.changeHistory.endChange()
     return this.changeHistory.applayRedo(change => this.pieceTree.doRedo(change))
   }
 
@@ -61,6 +62,7 @@ export class Model {
    * Undo the operation
    */
   undo(): Diff[] {
+    this.changeHistory.endChange()
     return this.changeHistory.applayUndo(change => this.pieceTree.doUndo(change))
   }
 

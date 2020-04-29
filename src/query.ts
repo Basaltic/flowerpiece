@@ -11,6 +11,13 @@ export class Queries {
   }
 
   /**
+   * Max Offset of the doucment
+   */
+  getMaxOffset() {
+    return this.pieceTree.getLength() - 1
+  }
+
+  /**
    * How many charactor in doc
    */
   getCountOfCharacter(): number {

@@ -1,11 +1,12 @@
 # Flower Piece (WIP)
 
-[![Build Status](https://travis-ci.org/Basaltic/flowerpiece.svg?branch=master)](https://travis-ci.org/Basaltic/flowerpiece)
-[![codecov](https://codecov.io/gh/Basaltic/flowerpiece/branch/master/graph/badge.svg)](https://codecov.io/gh/Basaltic/flowerpiece)
-
 A Rich Text Editor Data Model
 
 **Warning: Before 1.0.0 release, the api may change. It's not prepared for production now.**
+
+[![Build Status](https://travis-ci.org/Basaltic/flowerpiece.svg?branch=master)](https://travis-ci.org/Basaltic/flowerpiece)
+[![codecov](https://codecov.io/gh/Basaltic/flowerpiece/branch/master/graph/badge.svg)](https://codecov.io/gh/Basaltic/flowerpiece)
+
 
 # Features
 
@@ -120,6 +121,7 @@ export class PieceMeta implements IPieceMeta {
 
 #### queries: Queries
 
+##### getMaxOffset()
 ##### getCountOfCharacter()
 ##### getCountOfLine()
 ##### getAllText()
