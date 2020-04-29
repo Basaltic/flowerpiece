@@ -22,7 +22,7 @@ it('Delete： Corner Case', () => {
 
   operations.delete(6, 1)
 
-  expect(operations.deleteLine(2)).toEqual([])
+  expect(operations.deleteLine(2)).toEqual(null)
 
   operations.deleteLine(1)
   expect(model.isEmpty()).toBe(true)
@@ -30,5 +30,5 @@ it('Delete： Corner Case', () => {
   operations.insert(0, 'abc\nabc\nabc')
   operations.deleteLine(3)
 
-  expect(operations.deleteLine(100)).toEqual([])
+  expect(operations.deleteLine(100)).toEqual(null)
 })

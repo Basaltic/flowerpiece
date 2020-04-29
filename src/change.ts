@@ -1,20 +1,21 @@
 import { Patch } from 'immer'
 import { IPieceMeta } from './meta'
 import NodePiece from './piece'
-import { Diff, mergeDiffs } from './diff'
+import { Diff } from './diff'
 
-export default interface IChange {
+export interface DocumentChange {
   type: 'insert' | 'delete' | 'format'
   diffs: Diff[]
+  startOffset: number
+  length: number
 }
 
 /**
  * Represent the change of insert operation
  */
-export interface InsertChange extends IChange {
+export interface InsertChange extends DocumentChange {
   type: 'insert'
-  startOffset: number
-  length: number
+
   // [bufferIndex, start, length]
   text: number[]
   meta: IPieceMeta
@@ -23,10 +24,8 @@ export interface InsertChange extends IChange {
 /**
  * Represent the change of delete operation
  */
-export interface DeleteChange extends IChange {
+export interface DeleteChange extends DocumentChange {
   type: 'delete'
-  startOffset: number
-  length: number
   // Deleted part of piece, only the text string need to be stored. [bufferIndex, start, length]
   pieces: NodePiece[]
 }
@@ -34,10 +33,8 @@ export interface DeleteChange extends IChange {
 /**
  * Represent the change of format operation
  */
-export interface FormatChange extends IChange {
+export interface FormatChange extends DocumentChange {
   type: 'format'
-  startOffset: number
-  length: number
   meta: IPieceMeta
   // reverse meta change for every piece
 
@@ -73,12 +70,17 @@ export function createFormatChange(
  */
 export class ChangeStack {
   // undo stack
-  private undoChangesStack: IChange[][] = []
+  private undoChangesStack: DocumentChange[][] = []
   // redo stack
-  private redoChangesStack: IChange[][] = []
+  private redoChangesStack: DocumentChange[][] = []
 
   // indicate if piece tree is under the changing mode.
   private changing: boolean = false
+
+  get last(): DocumentChange[] {
+    const index = this.undoChangesStack.length - 1
+    return this.undoChangesStack[index]
+  }
 
   /**
    * Clear all changes
@@ -106,7 +108,7 @@ export class ChangeStack {
    * Add new Changes
    * @param change
    */
-  push(change: IChange) {
+  push(change: DocumentChange) {
     if (this.changing) {
       const len = this.undoChangesStack.length - 1
       this.undoChangesStack[len].push(change)
@@ -121,37 +123,32 @@ export class ChangeStack {
    * Redo
    * @param callback
    */
-  applayRedo(callback: (change: IChange) => Diff[]): Diff[] {
+  applayRedo(callback: (change: DocumentChange) => DocumentChange) {
     const changes = this.redoChangesStack.pop()
+    const returnChanges: DocumentChange[] = []
     if (changes !== undefined) {
-      const diffs: Diff[][] = []
       for (let i = 0; i < changes.length; i++) {
-        diffs.push(callback(changes[i]))
+        callback(changes[i])
       }
-
       this.undoChangesStack.push(changes)
-      return mergeDiffs([])
     }
 
-    return []
+    return returnChanges
   }
 
   /**
    * Undo
    * @param callback
    */
-  applayUndo(callback: (change: IChange) => Diff[]) {
+  applayUndo(callback: (change: DocumentChange) => DocumentChange) {
     const changes = this.undoChangesStack.pop()
+    const returnChanges: DocumentChange[] = []
     if (changes !== undefined) {
-      const diffs: Diff[][] = []
       for (let i = changes.length - 1; i >= 0; i--) {
-        diffs.push(callback(changes[i]))
+        callback(changes[i])
       }
-
       this.redoChangesStack.push(changes)
-
-      return mergeDiffs(diffs)
     }
-    return []
+    return returnChanges
   }
 }

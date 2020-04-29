@@ -1,9 +1,9 @@
 import { Operations } from './operations'
 import { PieceTree } from './pieceTree'
-import { Queries } from './query'
+import { Queries } from './queries'
 import { ChangeStack } from './change'
-import { Diff } from './diff'
 import { Line } from './piece'
+import { DocumentChange } from 'flowerpiece'
 
 export interface ModelConfig {
   initialValue?: Line[]
@@ -42,18 +42,21 @@ export class Model {
    * Combine Multiple Operations into one Change.
    * @param callback
    */
-  change(callback: (operations: Operations) => void) {
+  change(callback: (operations: Operations) => void): DocumentChange[] {
     this.changeHistory.startChange()
+    let changes: DocumentChange[] = []
     try {
       callback(this.operations)
+      changes = this.changeHistory.last
     } catch (error) {}
     this.changeHistory.endChange()
+    return changes
   }
 
   /**
    * Redo the operation
    */
-  redo(): Diff[] {
+  redo(): DocumentChange[] {
     this.changeHistory.endChange()
     return this.changeHistory.applayRedo(change => this.pieceTree.doRedo(change))
   }
@@ -61,7 +64,7 @@ export class Model {
   /**
    * Undo the operation
    */
-  undo(): Diff[] {
+  undo(): DocumentChange[] {
     this.changeHistory.endChange()
     return this.changeHistory.applayUndo(change => this.pieceTree.doUndo(change))
   }

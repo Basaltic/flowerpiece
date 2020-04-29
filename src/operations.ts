@@ -2,6 +2,7 @@ import { PieceTree, EOL } from './pieceTree'
 import { Diff } from './diff'
 import { IPieceMeta } from './meta'
 import { PieceType } from './piece'
+import { DocumentChange } from 'flowerpiece'
 
 export class Operations {
   private pieceTree: PieceTree
@@ -16,7 +17,7 @@ export class Operations {
    * 2. Coninuesly input only text, append to same node
    * 3. LineBreak(\n) will in a new piece which used to store line data
    */
-  insert(offset: number, text: string = '', meta?: any): Diff[] {
+  insert(offset: number, text: string = '', meta?: any): DocumentChange {
     if (offset <= 0) {
       offset = 1
     } else {
@@ -29,7 +30,7 @@ export class Operations {
   /**
    * Delete Content
    */
-  delete(offset: number, length: number): Diff[] {
+  delete(offset: number, length: number): DocumentChange | null {
     if (offset <= 0) {
       offset = 1
     } else {
@@ -42,7 +43,7 @@ export class Operations {
   /**
    * Format The Content. Only change the meta
    */
-  format(offset: number, length: number, meta: IPieceMeta): Diff[] {
+  format(offset: number, length: number, meta: IPieceMeta): DocumentChange {
     // Notice: The Piece Tree will have a default line break piece. Adjust the offset
     if (offset <= 0) {
       offset = 1
@@ -58,20 +59,8 @@ export class Operations {
    * @param offset
    * @param meta
    */
-  insertLineBreak(offset: number, meta: IPieceMeta | null = null): Diff[] {
+  insertLineBreak(offset: number, meta: IPieceMeta | null = null): DocumentChange {
     return this.insert(offset, EOL, meta)
-  }
-
-  /**
-   * Insert A Complete new Line in Offset
-   * @param offset
-   * @param meta
-   */
-  insertLine(offset: number, meta: IPieceMeta | null = null): Diff[] {
-    const diff1 = this.insertLineBreak(offset, null)
-    const diff2 = this.insert(offset, '', meta)
-    const diff3 = this.insertLineBreak(offset + 2, null)
-    return [...diff1, ...diff2, ...diff3]
   }
 
   /**
@@ -80,7 +69,7 @@ export class Operations {
    * @param text
    * @param meta
    */
-  insertText(offset: number, text: string, meta: IPieceMeta | null = null): Diff[] {
+  insertText(offset: number, text: string, meta: IPieceMeta | null = null): DocumentChange {
     if (text === '') {
       throw new Error('cannot pass empty text')
     }
@@ -93,7 +82,7 @@ export class Operations {
    * @param offset
    * @param meta
    */
-  insertNonText(offset: number, meta: IPieceMeta): Diff[] {
+  insertNonText(offset: number, meta: IPieceMeta): DocumentChange {
     return this.insert(offset, '', meta)
   }
 
@@ -101,7 +90,7 @@ export class Operations {
    * Delete The Entire Line Contents
    * @param lineNumber
    */
-  deleteLine(lineNumber: number): Diff[] {
+  deleteLine(lineNumber: number): DocumentChange | null {
     const cnt = this.pieceTree.getLength()
     const lineCnt = this.pieceTree.getLineCount()
 
@@ -109,13 +98,13 @@ export class Operations {
       if (lineNumber === 1) {
         return this.pieceTree.deleteInner(1, cnt - 1)
       }
-      return []
+      return null
     } else {
       if (lineNumber === lineCnt) {
         const { startOffset } = this.pieceTree.findByLineNumber(lineNumber)
         return this.pieceTree.deleteInner(startOffset, cnt - startOffset)
       } else if (lineNumber > lineCnt || lineNumber <= 0) {
-        return []
+        return null
       } else {
         const posStart = this.pieceTree.findByLineNumber(lineNumber)
         const posEnd = this.pieceTree.findByLineNumber(lineNumber + 1)
@@ -131,7 +120,7 @@ export class Operations {
    * @param lineNumber
    * @param meta
    */
-  formatLine(lineNumber: number, meta: IPieceMeta): Diff[] {
+  formatLine(lineNumber: number, meta: IPieceMeta): DocumentChange {
     const { startOffset } = this.pieceTree.findByLineNumber(lineNumber)
     return this.pieceTree.formatInner(startOffset, 1, meta, PieceType.LINE_FEED)
   }
@@ -139,7 +128,7 @@ export class Operations {
   /**
    * Change All Piece Meta In The Line
    */
-  formatInLine(lineNumber: number, meta: IPieceMeta): Diff[] {
+  formatInLine(lineNumber: number, meta: IPieceMeta): DocumentChange | null {
     const cnt = this.pieceTree.getLength()
     const lineCnt = this.pieceTree.getLineCount()
 
@@ -147,7 +136,7 @@ export class Operations {
       if (lineNumber === 1) {
         return this.pieceTree.formatInner(1, cnt - 1, meta)
       }
-      return []
+      return null
     } else {
       if (lineNumber === lineCnt) {
         const { startOffset } = this.pieceTree.findByLineNumber(lineNumber)
@@ -159,7 +148,7 @@ export class Operations {
         const len = posEnd.startOffset - posStart.startOffset
         return this.pieceTree.formatInner(posStart.startOffset + 1, len, meta)
       } else {
-        return []
+        return null
       }
     }
   }
@@ -167,7 +156,7 @@ export class Operations {
   /**
    * Change All Text Piece Meta In The Line
    */
-  formatTextInLine(lineNumber: number, meta: IPieceMeta): Diff[] {
+  formatTextInLine(lineNumber: number, meta: IPieceMeta): DocumentChange | null {
     const cnt = this.pieceTree.getLength()
     const lineCnt = this.pieceTree.getLineCount()
 
@@ -175,7 +164,7 @@ export class Operations {
       if (lineNumber === 1) {
         return this.formatText(1, cnt - 1, meta)
       }
-      return []
+      return null
     } else {
       if (lineNumber === lineCnt) {
         const { startOffset } = this.pieceTree.findByLineNumber(lineNumber)
@@ -187,7 +176,7 @@ export class Operations {
         const len = posEnd.startOffset - posStart.startOffset
         return this.formatText(posStart.startOffset, len, meta)
       } else {
-        return []
+        return null
       }
     }
   }
@@ -195,7 +184,7 @@ export class Operations {
   /**
    * Change All Non-Text Piece Meta In The Line
    */
-  formatNonTextInLine(lineNumber: number, meta: IPieceMeta): Diff[] {
+  formatNonTextInLine(lineNumber: number, meta: IPieceMeta): DocumentChange | null {
     const cnt = this.pieceTree.getLength()
     const lineCnt = this.pieceTree.getLineCount()
 
@@ -203,7 +192,7 @@ export class Operations {
       if (lineNumber === 1) {
         return this.formatNonText(1, cnt - 1, meta)
       }
-      return []
+      return null
     } else {
       if (lineNumber === lineCnt) {
         const { startOffset } = this.pieceTree.findByLineNumber(lineNumber)
@@ -215,7 +204,7 @@ export class Operations {
         const len = posEnd.startOffset - posStart.startOffset
         return this.formatNonText(posStart.startOffset, len, meta)
       } else {
-        return []
+        return null
       }
     }
   }
@@ -224,7 +213,7 @@ export class Operations {
    * Format Text Piece
    * @param offset
    */
-  formatText(offset: number, length: number, meta: IPieceMeta): Diff[] {
+  formatText(offset: number, length: number, meta: IPieceMeta): DocumentChange {
     return this.pieceTree.formatInner(offset, length, meta, PieceType.TEXT)
   }
 
@@ -234,7 +223,7 @@ export class Operations {
    * @param length
    * @param meta
    */
-  formatNonText(offset: number, length: number, meta: IPieceMeta): Diff[] {
+  formatNonText(offset: number, length: number, meta: IPieceMeta): DocumentChange {
     return this.pieceTree.formatInner(offset, length, meta, PieceType.NON_TEXT)
   }
 }

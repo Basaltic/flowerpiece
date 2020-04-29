@@ -22,10 +22,9 @@ it('Line Count', () => {
   const { operations, queries } = model
 
   operations.insert(0, 'hello')
-  operations.insertLine(2, null)
   operations.insertNonText(0, {})
   operations.insertLineBreak(0)
   operations.insertText(5, 'aaa')
 
-  expect(queries.getCountOfLine()).toBe(4)
+  expect(queries.getCountOfLine()).toBe(2)
 })

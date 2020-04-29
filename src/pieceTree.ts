@@ -1,7 +1,8 @@
 import NodePiece, { Piece, Line, PieceType, determinePieceType } from './piece'
 import PieceTreeBase from './pieceTreebase'
 import PieceTreeNode, { SENTINEL } from './pieceTreeNode'
-import Change, {
+import {
+  DocumentChange,
   InsertChange,
   createInsertChange,
   DeleteChange,
@@ -99,17 +100,19 @@ export class PieceTree extends PieceTreeBase {
    * Actual Operation to undo the change
    * @param change
    */
-  doUndo(change: Change): Diff[] {
+  doUndo(change: DocumentChange): DocumentChange {
+    let diffs: Diff[] = []
     switch (change.type) {
       case 'insert':
         const insertChange = change as InsertChange
         this.deleteInner(insertChange.startOffset, insertChange.length)
-        return change.diffs.map(diff => {
+        diffs = change.diffs.map(diff => {
           if (diff.type === 'insert') {
             diff.type = 'remove'
           }
           return diff
         })
+        break
       case 'delete':
         {
           const deleteChange = change as DeleteChange
@@ -143,12 +146,13 @@ export class PieceTree extends PieceTreeBase {
         }
 
         // Change 'remove' to 'insert'
-        return change.diffs.map(diff => {
+        diffs = change.diffs.map(diff => {
           if (diff.type === 'remove') {
             diff.type = 'insert'
           }
           return diff
         })
+        break
       case 'format':
         const formatChange = change as FormatChange
         if (formatChange.piecePatches.length > 0) {
@@ -162,27 +166,34 @@ export class PieceTree extends PieceTreeBase {
             node.piece.meta = applyPatches(node.piece.meta || {}, inversePatches)
           }
         }
-        return change.diffs
+        return change
     }
+
+    return { ...change, diffs }
   }
 
   /**
    * Actual Operation to redo the change
    * @param change
    */
-  doRedo(change: Change): Diff[] {
+  doRedo(change: DocumentChange): DocumentChange {
     switch (change.type) {
       case 'insert':
         const { startOffset, text, meta } = change as InsertChange
         const txt = this.getTextInBuffer(text[0], text[1], text[2])
-        return this.insertInner(startOffset, txt, meta)
+        this.insertInner(startOffset, txt, meta)
+        break
       case 'delete':
         const deleteChange = change as DeleteChange
-        return this.deleteInner(deleteChange.startOffset, deleteChange.length)
+        this.deleteInner(deleteChange.startOffset, deleteChange.length)
+        break
       case 'format':
         const formatChange = change as FormatChange
-        return this.formatInner(formatChange.startOffset, formatChange.length, formatChange.meta)
+        this.formatInner(formatChange.startOffset, formatChange.length, formatChange.meta)
+        break
     }
+
+    return change
   }
 
   /**
@@ -191,7 +202,7 @@ export class PieceTree extends PieceTreeBase {
    * @param text
    * @param meta
    */
-  insertInner(offset: number, text: string = '', meta?: any) {
+  insertInner(offset: number, text: string = '', meta?: any): DocumentChange {
     const diffs: Diff[] = []
 
     const addBuffer = this.buffers[0]
@@ -264,7 +275,7 @@ export class PieceTree extends PieceTreeBase {
     const change: InsertChange = createInsertChange(offset, [0, addBuffer.length - text.length, text.length], meta, diffs)
     this.changeHistory.push(change)
 
-    return diffs
+    return change
   }
 
   /**
@@ -272,13 +283,13 @@ export class PieceTree extends PieceTreeBase {
    * @param offset
    * @param length
    */
-  deleteInner(offset: number, length: number) {
+  deleteInner(offset: number, length: number): DocumentChange | null {
     if (this.isEmpty()) {
-      return []
+      return null
     }
 
     if (offset >= this.getLength()) {
-      return []
+      return null
     }
 
     const pieceChange: NodePiece[] = []
@@ -356,7 +367,7 @@ export class PieceTree extends PieceTreeBase {
     const change: DeleteChange = createDeleteChange(offset, originalLength, pieceChange, diffs)
     this.changeHistory.push(change)
 
-    return diffs
+    return change
   }
 
   /**
@@ -366,7 +377,7 @@ export class PieceTree extends PieceTreeBase {
    * @param meta
    * @param type
    */
-  formatInner(offset: number, length: number, meta: IPieceMeta, type: PieceType = PieceType.ALL): Diff[] {
+  formatInner(offset: number, length: number, meta: IPieceMeta, type: PieceType = PieceType.ALL): DocumentChange {
     const piecePatches: PiecePatch[] = []
     const originalOffset = offset
     const originalLength = length
@@ -440,7 +451,7 @@ export class PieceTree extends PieceTreeBase {
     const change: FormatChange = createFormatChange(originalOffset, originalLength, meta, piecePatches, diffs)
     this.changeHistory.push(change)
 
-    return diffs
+    return change
   }
 
   // ----------------------- Iterate ------------------------------- //

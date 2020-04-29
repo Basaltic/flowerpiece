@@ -1,4 +1,4 @@
-import { PieceTree, Operations, Model } from '../src/flowerpiece'
+import { Model } from '../src/flowerpiece'
 
 // insert undo redo test
 it('redo undo insert', () => {

@@ -91,13 +91,13 @@ it('FormatInLine Corner Case', () => {
 
   operations.formatInLine(1, meta1)
   expect(queries.getLine(1).pieces).toEqual([{ text: 'aaa', length: 3, meta: meta1 }])
-  expect(operations.formatInLine(100, meta1)).toEqual([])
+  expect(operations.formatInLine(100, meta1)).toEqual(null)
 
   operations.insert(3, '\nbbb')
 
   operations.formatInLine(2, meta2)
   expect(queries.getLine(2).pieces).toEqual([{ text: 'bbb', length: 3, meta: meta2 }])
-  expect(operations.formatInLine(100, meta1)).toEqual([])
+  expect(operations.formatInLine(100, meta1)).toEqual(null)
 })
 
 it('FormatTextInLine Corner Case', () => {
@@ -115,7 +115,7 @@ it('FormatTextInLine Corner Case', () => {
     { text: '', length: 1, meta: { t: 'image' } },
     { text: 'aaa', length: 3, meta: meta1 },
   ])
-  expect(operations.formatTextInLine(100, meta1)).toEqual([])
+  expect(operations.formatTextInLine(100, meta1)).toEqual(null)
 
   operations.insert(4, '\nbbb')
   operations.insert(6, '', { t: 'image' })
@@ -126,7 +126,7 @@ it('FormatTextInLine Corner Case', () => {
     { text: '', length: 1, meta: { t: 'image' } },
     { text: 'bb', length: 2, meta: meta2 },
   ])
-  expect(operations.formatTextInLine(100, meta1)).toEqual([])
+  expect(operations.formatTextInLine(100, meta1)).toEqual(null)
 })
 
 it('FormatNonTextInLine Corner Case', () => {
@@ -144,7 +144,7 @@ it('FormatNonTextInLine Corner Case', () => {
     { text: '', length: 1, meta: { t: 'image', ...meta1 } },
     { text: 'aaa', length: 3, meta: null },
   ])
-  expect(operations.formatNonTextInLine(100, meta1)).toEqual([])
+  expect(operations.formatNonTextInLine(100, meta1)).toEqual(null)
 
   operations.insert(4, '\nbbb')
   operations.insert(6, '', { t: 'image' })
@@ -155,5 +155,5 @@ it('FormatNonTextInLine Corner Case', () => {
     { text: '', length: 1, meta: { t: 'image', ...meta2 } },
     { text: 'bb', length: 2, meta: null },
   ])
-  expect(operations.formatNonTextInLine(100, meta1)).toEqual([])
+  expect(operations.formatNonTextInLine(100, meta1)).toEqual(null)
 })
