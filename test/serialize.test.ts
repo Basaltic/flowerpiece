@@ -1,4 +1,4 @@
-import { PieceTree, Model } from '../src/flowerpiece'
+import { Model } from '../src/flowerpiece'
 import { Line } from '../src/piece'
 
 it('serialize deserialize', () => {

@@ -7,7 +7,7 @@ it('Basic Format', () => {
 
   operations.insert(0, 'abc defg hijk \n', { color: 'red' })
 
-  const meta: any = new PieceMeta()
+  const meta: PieceMeta = {}
   meta.color = 'blue'
 
   // tree.format(2, 2, meta)

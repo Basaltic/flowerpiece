@@ -1,4 +1,4 @@
-import { IPieceMeta, Model } from '../src/flowerpiece'
+import { PieceMeta, Model } from '../src/flowerpiece'
 
 /**
  * Test For Fetching Lines and Pieces
@@ -59,7 +59,7 @@ it('Get: Line and Pieces', () => {
     { text: '\n', length: 1, meta: null },
   ])
 
-  const imageMeta: IPieceMeta = { type: 'image', width: 500, height: 500, style: {} }
+  const imageMeta: PieceMeta = { type: 'image', width: 500, height: 500, style: {} }
   operations.insert(2, '', imageMeta)
   expect(queries.getLine(1)).toEqual({
     meta: null,

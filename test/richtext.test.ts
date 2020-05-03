@@ -1,8 +1,8 @@
-import { IPieceMeta, Model } from '../src/flowerpiece'
+import { PieceMeta, Model } from '../src/flowerpiece'
 
 it('Insert: Rich Text Case', () => {
-  const textMeta: IPieceMeta = { type: 'text', style: { fontSize: 16 } }
-  const imageMeta: IPieceMeta = { type: 'image', width: 500, height: 500, style: {} }
+  const textMeta: PieceMeta = { type: 'text', style: { fontSize: 16 } }
+  const imageMeta: PieceMeta = { type: 'image', width: 500, height: 500, style: {} }
 
   const model = new Model()
   const { operations, queries } = model

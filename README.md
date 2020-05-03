@@ -96,11 +96,9 @@ export class PieceMeta implements IPieceMeta {
 }
 ```
 
-# Model
+## Model
 
-## Property
-
-#### operations: Operations
+### operations: Operations
 
 ##### insertText(offset: number, text: string, meta: PieceMeta | null)
 ##### insertLineBrea(offset: number, meta: PieceMeta | null)
@@ -119,7 +117,7 @@ export class PieceMeta implements IPieceMeta {
 ##### delete(offset: number, length: number): Diff[]
 ##### format(offset: number, length: number, meta: PieceMeta): Diff[]
 
-#### queries: Queries
+### queries: Queries
 
 ##### getMaxOffset()
 ##### getCountOfCharacter()
