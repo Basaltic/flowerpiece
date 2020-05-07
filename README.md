@@ -36,21 +36,59 @@ import { Model } from 'flowerpiece'
 cconst model = new Model()
 const { operations, queries } = model
 
-model.change((operations) => {
+const changes = model.change((operations) => {
   operations.insert(0, 'test', {})
 })
 
-
 ```
 
-# Objects
+## Model
+
+### operations
+
+#### insert(offset: number, length: number, text: string, meta: PieceMeta | null): DocumentChange
+#### insertText(offset: number, text: string, meta: PieceMeta | null): DocumentChange
+#### insertLineBrea(offset: number, meta: PieceMeta | null): DocumentChange
+#### insertLine(offset: number, meta: PieceMeta | null): DocumentChange
+#### insertNonText(offset: number, meta: PieceMeta): DocumentChange
+
+#### delete(offset: number, length: number): DocumentChange
+#### deleteLine(lineNumber: number): DocumentChange
+
+#### format(offset: number, length: number, meta: PieceMeta): DocumentChange
+#### formatText(offset: number, length: number, meta: PieceMeta): DocumentChange
+#### formatNonText(offset: number, length: number, meta: PieceMeta): DocumentChange
+#### formatLine(lineNumber: number, meta: PieceMeta): DocumentChange
+#### formatInLine(lineNumber: number, meta: PieceMeta): DocumentChange
+#### formatTextInLine(lineNumber: number, meta: PieceMeta): DocumentChange
+#### formatNonTextInLine(linetNumber: number, meat: PieceMeta): DocumentChange
+
+
+### queries
+
+#### getMaxOffset()
+#### getCountOfCharacter()
+#### getCountOfLine()
+#### getAllText()
+#### getLine(lineNumber: number): Piece[]
+#### getLInes(): Line[]
+#### getLineMeta(lineNumber: number): PieceMeta | null
+#### getPieces(): Piece[]
+#### forEachLine(callback: (line: IPiece[], lineNumber: number)
+
+### Methods
+
+#### change(callback: (operations: operations) => void)
+#### redo()
+#### undo()
+
 
 ## Piece
 
 A Piece represet a piece content of the whole document
 
 ```typescript
-export interface Piece {
+interface Piece {
   // Text Content
   text: string
   // Length of this piece
@@ -76,7 +114,7 @@ interface Line {
 Diff indicate which line of content is newly added, removed or modified after operation
 
 ```typescript
-export interface Diff {
+interface Diff {
   // Diff type
   type: 'insert' | 'remove' | 'replace'
   // Which line of content has change
@@ -86,54 +124,21 @@ export interface Diff {
 
 ## PieceMeta
 
-```typescript
-export interface IPieceMeta {
-  [key: string]: any
-}
+Must Be Plain Object
 
-export class PieceMeta implements IPieceMeta {
-  [immerable] = true
+```typescript
+interface PieceMeta {
+  [key: string]: any
 }
 ```
 
-## Model
+## DocumentChange
+```typescript
+interface DocumentChange {
+  type: 'insert' | 'delete' | 'format'
+  diffs: Diff[]
+  startOffset: number
+  length: number
+}
 
-### operations: Operations
-
-##### insertText(offset: number, text: string, meta: PieceMeta | null)
-##### insertLineBrea(offset: number, meta: PieceMeta | null)
-##### insertLine(offset: number, meta: PieceMeta | null)
-##### insertNonText(offset: number, meta: PieceMeta)
-##### deleteLine(lineNumber: number)
-
-##### formatText(offset: number, length: number, meta: PieceMeta): Diff[]
-##### formatNonText(offset: number, length: number, meta: PieceMeta): Diff[]
-##### formatLine(lineNumber: number, meta: PieceMeta)
-##### formatInLine(lineNumber: number, meta: PieceMeta)
-##### formatTextInLine(lineNumber: number, meta: PieceMeta)
-##### formatNonTextInLine(linetNumber: number, meat: PieceMeta)
-
-##### insert(offset: number, length: number, text: string, meta: PieceMeta | null): Diff[]
-##### delete(offset: number, length: number): Diff[]
-##### format(offset: number, length: number, meta: PieceMeta): Diff[]
-
-### queries: Queries
-
-##### getMaxOffset()
-##### getCountOfCharacter()
-##### getCountOfLine()
-##### getAllText()
-##### getLine(lineNumber: number): Piece[]
-##### getLInes(): Line[]
-##### getLineMeta(lineNumber: number): PieceMeta | null
-##### getPieces(): Piece[]
-
-## Methods
-
-##### change(callback: (operations: operations) => void)
-##### redo()
-##### undo()
-
-##### forEachLine(callback: (line: IPiece[], lineNumber: number)
-
-
+```
