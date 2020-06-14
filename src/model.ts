@@ -30,12 +30,17 @@ export class Model {
   }
 
   /**
-   * Reset Contents
-   * @param lines
+   * Start Recording Operations
    */
-  resetContent(lines: Line[]) {
-    this.changeHistory.clear()
-    this.pieceTree.resetByLines(lines)
+  startChange() {
+    this.changeHistory.startChange()
+  }
+
+  /**
+   * Finish Recording Operations.
+   */
+  endChange() {
+    this.changeHistory.endChange()
   }
 
   /**
@@ -74,5 +79,14 @@ export class Model {
    */
   isEmpty() {
     return this.pieceTree.isEmpty()
+  }
+
+  /**
+   * Reset Contents
+   * @param lines
+   */
+  resetContent(lines: Line[]) {
+    this.changeHistory.clear()
+    this.pieceTree.resetByLines(lines)
   }
 }
