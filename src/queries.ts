@@ -3,6 +3,9 @@ import { SENTINEL } from './pieceTreeNode'
 import { Line, Piece } from './piece'
 import { PieceMeta } from './meta'
 
+/**
+ * Methods For Getting Info/Data
+ */
 export class Queries {
   private pieceTree: PieceTree
 
