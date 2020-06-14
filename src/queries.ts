@@ -125,6 +125,21 @@ export class Queries {
   }
 
   /**
+   * Get First Line
+   */
+  getFirstLine(): Line {
+    return this.getLine(1)
+  }
+
+  /**
+   * Get Last Line
+   */
+  getLastLine(): Line {
+    const lastLineNumber = this.getCountOfLine()
+    return this.getLine(lastLineNumber)
+  }
+
+  /**
    * Get Specific Line Meta
    */
   getLineMeta(lineNumber: number): PieceMeta | null {
