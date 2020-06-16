@@ -16,7 +16,7 @@ export class Model {
   operations: Operations
   queries: Queries
 
-  private pieceTree: PieceTree
+  pieceTree: PieceTree
   // A Stack to manage the changes
   private changeHistory: ChangeStack
 

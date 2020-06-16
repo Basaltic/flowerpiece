@@ -230,15 +230,11 @@ export class PieceTree extends PieceTreeBase {
     for (let i = 0, length = text.length; i < length; i++) {
       let charCode = text.charCodeAt(i)
       if (charCode === CharCode.LineFeed) {
-        if (lineFeedCnt === 0) {
-          if (isContinousInput && isEmptyMeta && isNotLinkBreak && txt) {
-            addBuffer.buffer += txt
-            node.piece.length += txt.length
-            node.updateMetaUpward()
-          } else if (txt || !isEmptyMeta) {
-            node = this.insertFixedRight(node, this.createPiece(txt, meta, 0))
-          }
-        } else if (txt) {
+        if (lineFeedCnt === 0 && isContinousInput && isEmptyMeta && isNotLinkBreak && txt) {
+          addBuffer.buffer += txt
+          node.piece.length += txt.length
+          node.updateMetaUpward()
+        } else if (txt || (txt && !isEmptyMeta)) {
           node = this.insertFixedRight(node, this.createPiece(txt, meta, 0))
         }
 
@@ -476,10 +472,6 @@ export class PieceTree extends PieceTreeBase {
   }
 
   // ----------------------- Iterate End ------------------------ //
-
-  // ---- Fetch Operation ---- //
-
-  // ---- Fetch Operation End ---- //
 
   /**
    * Get Actual Text in piece

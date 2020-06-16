@@ -243,7 +243,7 @@ export class Queries {
 
     // Empty Line
     if (line.pieces.length === 0) {
-      line = { meta: null, pieces: [{ text: '', length: 0, meta: null }] }
+      line.pieces = []
     }
 
     callback(line, lineNumber)

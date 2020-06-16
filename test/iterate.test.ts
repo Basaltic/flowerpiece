@@ -17,7 +17,7 @@ it('iterate test 1', () => {
       pieces: [{ text: 'This is a test paragraph.', length: 25, meta: null }],
     },
     { meta: null, pieces: [{ text: '这是测试段落，只有文字', length: 11, meta: null }] },
-    { meta: null, pieces: [{ text: '', length: 0, meta: null }] },
+    { meta: null, pieces: [] },
   ])
 
   operations.insert(2, 'abc')
@@ -36,6 +36,6 @@ it('iterate test 1', () => {
       meta: null,
       pieces: [{ text: '这是测试段落，只有文字', length: 11, meta: null }],
     },
-    { meta: null, pieces: [{ text: '', length: 0, meta: null }] },
+    { meta: null, pieces: [] },
   ])
 })
