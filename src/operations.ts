@@ -1,5 +1,4 @@
 import { PieceTree, EOL } from './pieceTree'
-import { Diff } from './diff'
 import { PieceMeta } from './meta'
 import { PieceType } from './piece'
 import { DocumentChange } from 'flowerpiece'

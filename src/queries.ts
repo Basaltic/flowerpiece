@@ -3,6 +3,9 @@ import { SENTINEL } from './pieceTreeNode'
 import { Line, Piece } from './piece'
 import { PieceMeta } from './meta'
 
+/**
+ * Methods For Getting Info/Data
+ */
 export class Queries {
   private pieceTree: PieceTree
 
@@ -119,6 +122,21 @@ export class Queries {
     })
 
     return lines
+  }
+
+  /**
+   * Get First Line
+   */
+  getFirstLine(): Line {
+    return this.getLine(1)
+  }
+
+  /**
+   * Get Last Line
+   */
+  getLastLine(): Line {
+    const lastLineNumber = this.getCountOfLine()
+    return this.getLine(lastLineNumber)
   }
 
   /**
