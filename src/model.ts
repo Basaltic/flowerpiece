@@ -1,7 +1,7 @@
 import { Operations } from './operations'
 import { PieceTree } from './pieceTree'
 import { Queries } from './queries'
-import { ChangeStack } from './change'
+import { ChangeStack, createResetChange } from './change'
 import { Line } from './piece'
 import { DocumentChange } from 'flowerpiece'
 
@@ -85,8 +85,9 @@ export class Model {
    * Reset Contents
    * @param lines
    */
-  resetContent(lines: Line[]) {
+  resetContent(lines: Line[]): DocumentChange | null {
     this.changeHistory.clear()
     this.pieceTree.resetByLines(lines)
+    return createResetChange()
   }
 }

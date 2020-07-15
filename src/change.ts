@@ -4,7 +4,7 @@ import NodePiece from './piece'
 import { Diff } from './diff'
 
 export interface DocumentChange {
-  type: 'insert' | 'delete' | 'format'
+  type: 'insert' | 'delete' | 'format' | 'reset'
   diffs: Diff[]
   startOffset: number
   length: number
@@ -63,6 +63,10 @@ export function createFormatChange(
   diffs: Diff[],
 ): FormatChange {
   return { type: 'format', startOffset, length, meta, piecePatches, diffs }
+}
+
+export function createResetChange(): DocumentChange {
+  return { type: 'reset', diffs: [], startOffset: 0, length: 0 }
 }
 
 /**
