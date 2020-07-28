@@ -147,4 +147,6 @@ it('Get Pure Text In Range', () => {
   expect(queries.getTextInRange(1, 3)).toEqual('ji')
 
   expect(queries.getTextInRange(0, 6)).toEqual('jjiihh')
+
+  expect(queries.getTextInRange(-10, 1)).toEqual('j')
 })

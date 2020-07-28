@@ -51,6 +51,8 @@ export class Queries {
    * @param to
    */
   getTextInRange(from: number, to: number): string {
+    if (from < 0) from = 0
+    if (to < 0) to = 0
     from++
     to++
     if (to > from && from >= 0) {
