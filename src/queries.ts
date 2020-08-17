@@ -94,10 +94,9 @@ export class Queries {
    * @param lineNumber
    */
   getLine(lineNumber: number): Line {
-    const line: Line = { meta: null, pieces: [] }
-
     let { node } = this.pieceTree.findByLineNumber(lineNumber)
-    line.meta = node.piece.meta
+
+    const line: Line = { meta: node.piece.meta, pieces: [] }
 
     node = node.successor()
 

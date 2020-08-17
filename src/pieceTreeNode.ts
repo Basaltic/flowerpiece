@@ -1,8 +1,11 @@
 import NodePiece, { determinePureTextSize } from './piece'
-import { NodeColor, NodePosition, LineNodePosition } from './common'
+import { NodeColor } from './common'
 
 /**
  * A Node Refers a piece of content in the document
+ *
+ *
+ *
  */
 export default class PieceTreeNode {
   parent: PieceTreeNode

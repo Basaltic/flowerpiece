@@ -38,6 +38,9 @@ it('Advanced Format', () => {
   operations.insert(0, 'aaa\nbbb\nccc\nddd\n')
   operations.insert(2, '', imageMeta)
 
+  operations.formatLine(1, meta1)
+  expect(queries.getLineMeta(1)).toEqual(meta1)
+
   operations.formatLine(2, meta1)
   expect(queries.getLineMeta(2)).toEqual(meta1)
 
@@ -45,7 +48,7 @@ it('Advanced Format', () => {
   expect(queries.getLineMeta(2)).toEqual({ ...meta1, ...meta2 })
 
   expect(queries.getLine(1)).toEqual({
-    meta: null,
+    meta: meta1,
     pieces: [
       { text: 'aa', length: 2, meta: null },
       { text: '', length: 1, meta: imageMeta },
@@ -61,7 +64,7 @@ it('Advanced Format', () => {
 
   operations.formatTextInLine(1, meta4)
   expect(queries.getLine(1)).toEqual({
-    meta: null,
+    meta: meta1,
     pieces: [
       { text: 'aa', length: 2, meta: meta4 },
       { text: '', length: 1, meta: imageMeta },
@@ -71,7 +74,7 @@ it('Advanced Format', () => {
 
   operations.formatNonTextInLine(1, meta5)
   expect(queries.getLine(1)).toEqual({
-    meta: null,
+    meta: meta1,
     pieces: [
       { text: 'aa', length: 2, meta: meta4 },
       { text: '', length: 1, meta: { ...imageMeta, ...meta5 } },

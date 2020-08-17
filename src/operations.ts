@@ -115,7 +115,8 @@ export class Operations {
   }
 
   /**
-   * Format the Specific Line
+   * Format the Specific Line. Change The Meta info of the line feed piece
+   *
    * @param lineNumber
    * @param meta
    */
