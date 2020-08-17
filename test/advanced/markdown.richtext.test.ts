@@ -10,12 +10,11 @@ it('Insert: Rich Text Case', () => {
   const model = new Model()
   const { operations, queries } = model
 
-  operations.insert(0, '123456789\n')
+  operations.insert(0, '123456789\n1234')
   operations.insert(0, '# ')
   operations.delete(0, 2)
 
-  let len = model.pieceTree.getLength()
-  console.log(len)
+  console.log(queries.getPieces())
 
   operations.formatLine(1, h1Meta)
   operations.formatInLine(1, h1Meta)

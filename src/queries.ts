@@ -104,7 +104,6 @@ export class Queries {
       line.pieces.push({ text: this.pieceTree.getTextInPiece(node.piece), length: node.piece.length, meta: node.piece.meta })
       node = node.successor()
     }
-
     if (line.pieces.length === 0) {
       line.pieces.push({ text: '', length: 0, meta: null })
     }
