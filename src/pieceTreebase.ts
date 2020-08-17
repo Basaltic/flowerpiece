@@ -195,12 +195,12 @@ export default class PieceTreeBase {
       x = z.right
       this.transplant(z, z.right)
 
-      x.parent.updateMeta()
+      x.parent.updateMetaUpward()
     } else if (z.right.isNil) {
       x = z.left
       this.transplant(z, z.left)
 
-      x.parent.updateMeta()
+      x.parent.updateMetaUpward()
     }
     // 3. 左树、右树都存在。用该节点的后继节点移植
     else {
@@ -221,8 +221,8 @@ export default class PieceTreeBase {
       y.left.parent = y
       y.color = z.color
 
-      x.parent.updateMeta()
-      y.updateMeta()
+      x.parent.updateMetaUpward()
+      y.updateMetaUpward()
     }
 
     if (yOriginalColor === NodeColor.BLACK) {

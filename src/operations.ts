@@ -131,10 +131,10 @@ export class Operations {
   formatInLine(lineNumber: number, meta: PieceMeta): DocumentChange | null {
     const cnt = this.pieceTree.getLength()
     const lineCnt = this.pieceTree.getLineCount()
-
+    // console.log(cnt)
     if (lineCnt === 1) {
       if (lineNumber === 1) {
-        return this.pieceTree.formatInner(1, cnt - 1, meta)
+        return this.pieceTree.formatInner(0, cnt - 1, meta)
       }
       return null
     } else {
