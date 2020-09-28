@@ -1,4 +1,4 @@
-import PieceTreeNode from './pieceTreeNode'
+import { PieceNode } from 'pieceNode'
 
 /**
  * Color of RB-Tree Node
@@ -12,24 +12,20 @@ export enum NodeColor {
  * Node Position
  */
 export interface NodePosition {
-  // node instance
-  node: PieceTreeNode
-  // remind content length in the node
+  /**
+   * Which node the position is located
+   */
+  node: PieceNode
+  /**
+   * Remind content length in the node
+   */
   reminder: number
-  // node content start offset in the document
+  /**
+   * Start offset in the entire document
+   */
   startOffset: number
-  // line Feed Cnt before this node
+  /**
+   * line Feed Count before this node
+   */
   startLineFeedCnt: number
-}
-
-export interface LineNodePosition {
-  // start node of this line
-  node: PieceTreeNode
-  remindLineCnt: number
-  startOffset: number
-}
-
-export interface ContentLoaction {
-  line: number
-  column: number
 }

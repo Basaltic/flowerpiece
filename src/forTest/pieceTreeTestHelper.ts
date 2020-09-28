@@ -1,4 +1,4 @@
-import PieceTreeNode from '../pieceTreeNode'
+import PieceNode from '../pieceNode'
 
 /**
  * Helper Functions to make debuger easier
@@ -8,7 +8,7 @@ export default class PieceTreeTest {
    * The Height Of The subtree
    * @param node
    */
-  static height(node: PieceTreeNode) {
+  static height(node: PieceNode) {
     if (node.isNil) {
       return 0
     } else {
@@ -23,7 +23,7 @@ export default class PieceTreeTest {
     }
   }
 
-  static printLevelOrder(root: PieceTreeNode) {
+  static printLevelOrder(root: PieceNode) {
     const h = PieceTreeTest.height(root)
     for (let i = 1; i <= h; i++) {
       const list: string[] = []
@@ -32,7 +32,7 @@ export default class PieceTreeTest {
     }
   }
 
-  static printGivenLevel(root: PieceTreeNode, level: number, list: string[]) {
+  static printGivenLevel(root: PieceNode, level: number, list: string[]) {
     if (root.isNil) {
       list.push('n')
       return

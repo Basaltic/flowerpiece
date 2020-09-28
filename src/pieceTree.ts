@@ -1,6 +1,6 @@
 import NodePiece, { Piece, Line, PieceType, determinePieceType } from './piece'
 import PieceTreeBase from './pieceTreebase'
-import PieceTreeNode, { SENTINEL } from './pieceTreeNode'
+import PieceNode, { SENTINEL } from './pieceNode'
 import {
   DocumentChange,
   InsertChange,
@@ -234,8 +234,10 @@ export class PieceTree extends PieceTreeBase {
           addBuffer.buffer += txt
           node.piece.length += txt.length
           node.updateMetaUpward()
-        } else if (txt || (txt && !isEmptyMeta)) {
-          node = this.insertFixedRight(node, this.createPiece(txt, meta, 0))
+        } else if (txt) {
+          const newMeta = determinePieceType(node.piece) === PieceType.TEXT && meta === null ? node.piece.meta : meta
+          console.log(newMeta)
+          node = this.insertFixedRight(node, this.createPiece(txt, newMeta, 0))
         }
 
         node = this.insertFixedRight(node, this.createPiece(EOL, meta, 1))
@@ -253,10 +255,12 @@ export class PieceTree extends PieceTreeBase {
         node.piece.length += txt.length
         node.updateMetaUpward()
       } else if (txt || !isEmptyMeta) {
-        this.insertFixedRight(node, this.createPiece(txt, meta, 0))
+        const newMeta = determinePieceType(node.piece) === PieceType.TEXT && meta === null ? node.piece.meta : meta
+        this.insertFixedRight(node, this.createPiece(txt, newMeta, 0))
       }
     } else if (txt) {
-      this.insertFixedRight(node, this.createPiece(txt, meta, 0))
+      const newMeta = determinePieceType(node.piece) === PieceType.TEXT && meta === null ? node.piece.meta : meta
+      this.insertFixedRight(node, this.createPiece(txt, newMeta, 0))
     }
 
     // Create Diffs
@@ -522,7 +526,7 @@ export class PieceTree extends PieceTreeBase {
    * @param node
    * @param reminder
    */
-  protected splitNode(node: PieceTreeNode, reminder: number) {
+  protected splitNode(node: PieceNode, reminder: number) {
     const { bufferIndex, start, meta } = node.piece
 
     const leftPiece = new NodePiece(bufferIndex, start, reminder, 0, meta ? cloneDeep(meta) : meta)

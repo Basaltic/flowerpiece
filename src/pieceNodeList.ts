@@ -1,141 +1,125 @@
-import PieceNode, { SENTINEL, createPieceTreeNode } from './pieceNode'
-import { NodeColor, NodePosition } from './common'
-import NodePiece, { determinePureTextSize } from './piece'
-import StringBuffer from './stringBuffer'
+import { NodeColor, NodePosition } from 'common'
+import { SENTINEL, PieceNode, Piece } from 'pieceNode'
+import { PieceTable } from 'pieceTable'
+import cloneDeep from 'lodash.clonedeep'
+import { off } from 'process'
 
 /**
- * Piece Tree Base
+ * Balanced Binary Tree
+ *
+ * Piece List 初始化的时候，
+ *
  */
-export default class PieceTreeBase {
-  public buffers: StringBuffer[]
-  public root: PieceNode = SENTINEL
+export class PieceNodeList {
+  private root: PieceNode = SENTINEL
 
-  constructor() {
-    const addedTextBuffer = new StringBuffer('')
-    this.buffers = [addedTextBuffer, new StringBuffer('')]
-  }
+  private pt: PieceTable
 
   /**
-   * Length Of The Content
+   * Actual Length
    */
-  getLength() {
+  public get length(): number {
     return this.root.leftSize + this.root.rightSize + this.root.piece.length
   }
 
   /**
-   * Get How many lines the document has
+   * Number of Line Feeds in the list
    */
-  getLineCount() {
+  public get lineFeedCnt(): number {
     return this.root.leftLineFeeds + this.root.rightLineFeeds + this.root.piece.lineFeedCnt
   }
 
-  /**
-   * Pure Text Count
-   */
-  getPureTextCount() {
-    return this.root.leftTextSize + this.root.rightTextSize + determinePureTextSize(this.root.piece)
+  constructor(pt: PieceTable) {
+    this.pt = pt
   }
 
   /**
-   * Check if there's no content
-   */
-  isEmpty() {
-    if (this.getLength() <= 1) {
-      return true
-    }
-    return false
-  }
-
-  freeAll() {
-    this.free(this.root.left)
-    this.free(this.root.right)
-    this.root = SENTINEL
-    this.buffers = [new StringBuffer(''), new StringBuffer('')]
-  }
-
-  protected free(node: PieceNode) {
-    if (node === SENTINEL) return
-
-    if (node.left !== SENTINEL) {
-      this.free(node.left)
-    }
-
-    if (node.right !== SENTINEL) {
-      this.free(node.right)
-    }
-
-    node.detach()
-  }
-
-  /**
-   * Find Node Position by Offset
+   * Find Node Postion
+   *
    * @param offset
    */
-  findByOffset(offset: number): NodePosition {
+  public find(offset: number): NodePosition {
     let node = this.root
     let reminder = 0
     let startOffset = 0
     let startLineFeedCnt = 0
 
+    if (offset <= 0) return { node: this.root.lefest(), reminder: 0, startOffset: startOffset, startLineFeedCnt }
+    if (offset >= this.length) {
+      const lastNode = this.root.rightest()
+      return {
+        node: lastNode,
+        reminder: lastNode.piece.length,
+        startOffset: this.length - lastNode.piece.length,
+        startLineFeedCnt: this.lineFeedCnt - lastNode.piece.lineFeedCnt,
+      }
+    }
+
     while (node !== SENTINEL) {
+      // Go to left tree
       if (node.leftSize > offset) {
         node = node.left
-      } else if (node.leftSize + node.piece.length >= offset) {
-        reminder = offset - node.leftSize
-        startOffset += node.leftSize
-        startLineFeedCnt += node.leftLineFeeds
-        break
+      }
+      // In This Node
+      else if (node.leftSize + node.piece.length > offset) {
       } else {
         if (node.right === SENTINEL) break
 
         offset -= node.leftSize + node.piece.length
         startOffset += node.leftSize + node.piece.length
         startLineFeedCnt += node.leftLineFeeds + node.piece.lineFeedCnt
+
         node = node.right
       }
     }
 
-    return { node, reminder, startOffset, startLineFeedCnt }
+    return { node: this.root.lefest(), reminder: 0, startOffset: startOffset, startLineFeedCnt }
   }
 
   /**
-   * Find The Specific Line Start Node
+   * Split a node into to two new node
+   *
+   * @param pieceNode Node To Split
+   * @param offset Where To Split
    */
-  findByLineNumber(lineNumber: number): NodePosition {
-    let node = this.root
-    let reminder = 0
-    let startOffset = 0
-    let startLineFeedCnt = lineNumber
+  public splitNode(pieceNode: PieceNode, offset: number) {
+    const { bufferIndex, start, meta, pieceType } = pieceNode.piece
 
-    if (lineNumber <= 0) lineNumber = 1
-    if (lineNumber > this.getLineCount()) lineNumber = this.getLineCount()
-
-    while (node !== SENTINEL) {
-      if (node.leftLineFeeds >= lineNumber) {
-        node = node.left
-      } else if (node.leftLineFeeds + node.piece.lineFeedCnt >= lineNumber) {
-        startOffset += node.leftSize
-        break
-      } else {
-        if (node.right === SENTINEL) break
-
-        lineNumber -= node.leftLineFeeds + node.piece.lineFeedCnt
-        startOffset += node.leftSize + node.piece.length
-
-        node = node.right
-      }
+    const leftPiece: Piece = {
+      bufferIndex,
+      start,
+      length: offset,
+      lineFeedCnt: 0,
+      meta: cloneDeep(meta),
+      pieceType: pieceType,
     }
 
-    return { node, reminder, startOffset, startLineFeedCnt }
+    pieceNode.piece.start += offset
+    pieceNode.piece.length -= offset
+    pieceNode.piece.lineFeedCnt -= 0
+
+    const leftNode = new PieceNode(leftPiece)
+
+    this.insertFixedLeft(pieceNode, leftNode)
+    return [leftNode, pieceNode]
   }
 
   /**
-   * Append the piece
+   * Insert a new node to the leftest of the tree
+   * @param pieceNode
+   */
+  public prepend(pieceNode: PieceNode) {
+    const node = this.root.lefest()
+    this.insertFixedLeft(node, pieceNode)
+  }
+
+  /**
+   * Insert a new node to the rightest of the tree
    * @param piece
    */
-  protected insertRightest(piece: NodePiece) {
-    const node = this.root.findMax()
-    this.insertFixedRight(node, piece)
+  public append(pieceNode: PieceNode) {
+    const node = this.root.rightest()
+    this.insertFixedRight(node, pieceNode)
   }
 
   /**
@@ -143,20 +127,19 @@ export default class PieceTreeBase {
    * @param node Insert After This Node
    * @param piece
    */
-  protected insertFixedLeft(node: PieceNode, piece: NodePiece): PieceNode {
-    const newNode = createPieceTreeNode(piece)
+  public insertFixedLeft(node: PieceNode, pieceNode: PieceNode): PieceNode {
     if (node.isNil) {
-      this.root = newNode
-      newNode.left = SENTINEL
-      newNode.right = SENTINEL
-      newNode.parent = SENTINEL
+      this.root = pieceNode
+      pieceNode.left = SENTINEL
+      pieceNode.right = SENTINEL
+      pieceNode.parent = SENTINEL
     } else {
-      node.prepend(newNode)
+      node.prepend(pieceNode)
     }
-    newNode.updateMetaUpward()
-    this.insertFixup(newNode)
+    pieceNode.updateMetaUpward()
+    this.insertFixup(pieceNode)
 
-    return newNode
+    return pieceNode
   }
 
   /**
@@ -164,27 +147,26 @@ export default class PieceTreeBase {
    * @param node
    * @param piece
    */
-  protected insertFixedRight(node: PieceNode, piece: NodePiece) {
-    const newNode = createPieceTreeNode(piece)
+  public insertFixedRight(node: PieceNode, pieceNode: PieceNode) {
     if (node.isNil) {
-      this.root = newNode
-      newNode.left = SENTINEL
-      newNode.right = SENTINEL
-      newNode.parent = SENTINEL
+      this.root = pieceNode
+      pieceNode.left = SENTINEL
+      pieceNode.right = SENTINEL
+      pieceNode.parent = SENTINEL
     } else {
-      node.append(newNode)
+      node.append(pieceNode)
     }
-    newNode.updateMetaUpward()
-    this.insertFixup(newNode)
+    pieceNode.updateMetaUpward()
+    this.insertFixup(pieceNode)
 
-    return newNode
+    return pieceNode
   }
 
   /**
    * Delete Node
    * @param node
    */
-  protected deleteNode(z: PieceNode) {
+  public deleteNode(z: PieceNode): PieceNode {
     let y = z
     let yOriginalColor = y.color
 
@@ -204,7 +186,7 @@ export default class PieceTreeBase {
     }
     // 3. 左树、右树都存在。用该节点的后继节点移植
     else {
-      y = z.right.findMin()
+      y = z.right.lefest()
       yOriginalColor = y.color
       x = y.right
 
@@ -230,6 +212,7 @@ export default class PieceTreeBase {
     }
 
     z.detach()
+    return z
   }
 
   /**

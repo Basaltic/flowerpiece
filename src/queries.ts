@@ -1,5 +1,5 @@
 import { PieceTree } from './pieceTree'
-import { SENTINEL } from './pieceTreeNode'
+import { SENTINEL } from './pieceNode'
 import { Line, Piece } from './piece'
 import { PieceMeta } from './meta'
 

@@ -1,7 +1,7 @@
 import { Patch } from 'immer'
 import { PieceMeta } from './meta'
-import NodePiece from './piece'
 import { Diff } from './diff'
+import { Piece } from 'pieceNode'
 
 export interface DocumentChange {
   type: 'insert' | 'delete' | 'format' | 'reset'
@@ -27,7 +27,7 @@ export interface InsertChange extends DocumentChange {
 export interface DeleteChange extends DocumentChange {
   type: 'delete'
   // Deleted part of piece, only the text string need to be stored. [bufferIndex, start, length]
-  pieces: NodePiece[]
+  pieces: Piece[]
 }
 
 /**

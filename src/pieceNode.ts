@@ -1,17 +1,100 @@
-import NodePiece, { determinePureTextSize } from './piece'
 import { NodeColor } from './common'
+import { mergeMeta, PieceMeta } from 'meta'
+import { PieceNodeList } from 'pieceNodeList'
+
+/**
+ * Types Of Piece
+ */
+export enum PieceType {
+  /**
+   * Pure Text Object. Can Have:
+   * 1. Text Reference
+   * 2. Lenght, Offset
+   * 3. Meta Style
+   */
+  TEXT = 1,
+  /**
+   * A Inline Object. e.x. Image, Video, Custom inline object. Can Have:
+   * 1. Meta, Style
+   * 2. Length, Offset
+   */
+  OBJECT = 2,
+  /**
+   * A Container Piece. Can Have:
+   * 1. Meta Style
+   * 2. Children Piece List
+   */
+  STRUCTURAL = 3,
+}
+
+export interface Piece {
+  // TEXT: Buffer Index
+  // OBJECT: -1
+  // STRUCTURAL: -1
+  bufferIndex: number
+  // TEXT: Raw Content Start in Current Buffer
+  // OBJECT: -1
+  // STRUCTURAL: -1
+  start: number
+  // TEXT: Content Length
+  // OBJECT: 1
+  // STRUCTURAL: -1
+  length: number
+
+  // How Many Line Break In This Piece.
+  lineFeedCnt: number
+
+  // Extra Meta Info
+  meta: PieceMeta | null
+
+  // Type of this piece
+  pieceType: PieceType
+}
+
+/**
+ * Create Text Piece
+ * @param bufferIndex
+ * @param start
+ * @param length
+ * @param lineFeedCnt
+ * @param meta
+ */
+export function createTextPiece(
+  bufferIndex: number,
+  start: number,
+  length: number,
+  lineFeedCnt: number,
+  meta: PieceMeta | null = null,
+): Piece {
+  return { pieceType: PieceType.TEXT, bufferIndex, start, length, lineFeedCnt, meta }
+}
+
+/**
+ * Create Object Piece
+ * @param meta
+ */
+export function createObjectPiece(meta: PieceMeta): Piece {
+  return { pieceType: PieceType.OBJECT, bufferIndex: -1, start: -1, length: 1, lineFeedCnt: -1, meta }
+}
+
+/**
+ * Create Structural Piece
+ * @param meta
+ */
+export function createStructuralPiece(meta: PieceMeta) {
+  return { pieceType: PieceType.STRUCTURAL, bufferIndex: -1, start: -1, length: 0, lineFeedCnt: -1, meta }
+}
 
 /**
  * A Node Refers a piece of content in the document
- *
- *
- *
  */
-export default class PieceTreeNode {
-  parent: PieceTreeNode
-  left: PieceTreeNode
-  right: PieceTreeNode
+export class PieceNode {
+  parent: PieceNode
+  left: PieceNode
+  right: PieceNode
   color: NodeColor
+
+  above: PieceNode
 
   // Left sub-tree Text Size
   leftSize!: number
@@ -30,9 +113,12 @@ export default class PieceTreeNode {
   rightTextSize: number
 
   // Every Node Store The Text Piece
-  piece!: NodePiece
+  piece: Piece
 
-  constructor(piece: NodePiece, color?: NodeColor) {
+  // If this is a structural piece, it can have innner piece list
+  children?: PieceNodeList
+
+  constructor(piece: Piece, color?: NodeColor) {
     this.piece = piece
     this.leftSize = 0
     this.leftLineFeeds = 0
@@ -46,6 +132,8 @@ export default class PieceTreeNode {
     this.parent = this
     this.left = this
     this.right = this
+
+    this.above = this
   }
 
   get isRoot() {
@@ -79,22 +167,35 @@ export default class PieceTreeNode {
   /**
    * Set To Red Node
    */
-  toRed() {
+  public toRed() {
     this.color = NodeColor.RED
   }
 
   /**
    * Set To Black Node
    */
-  toBlack() {
+  public toBlack() {
     this.color = NodeColor.BLACK
+  }
+
+  /**
+   * Change Meta Object
+   */
+  public changeMeta(modifiedMeta: PieceMeta) {
+    const result = mergeMeta(this.piece.meta, modifiedMeta)
+    if (result !== null) {
+      this.piece.meta = result[0]
+      return result[1]
+    }
+
+    return null
   }
 
   /**
    * Prepend
    * @param node
    */
-  prepend(node: PieceTreeNode) {
+  public prepend(node: PieceNode) {
     if (this.left === SENTINEL) {
       this.left = node
       node.parent = this
@@ -109,7 +210,7 @@ export default class PieceTreeNode {
    * Append
    * @param node
    */
-  append(node: PieceTreeNode) {
+  public append(node: PieceNode) {
     if (this.right === SENTINEL) {
       this.right = node
       node.parent = this
@@ -123,9 +224,9 @@ export default class PieceTreeNode {
   /**
    * 寻找本节点子树的最左侧节点
    */
-  findMin(): PieceTreeNode {
+  public lefest(): PieceNode {
     if (this.left.isNotNil) {
-      return this.left.findMin()
+      return this.left.lefest()
     }
     return this
   }
@@ -133,9 +234,9 @@ export default class PieceTreeNode {
   /**
    * Find The Max Node in this subtree
    */
-  findMax(): PieceTreeNode {
+  public rightest(): PieceNode {
     if (this.right.isNotNil) {
-      return this.right.findMax()
+      return this.right.rightest()
     }
     return this
   }
@@ -143,12 +244,12 @@ export default class PieceTreeNode {
   /**
    * Tree Successor
    */
-  successor() {
+  public successor() {
     if (this.right.isNotNil) {
-      return this.right.findMin()
+      return this.right.lefest()
     }
 
-    let node: PieceTreeNode = this
+    let node: PieceNode = this
 
     while (node.parent.isNotNil) {
       if (node.parent.left === node) {
@@ -163,12 +264,12 @@ export default class PieceTreeNode {
   /**
    * Tree Predecessor
    */
-  predecessor() {
+  public predecessor() {
     if (this.left.isNotNil) {
-      return this.left.findMax()
+      return this.left.rightest()
     }
 
-    let node: PieceTreeNode = this
+    let node: PieceNode = this
 
     while (node.parent.isNotNil) {
       if (node.parent.right === node) {
@@ -183,7 +284,7 @@ export default class PieceTreeNode {
   /**
    * Update Meta Info of The Node
    */
-  updateMeta() {
+  public updateMeta() {
     if (this.left.isNil) {
       this.leftSize = 0
       this.leftLineFeeds = 0
@@ -193,7 +294,7 @@ export default class PieceTreeNode {
       this.leftSize = this.left.leftSize + this.left.rightSize + this.left.piece.length
       this.leftLineFeeds = this.left.leftLineFeeds + this.left.rightLineFeeds + this.left.piece.lineFeedCnt
 
-      this.leftTextSize = this.left.leftTextSize + this.left.rightTextSize + determinePureTextSize(this.left.piece)
+      // this.leftTextSize = this.left.leftTextSize + this.left.rightTextSize + determinePureTextSize(this.left.piece)
     }
 
     if (this.right.isNil) {
@@ -205,7 +306,7 @@ export default class PieceTreeNode {
       this.rightSize = this.right.leftSize + this.right.rightSize + this.right.piece.length
       this.rightLineFeeds = this.right.leftLineFeeds + this.right.rightLineFeeds + this.right.piece.lineFeedCnt
 
-      this.rightTextSize = this.right.leftTextSize + this.right.rightTextSize + determinePureTextSize(this.right.piece)
+      // this.rightTextSize = this.right.leftTextSize + this.right.rightTextSize + determinePureTextSize(this.right.piece)
     }
   }
 
@@ -216,7 +317,7 @@ export default class PieceTreeNode {
    *
    * @param this
    */
-  updateMetaUpward(stopAnchor?: PieceTreeNode): boolean {
+  public updateMetaUpward(stopAnchor?: PieceNode): boolean {
     this.updateMeta()
 
     if (this.parent.isNotNil && this !== stopAnchor) {
@@ -226,7 +327,10 @@ export default class PieceTreeNode {
     return true
   }
 
-  detach() {
+  /**
+   * detach this node from the tree
+   */
+  public detach() {
     this.parent = null!
     this.left = null!
     this.right = null!
@@ -234,15 +338,15 @@ export default class PieceTreeNode {
 }
 
 // Sentinel Node Which Refers to Black Nil Node
-export const SENTINEL = new PieceTreeNode(new NodePiece(1, 1, 0, 0, null), NodeColor.BLACK)
+export const SENTINEL = new PieceNode(createObjectPiece({}), NodeColor.BLACK)
 
 /**
  * Create New Node
  * @param piece
  * @param color
  */
-export function createPieceTreeNode(piece: NodePiece, color?: NodeColor): PieceTreeNode {
-  const node = new PieceTreeNode(piece, color)
+export function createPieceTreeNode(piece: Piece, color?: NodeColor): PieceNode {
+  const node = new PieceNode(piece, color)
   node.left = SENTINEL
   node.right = SENTINEL
   node.parent = SENTINEL
