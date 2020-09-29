@@ -1,8 +1,6 @@
-import { NodeColor, NodePosition } from 'common'
-import { SENTINEL, PieceNode, Piece } from 'pieceNode'
-import { PieceTable } from 'pieceTable'
+import { NodeColor, NodePosition } from './common'
+import { SENTINEL, PieceNode, Piece } from './pieceNode'
 import cloneDeep from 'lodash.clonedeep'
-import { off } from 'process'
 
 /**
  * Balanced Binary Tree
@@ -11,27 +9,37 @@ import { off } from 'process'
  *
  */
 export class PieceNodeList {
-  private root: PieceNode = SENTINEL
+  public root: PieceNode = SENTINEL
 
-  private pt: PieceTable
+  /**
+   * First Node Of the list
+   */
+  public get firstNode(): PieceNode {
+    return this.root.lefest()
+  }
 
   /**
    * Actual Length
    */
-  public get length(): number {
+  public get size(): number {
     return this.root.leftSize + this.root.rightSize + this.root.piece.length
+  }
+
+  /**
+   * How many nodes in this list
+   */
+  public get nodeCnt(): number {
+    return this.root.leftNodeCnt + this.root.rightNodeCnt + 1
   }
 
   /**
    * Number of Line Feeds in the list
    */
   public get lineFeedCnt(): number {
-    return this.root.leftLineFeeds + this.root.rightLineFeeds + this.root.piece.lineFeedCnt
+    return this.root.leftLineFeedCnt + this.root.rightLineFeedCnt + this.root.piece.lineFeedCnt
   }
 
-  constructor(pt: PieceTable) {
-    this.pt = pt
-  }
+  constructor() {}
 
   /**
    * Find Node Postion
@@ -45,12 +53,12 @@ export class PieceNodeList {
     let startLineFeedCnt = 0
 
     if (offset <= 0) return { node: this.root.lefest(), reminder: 0, startOffset: startOffset, startLineFeedCnt }
-    if (offset >= this.length) {
+    if (offset >= this.size) {
       const lastNode = this.root.rightest()
       return {
         node: lastNode,
         reminder: lastNode.piece.length,
-        startOffset: this.length - lastNode.piece.length,
+        startOffset: this.size - lastNode.piece.length,
         startLineFeedCnt: this.lineFeedCnt - lastNode.piece.lineFeedCnt,
       }
     }
@@ -61,19 +69,23 @@ export class PieceNodeList {
         node = node.left
       }
       // In This Node
-      else if (node.leftSize + node.piece.length > offset) {
+      else if (node.leftSize + node.size > offset) {
+        reminder = offset - node.leftSize
+        startOffset += node.leftSize
+        startLineFeedCnt += node.leftLineFeedCnt
+        break
       } else {
         if (node.right === SENTINEL) break
 
-        offset -= node.leftSize + node.piece.length
-        startOffset += node.leftSize + node.piece.length
-        startLineFeedCnt += node.leftLineFeeds + node.piece.lineFeedCnt
+        offset -= node.leftSize + node.size
+        startOffset += node.leftSize + node.size
+        startLineFeedCnt += node.leftLineFeedCnt + node.lineFeedCnt
 
         node = node.right
       }
     }
 
-    return { node: this.root.lefest(), reminder: 0, startOffset: startOffset, startLineFeedCnt }
+    return { node, reminder, startOffset: startOffset, startLineFeedCnt }
   }
 
   /**
@@ -108,7 +120,7 @@ export class PieceNodeList {
    * Insert a new node to the leftest of the tree
    * @param pieceNode
    */
-  public prepend(pieceNode: PieceNode) {
+  public prependNode(pieceNode: PieceNode) {
     const node = this.root.lefest()
     this.insertFixedLeft(node, pieceNode)
   }
@@ -117,7 +129,7 @@ export class PieceNodeList {
    * Insert a new node to the rightest of the tree
    * @param piece
    */
-  public append(pieceNode: PieceNode) {
+  public appendNode(pieceNode: PieceNode) {
     const node = this.root.rightest()
     this.insertFixedRight(node, pieceNode)
   }

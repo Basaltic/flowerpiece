@@ -1,4 +1,4 @@
-import { PieceNode } from 'pieceNode'
+import { PieceNode } from './pieceNode'
 
 /**
  * Color of RB-Tree Node
@@ -29,3 +29,8 @@ export interface NodePosition {
    */
   startLineFeedCnt: number
 }
+
+/**
+ * Document Postion. Its just a offset number
+ */
+export declare type DocPostion = number

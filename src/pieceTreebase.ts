@@ -1,4 +1,4 @@
-import PieceNode, { SENTINEL, createPieceTreeNode } from './pieceNode'
+import PieceNode, { SENTINEL, createPieceNode } from './pieceNode'
 import { NodeColor, NodePosition } from './common'
 import NodePiece, { determinePureTextSize } from './piece'
 import StringBuffer from './stringBuffer'
@@ -144,7 +144,7 @@ export default class PieceTreeBase {
    * @param piece
    */
   protected insertFixedLeft(node: PieceNode, piece: NodePiece): PieceNode {
-    const newNode = createPieceTreeNode(piece)
+    const newNode = createPieceNode(piece)
     if (node.isNil) {
       this.root = newNode
       newNode.left = SENTINEL
@@ -165,7 +165,7 @@ export default class PieceTreeBase {
    * @param piece
    */
   protected insertFixedRight(node: PieceNode, piece: NodePiece) {
-    const newNode = createPieceTreeNode(piece)
+    const newNode = createPieceNode(piece)
     if (node.isNil) {
       this.root = newNode
       newNode.left = SENTINEL

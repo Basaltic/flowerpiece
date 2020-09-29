@@ -1,4 +1,4 @@
-import PieceNode from '../pieceNode'
+import { PieceNode } from '../pieceNode'
 
 /**
  * Helper Functions to make debuger easier
@@ -38,9 +38,7 @@ export default class PieceTreeTest {
       return
     }
     if (level === 1) {
-      list.push(
-        `${root.leftLineFeeds},${root.leftSize},${root.piece.length},${root.rightSize},${root.rightLineFeeds},${root.piece.lineFeedCnt}`,
-      )
+      list.push(`${root.leftLineFeedCnt},${root.leftSize},${root.size},${root.rightSize},${root.rightLineFeedCnt},${root.lineFeedCnt}`)
     } else if (level > 1) {
       PieceTreeTest.printGivenLevel(root.left, level - 1, list)
       PieceTreeTest.printGivenLevel(root.right, level - 1, list)
