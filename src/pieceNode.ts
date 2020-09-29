@@ -376,8 +376,14 @@ export class PieceNode {
   public updateMetaUpward(stopAnchor?: PieceNode): boolean {
     this.updateMeta()
 
+    // Update Meta of This level
     if (this.parent.isNotNil && this !== stopAnchor) {
       this.parent.updateMetaUpward()
+    }
+
+    // Update up level
+    if (this.above.isNotNil) {
+      this.above.updateMetaUpward()
     }
 
     return true
@@ -406,5 +412,6 @@ export function createPieceNode(piece: Piece, color?: NodeColor): PieceNode {
   node.left = SENTINEL
   node.right = SENTINEL
   node.parent = SENTINEL
+  node.above = SENTINEL
   return node
 }

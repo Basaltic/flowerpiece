@@ -22,7 +22,7 @@ export class PieceNodeList {
    * Actual Length
    */
   public get size(): number {
-    return this.root.leftSize + this.root.rightSize + this.root.piece.length
+    return this.root.leftSize + this.root.rightSize + this.root.size
   }
 
   /**
@@ -36,7 +36,7 @@ export class PieceNodeList {
    * Number of Line Feeds in the list
    */
   public get lineFeedCnt(): number {
-    return this.root.leftLineFeedCnt + this.root.rightLineFeedCnt + this.root.piece.lineFeedCnt
+    return this.root.leftLineFeedCnt + this.root.rightLineFeedCnt + this.root.lineFeedCnt
   }
 
   constructor() {}
