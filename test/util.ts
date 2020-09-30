@@ -1,18 +1,22 @@
-import { PieceNodeList } from '../src/pieceNodeList'
-import { createPieceNode, createStructuralPiece, createTextPiece, PieceNode } from '../src/pieceNode'
+import { createPieceNode, createRootPiece, createStructuralPiece, createTextPiece, PieceNode, SENTINEL } from '../src/pieceNode'
 import PieceTreeTest from '../src/forTest/pieceTreeTestHelper'
 
 /**
  * Create A Piece Node List Of Empty Paragraph
  */
-export function createEmptyParagraphList(): PieceNodeList {
-  const list = new PieceNodeList()
+export function createEmptyParagraphList(): PieceNode {
+  const root = createPieceNode(createRootPiece())
 
   for (let i = 0; i < 10; i++) {
     const p = createParagraphNode()
-    list.appendNode(p)
+    root.appendChild(p)
   }
-  return list
+
+  if (root.children) {
+    PieceTreeTest.printLevelOrder(root.children.root)
+  }
+
+  return root
 }
 
 /**
@@ -20,33 +24,30 @@ export function createEmptyParagraphList(): PieceNodeList {
  * Table
  * P
  */
-export function createEmptyTableParagraphList(): PieceNodeList {
-  const list = new PieceNodeList()
+export function createEmptyTableParagraphList(): PieceNode {
+  const root = createPieceNode(createRootPiece())
 
-  list.appendNode(createParagraphNode())
-  list.appendNode(createTableNode({ row: 1, col: 1 }))
-  list.appendNode(createParagraphNode())
+  root.appendChild(createParagraphNode())
+  root.appendChild(createTableNode({ row: 1, col: 1 }))
+  root.appendChild(createParagraphNode())
 
-  PieceTreeTest.printLevelOrder(list.root)
+  if (root.children) {
+    PieceTreeTest.printLevelOrder(root.children.root)
+  }
 
-  return list
+  return root
 }
-
-let id = 0
 
 /**
  * Create An Empty Paragraph Structural Piece Node
  */
 export function createParagraphNode() {
-  const piece = createStructuralPiece(0, { type: 'p', id: id++ })
+  const piece = createStructuralPiece(0, { type: 'p' })
   const node = createPieceNode(piece)
-
-  const list = new PieceNodeList()
-  node.children = list
 
   // text node has a line feed symbol
   const tNode = createTextNode(1, 1)
-  list.appendNode(tNode)
+  node.appendChild(tNode)
 
   return node
 }
@@ -60,8 +61,6 @@ export function createTableNode(params: { row: number; col: number }) {
 
   const piece = createStructuralPiece(1, { type: 'table' })
   const node = createPieceNode(piece)
-  const children = new PieceNodeList()
-  node.children = children
 
   if (row <= 0) {
     row = 1
@@ -69,7 +68,7 @@ export function createTableNode(params: { row: number; col: number }) {
 
   for (let i = 0; i < row; i++) {
     const rowNode = createTableRowNode(col)
-    children.appendNode(rowNode)
+    node.appendChild(rowNode)
   }
 
   return node
@@ -78,8 +77,6 @@ export function createTableNode(params: { row: number; col: number }) {
 function createTableRowNode(cellNum: number): PieceNode {
   const piece = createStructuralPiece(1, { type: 'tr' })
   const node = createPieceNode(piece)
-  const children = new PieceNodeList()
-  node.children = children
 
   if (cellNum <= 0) {
     cellNum = 1
@@ -87,7 +84,7 @@ function createTableRowNode(cellNum: number): PieceNode {
 
   for (let i = 0; i < cellNum; i++) {
     const cell = createTableCellNode()
-    children.appendNode(cell)
+    node.appendChild(cell)
   }
 
   return node
@@ -97,13 +94,8 @@ function createTableCellNode(): PieceNode {
   const cellPiece = createStructuralPiece(1, { type: 'tc' })
   const cellNode = createPieceNode(cellPiece)
 
-  const cellChildren = new PieceNodeList()
-  cellNode.children = cellChildren
-
   const paragraphNode = createParagraphNode()
-  cellChildren.appendNode(paragraphNode)
-
-  console.log(cellNode.children.size, cellNode.piece.length, cellNode.size)
+  cellNode.appendChild(paragraphNode)
 
   return cellNode
 }

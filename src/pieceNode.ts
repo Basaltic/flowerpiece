@@ -1,3 +1,4 @@
+import { chdir } from 'process'
 import { NodeColor } from './common'
 import { mergeMeta, PieceMeta } from './meta'
 import { PieceNodeList } from './pieceNodeList'
@@ -37,6 +38,11 @@ export enum PieceType {
    *
    */
   STRUCTURAL = 3,
+
+  /**
+   * A Root Piece, One Piece Table Can only have one root
+   */
+  ROOT = 4,
 }
 
 export interface Piece {
@@ -61,41 +67,6 @@ export interface Piece {
 
   // Type of this piece
   pieceType: PieceType
-}
-
-/**
- * Create Text Piece
- *
- * @param bufferIndex
- * @param start
- * @param length
- * @param lineFeedCnt
- * @param meta
- */
-export function createTextPiece(
-  bufferIndex: number,
-  start: number,
-  length: number,
-  lineFeedCnt: number,
-  meta: PieceMeta | null = null,
-): Piece {
-  return { pieceType: PieceType.TEXT, bufferIndex, start, length, lineFeedCnt, meta }
-}
-
-/**
- * Create Object Piece
- * @param meta
- */
-export function createObjectPiece(meta: PieceMeta): Piece {
-  return { pieceType: PieceType.OBJECT, bufferIndex: -1, start: 0, length: 1, lineFeedCnt: 0, meta }
-}
-
-/**
- * Create Structural Piece
- * @param meta
- */
-export function createStructuralPiece(length: number = 0, meta: PieceMeta) {
-  return { pieceType: PieceType.STRUCTURAL, bufferIndex: -1, start: 0, length, lineFeedCnt: 0, meta }
 }
 
 /**
@@ -154,6 +125,52 @@ export class PieceNode {
       return this.piece.lineFeedCnt + this.children.lineFeedCnt
     }
     return this.piece.lineFeedCnt
+  }
+
+  /**
+   * The Node Immediately following this node
+   */
+  public get nextSibling(): PieceNode | null {
+    const node = this.successor()
+    if (node.isNotNil) {
+      return node
+    }
+    return null
+  }
+
+  /**
+   * The node immediately preceding this node
+   */
+  public get previousSibling(): PieceNode | null {
+    const node = this.predecessor()
+    if (node.isNotNil) {
+      return node
+    }
+    return null
+  }
+
+  /**
+   * First Child Of this node
+   */
+  public get firstChild(): PieceNode | null {
+    if (this.children) {
+      const node = this.children.firstNode
+      if (node.isNotNil) return node
+    }
+
+    return null
+  }
+
+  /**
+   * Last Child of this node
+   */
+  public get lastChild(): PieceNode | null {
+    if (this.children) {
+      const node = this.children.lastNode
+      if (node.isNotNil) return node
+    }
+
+    return null
   }
 
   constructor(piece: Piece, color?: NodeColor) {
@@ -233,13 +250,16 @@ export class PieceNode {
     return null
   }
 
+  // -------------------- Method to Change Structure ---------------- //
+
   /**
    * Append Child To this node's child list
    * @param node
    */
   public appendChild(node: PieceNode) {
     if (this.children) {
-      this.children.appendNode(node)
+      node.above = this
+      this.children.append(node)
     }
   }
 
@@ -248,8 +268,49 @@ export class PieceNode {
    */
   public prependChild(node: PieceNode) {
     if (this.children) {
-      this.children.prependNode(node)
+      this.above = this
+      this.children.prepend(node)
     }
+  }
+
+  /**
+   * Insert new node to child node list after specific child node
+   *
+   * @param newNode
+   * @param referenceNode
+   */
+  public insertAfter(newNode: PieceNode, referenceNode: PieceNode): PieceNode {
+    if (referenceNode.above === this && this.children) {
+      newNode.above = this
+      this.children.insertAfter(newNode, referenceNode)
+    }
+    return newNode
+  }
+
+  /**
+   * Insert new node to child node list before specific child node
+   *
+   * @param newNode
+   * @param referenceNode
+   */
+  public insertBefore(newNode: PieceNode, referenceNode: PieceNode): PieceNode {
+    if (referenceNode.above === this && this.children) {
+      newNode.above = this
+      this.children.insertBefore(newNode, referenceNode)
+    }
+    return newNode
+  }
+
+  /**
+   * Remove A Specific Child Node
+   *
+   * @param {PieceNode} childNode Child Node Prepare to be removed
+   */
+  public removeChild(childNode: PieceNode) {
+    if (this.children) {
+      this.children.deleteNode(childNode)
+    }
+    return childNode
   }
 
   /**
@@ -257,7 +318,7 @@ export class PieceNode {
    *
    * @param node
    */
-  public prepend(node: PieceNode) {
+  public before(node: PieceNode) {
     if (this.left === SENTINEL) {
       this.left = node
       node.parent = this
@@ -272,7 +333,7 @@ export class PieceNode {
    * Append
    * @param node
    */
-  public append(node: PieceNode) {
+  public after(node: PieceNode) {
     if (this.right === SENTINEL) {
       this.right = node
       node.parent = this
@@ -353,15 +414,17 @@ export class PieceNode {
       this.leftLineFeedCnt = 0
     } else {
       this.leftSize = this.left.leftSize + this.left.rightSize + this.left.size
+      this.leftNodeCnt = this.left.leftNodeCnt + this.left.rightNodeCnt + 1
       this.leftLineFeedCnt = this.left.leftLineFeedCnt + this.left.rightLineFeedCnt + this.left.lineFeedCnt
     }
 
     if (this.right.isNil) {
       this.rightSize = 0
-      this.leftNodeCnt = 0
+      this.rightNodeCnt = 0
       this.rightLineFeedCnt = 0
     } else {
       this.rightSize = this.right.leftSize + this.right.rightSize + this.right.size
+      this.rightNodeCnt = this.right.leftNodeCnt + this.right.rightNodeCnt + 1
       this.rightLineFeedCnt = this.right.leftLineFeedCnt + this.right.rightLineFeedCnt + this.right.lineFeedCnt
     }
   }
@@ -371,7 +434,6 @@ export class PieceNode {
    *
    * O(logn)
    *
-   * @param this
    */
   public updateMetaUpward(stopAnchor?: PieceNode): boolean {
     this.updateMeta()
@@ -396,22 +458,69 @@ export class PieceNode {
     this.parent = null!
     this.left = null!
     this.right = null!
+    this.above = null!
+    this.children = null!
   }
 }
 
-// Sentinel Node Which Refers to Black Nil Node
-export const SENTINEL = new PieceNode(createTextPiece(1, 0, 0, 0), NodeColor.BLACK)
+/**
+ * Create Text Piece
+ *
+ * @param bufferIndex
+ * @param start
+ * @param length
+ * @param lineFeedCnt
+ * @param meta
+ */
+export function createTextPiece(
+  bufferIndex: number,
+  start: number,
+  length: number,
+  lineFeedCnt: number,
+  meta: PieceMeta | null = null,
+): Piece {
+  return { pieceType: PieceType.TEXT, bufferIndex, start, length, lineFeedCnt, meta }
+}
+
+/**
+ * Create Object Piece
+ * @param meta
+ */
+export function createObjectPiece(meta: PieceMeta): Piece {
+  return { pieceType: PieceType.OBJECT, bufferIndex: -1, start: 0, length: 1, lineFeedCnt: 0, meta }
+}
+
+/**
+ * Create Structural Piece
+ * @param meta
+ */
+export function createStructuralPiece(length: number = 0, meta: PieceMeta) {
+  return { pieceType: PieceType.STRUCTURAL, bufferIndex: -1, start: 0, length, lineFeedCnt: 0, meta }
+}
+
+/**
+ * Create Root Piece
+ * @param meta
+ */
+export function createRootPiece(meta: PieceMeta = {}): Piece {
+  return { pieceType: PieceType.ROOT, bufferIndex: -1, start: 0, length: 0, lineFeedCnt: 0, meta }
+}
 
 /**
  * Create New Node
  * @param piece
  * @param color
  */
-export function createPieceNode(piece: Piece, color?: NodeColor): PieceNode {
-  const node = new PieceNode(piece, color)
+export function createPieceNode(piece: Piece): PieceNode {
+  const node = new PieceNode(piece)
   node.left = SENTINEL
   node.right = SENTINEL
   node.parent = SENTINEL
   node.above = SENTINEL
+
+  node.children = new PieceNodeList()
   return node
 }
+
+// Sentinel Node Which Refers to Black Nil Node
+export const SENTINEL = new PieceNode(createTextPiece(1, 0, 0, 0), NodeColor.BLACK)
