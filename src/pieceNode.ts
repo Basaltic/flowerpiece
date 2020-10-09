@@ -42,7 +42,7 @@ export enum PieceType {
   /**
    * A Root Piece, One Piece Table Can only have one root
    */
-  ROOT = 4,
+  ROOT = 10,
 }
 
 export interface Piece {
@@ -73,10 +73,11 @@ export interface Piece {
  * A Node Refers a piece of content in the document
  */
 export class PieceNode {
+  color: NodeColor
+
   parent: PieceNode
   left: PieceNode
   right: PieceNode
-  color: NodeColor
 
   above: PieceNode
 
@@ -115,6 +116,16 @@ export class PieceNode {
       return this.piece.length + this.children.size
     }
     return this.piece.length
+  }
+
+  /**
+   * Child Node Count
+   */
+  public get childNodeCnt(): number {
+    if (this.children) {
+      return this.children.nodeCnt
+    }
+    return 0
   }
 
   /**
@@ -254,22 +265,22 @@ export class PieceNode {
 
   /**
    * Append Child To this node's child list
-   * @param node
+   * @param nodeNode
    */
-  public appendChild(node: PieceNode) {
+  public appendChild(nodeNode: PieceNode) {
     if (this.children) {
-      node.above = this
-      this.children.append(node)
+      nodeNode.above = this
+      this.children.append(nodeNode)
     }
   }
 
   /**
    * Prepend Child to this node's child list
    */
-  public prependChild(node: PieceNode) {
+  public prependChild(newNode: PieceNode) {
     if (this.children) {
-      this.above = this
-      this.children.prepend(node)
+      newNode.above = this
+      this.children.prepend(newNode)
     }
   }
 
@@ -314,34 +325,29 @@ export class PieceNode {
   }
 
   /**
-   * Prepend
+   * Inset new node just before this node
    *
-   * @param node
+   * @param newNode
    */
-  public before(node: PieceNode) {
-    if (this.left === SENTINEL) {
-      this.left = node
-      node.parent = this
-    } else {
-      const predecessor = this.predecessor()
-      predecessor.right = node
-      node.parent = predecessor
+  public before(newNode: PieceNode) {
+    if (this.above && this.above.children) {
+      newNode.above = this
+      return this.above.children.insertBefore(newNode, this)
     }
+    return newNode
   }
 
   /**
-   * Append
-   * @param node
+   * Insert New Node Just After this node
+   *
+   * @param newNode
    */
-  public after(node: PieceNode) {
-    if (this.right === SENTINEL) {
-      this.right = node
-      node.parent = this
-    } else {
-      const successor = this.successor()
-      successor.left = node
-      node.parent = successor
+  public after(newNode: PieceNode) {
+    if (this.above && this.above.children) {
+      newNode.above = this
+      return this.above.children.insertAfter(newNode, this)
     }
+    return newNode
   }
 
   /**
@@ -411,21 +417,21 @@ export class PieceNode {
     if (this.left.isNil) {
       this.leftSize = 0
       this.leftNodeCnt = 0
-      this.leftLineFeedCnt = 0
+      // this.leftLineFeedCnt = 0
     } else {
       this.leftSize = this.left.leftSize + this.left.rightSize + this.left.size
       this.leftNodeCnt = this.left.leftNodeCnt + this.left.rightNodeCnt + 1
-      this.leftLineFeedCnt = this.left.leftLineFeedCnt + this.left.rightLineFeedCnt + this.left.lineFeedCnt
+      // this.leftLineFeedCnt = this.left.leftLineFeedCnt + this.left.rightLineFeedCnt + this.left.lineFeedCnt
     }
 
     if (this.right.isNil) {
       this.rightSize = 0
       this.rightNodeCnt = 0
-      this.rightLineFeedCnt = 0
+      // this.rightLineFeedCnt = 0
     } else {
       this.rightSize = this.right.leftSize + this.right.rightSize + this.right.size
       this.rightNodeCnt = this.right.leftNodeCnt + this.right.rightNodeCnt + 1
-      this.rightLineFeedCnt = this.right.leftLineFeedCnt + this.right.rightLineFeedCnt + this.right.lineFeedCnt
+      // this.rightLineFeedCnt = this.right.leftLineFeedCnt + this.right.rightLineFeedCnt + this.right.lineFeedCnt
     }
   }
 
@@ -459,7 +465,6 @@ export class PieceNode {
     this.left = null!
     this.right = null!
     this.above = null!
-    this.children = null!
   }
 }
 

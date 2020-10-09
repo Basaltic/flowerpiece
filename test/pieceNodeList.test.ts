@@ -1,4 +1,6 @@
-import { createEmptyParagraphList, createEmptyTableParagraphList } from './util'
+import { createPieceNode, createRootPiece } from '../src/pieceNode'
+import { createEmptyParagraphList, createEmptyTableParagraphList, createParagraphNode } from './util'
+import PieceTreeTest from '../src/forTest/pieceTreeTestHelper'
 
 it('PieceNodeList: find1', () => {
   const root = createEmptyParagraphList()
@@ -38,6 +40,12 @@ it('PieceNodeList: find2', () => {
   }
 })
 
-it('PieceNodeList: splitNode', () => {
-  const root = createEmptyParagraphList()
+it('PieceNodeList: splitTextNode (static)', () => {
+  const root = createPieceNode(createRootPiece())
+
+  root.appendChild(createParagraphNode('abc'))
+
+  if (root.children) {
+    PieceTreeTest.printLevelOrder(root.children.root)
+  }
 })

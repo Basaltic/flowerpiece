@@ -1,5 +1,5 @@
 import { NodeColor, NodePosition } from './common'
-import { SENTINEL, PieceNode, Piece, PieceType, createPieceNode } from './pieceNode'
+import { SENTINEL, PieceNode, Piece, PieceType, createPieceNode, createStructuralPiece } from './pieceNode'
 import cloneDeep from 'lodash.clonedeep'
 
 /**
@@ -47,7 +47,67 @@ export class PieceNodeList {
 
   constructor() {}
 
-  // --------------
+  // ------------------------------------------------------------
+
+  /**
+   * Split a node into to two new node
+   * 1. split into two text piece node
+   * 2. split into two structural piece node(paragraph)
+   *
+   * @param {PieceNode} nodeToSplit Node To Split
+   * @param {number} offset Where To Split
+   */
+  public static splitTextNode(nodeToSplit: PieceNode, offset: number): PieceNode[] {
+    const { bufferIndex, start, meta, pieceType } = nodeToSplit.piece
+
+    const leftPiece: Piece = { bufferIndex, start, length: offset, lineFeedCnt: 0, meta: cloneDeep(meta), pieceType: pieceType }
+
+    const leftNode = createPieceNode(leftPiece)
+
+    nodeToSplit.piece.start += offset
+    nodeToSplit.piece.length -= offset
+
+    nodeToSplit.before(leftNode)
+
+    return [leftNode, nodeToSplit]
+  }
+
+  /**
+   * Split Structural Node into two.
+   * Left New Node contains the nodes to anchorNode. Right Node contains the other nodes.
+   *
+   * LetNode
+   * [firstNode, ...., anchorNode - 1]
+   *
+   * rightNode
+   * [anchorNode, ...., lastNode]
+   *
+   * @param {PieceNode} nodeToSplit Must Be a structural node
+   * @param {PieceNode} anchorNode
+   */
+  public static splitStructuralNode(nodeToSplit: PieceNode, anchorNode: PieceNode): PieceNode[] {
+    const rightPiece: Piece = cloneDeep(nodeToSplit.piece)
+    const rightNode: PieceNode = createPieceNode(rightPiece)
+
+    nodeToSplit.after(rightNode)
+
+    while (anchorNode.isNotNil) {
+      const nextNode = anchorNode.successor()
+
+      nodeToSplit.removeChild(anchorNode)
+
+      anchorNode.parent = SENTINEL
+      anchorNode.left = SENTINEL
+      anchorNode.right = SENTINEL
+      rightNode.appendChild(anchorNode)
+
+      anchorNode = nextNode
+    }
+
+    return [nodeToSplit, rightNode]
+  }
+
+  // --------------------------------------------------------------------------
 
   /**
    * Get node in specific index
@@ -120,50 +180,6 @@ export class PieceNodeList {
   }
 
   /**
-   * Split a node into to two new node
-   * 1. split into two text piece node
-   * 2. split into two structural piece node(paragraph)
-   *
-   * @param pieceNode Node To Split
-   * @param offset Where To Split
-   */
-  public splitNode(pieceNode: PieceNode, offset: number, structural: boolean = false) {
-    const { bufferIndex, start, meta, pieceType } = pieceNode.piece
-
-    const leftPiece: Piece = { bufferIndex, start, length: offset, lineFeedCnt: 0, meta: cloneDeep(meta), pieceType: pieceType }
-
-    pieceNode.piece.start += offset
-    pieceNode.piece.length -= offset
-    pieceNode.piece.lineFeedCnt -= 0
-
-    const leftNode = new PieceNode(leftPiece)
-
-    this.insertBefore(pieceNode, leftNode)
-
-    // TODO: Split Above Node into two parts
-    // Structural Node which contains Text Node Directly can be splitted
-    if (structural) {
-      const p = leftNode.above
-      if (p.isNotNil && p.piece.pieceType === PieceType.STRUCTURAL) {
-        const piece = cloneDeep(p.piece)
-        const node = createPieceNode(piece)
-        p.above.insertAfter(p, node)
-
-        // Removed Child in left node will move to right node
-        let removedNode = leftNode.successor()
-        while (removedNode.isNotNil) {
-          p.removeChild(removedNode)
-          node.appendChild(removedNode)
-        }
-
-        return [p, node]
-      }
-    }
-
-    return [leftNode, pieceNode]
-  }
-
-  /**
    * Insert a new node to the leftest of the tree
    * @param newNode
    */
@@ -192,7 +208,14 @@ export class PieceNodeList {
     if (referenceNode === SENTINEL) {
       this.root = newNode
     } else {
-      referenceNode.before(newNode)
+      if (referenceNode.left === SENTINEL) {
+        referenceNode.left = newNode
+        newNode.parent = referenceNode
+      } else {
+        const predecessor = referenceNode.predecessor()
+        predecessor.right = newNode
+        newNode.parent = predecessor
+      }
     }
 
     newNode.updateMetaUpward()
@@ -204,14 +227,21 @@ export class PieceNodeList {
   /**
    * Insert new Node as Node successor
    *
-   * @param newNode
-   * @param referenceNode
+   * @param {PieceNode} newNode
+   * @param {PieceNode} referenceNode
    */
   public insertAfter(newNode: PieceNode, referenceNode: PieceNode): PieceNode {
     if (referenceNode === SENTINEL) {
       this.root = newNode
     } else {
-      referenceNode.after(newNode)
+      if (referenceNode.right === SENTINEL) {
+        referenceNode.right = newNode
+        newNode.parent = referenceNode
+      } else {
+        const successor = referenceNode.successor()
+        successor.left = newNode
+        newNode.parent = successor
+      }
     }
     newNode.updateMetaUpward()
     this.insertFixup(newNode)

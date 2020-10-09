@@ -1,3 +1,4 @@
+import { PieceNodeList } from 'pieceNodeList'
 import { PieceNode } from '../pieceNode'
 
 /**
@@ -20,6 +21,12 @@ export default class PieceTreeTest {
       } else {
         return rh + 1
       }
+    }
+  }
+
+  static printTree(tree?: PieceNodeList) {
+    if (tree) {
+      PieceTreeTest.printLevelOrder(tree.root)
     }
   }
 
