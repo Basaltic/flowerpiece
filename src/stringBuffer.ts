@@ -12,4 +12,17 @@ export default class StringBuffer {
   constructor(buffer: string) {
     this.buffer = buffer
   }
+
+  /**
+   * Append New Text
+   *
+   * @param text
+   */
+  append(text: string) {
+    const oldLength = this.buffer.length
+    const newLength = oldLength + text.length
+    this.buffer = this.buffer.concat(text)
+
+    return [oldLength, newLength]
+  }
 }

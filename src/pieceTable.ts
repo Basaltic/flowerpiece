@@ -1,7 +1,10 @@
 import { NodePosition } from 'common'
-import { createPieceNode, createRootPiece, Piece, PieceNode, PieceType } from 'pieceNode'
+import { PieceNode, PieceType } from 'pieceNode'
 import StringBuffer from 'stringBuffer'
 import cloneDeep from 'lodash.clonedeep'
+import { splitTextNode } from 'pieceNodeList'
+import { PieceNodeFactory } from 'pieceNode.factory'
+import { ChangeStack } from 'change'
 
 export const LINE_BREAK = '\n'
 
@@ -10,8 +13,12 @@ export class PieceTable {
 
   private root: PieceNode
 
+  private changeHistory: ChangeStack
+
   constructor() {
-    this.root = createPieceNode(createRootPiece({}))
+    this.root = PieceNodeFactory.createPieceNode(PieceNodeFactory.createRootPiece({}))
+
+    this.changeHistory = new ChangeStack()
   }
 
   /**
@@ -23,17 +30,10 @@ export class PieceTable {
   public insertText(docPosition: number, text: string) {
     if (!text) return null
 
-    // 找到需要插入文字的节点
-    // 判断：
-    // - 分割节点，插入的文字以新节点插入其中
-    //    - 插入的文字中存在换行符，分割查找到的文字节点之上的段落节点为两个段落节点。换行符之前为前一个节点，之后会后一个节点。多个换行符，那么创建多个段落
-    // - 连续输入，文字放入buffer后，移动节点的长度引用
-    // - 节点前或者节点后插入新的文字节点
-
     const nodePosition = this.findNode(docPosition)
 
     if (nodePosition) {
-      const { node, reminder, startOffset, startLineFeedCnt } = nodePosition
+      const { node, reminder } = nodePosition
 
       const addBuffer = this.buffers[0]
       const isContinousInput =
@@ -44,8 +44,34 @@ export class PieceTable {
 
       const texts = text.split(LINE_BREAK)
 
+      // Pure Text. No Line Break
       if (texts.length === 1) {
-        if (isContinousInput) {
+        const [start] = addBuffer.append(text)
+
+        // Before Node
+        if (reminder === 0) {
+          const newTextPiece = PieceNodeFactory.createTextPiece(0, start, text.length, 0, cloneDeep(node.piece.meta))
+          const newNode = PieceNodeFactory.createPieceNode(newTextPiece)
+          node.before(newNode)
+        }
+        // After Node
+        else if (reminder >= node.size) {
+          if (isContinousInput) {
+            node.piece.length += text.length
+          } else {
+            const newTextPiece = PieceNodeFactory.createTextPiece(0, start, text.length, 0, cloneDeep(node.piece.meta))
+            const newNode = PieceNodeFactory.createPieceNode(newTextPiece)
+            node.after(newNode)
+          }
+        }
+        // Middle of the node
+        else {
+          const [leftNode, rightNode] = splitTextNode(node, reminder)
+
+          const newTextPiece = PieceNodeFactory.createTextPiece(0, start, text.length, 0, cloneDeep(leftNode.piece.meta))
+          const newNode = PieceNodeFactory.createPieceNode(newTextPiece)
+
+          leftNode.after(newNode)
         }
       } else if (texts.length > 1) {
         // Split Two Paragraph Structural Node
@@ -57,12 +83,17 @@ export class PieceTable {
 
   public format() {}
 
-  private findNode(offset: number): NodePosition | null {
+  /**
+   * Find the Lowest node by offset
+   *
+   * @param {number} offset
+   */
+  public findNode(offset: number): NodePosition | null {
     let list = this.root.children
 
     while (list && list !== null) {
       const position = list.find(offset)
-      const { node, reminder, startOffset, startLineFeedCnt } = position
+      const { node, reminder } = position
 
       // Find A Empty Structural Piece In this Layer, Go Blow layer
       if (node.piece.pieceType === PieceType.STRUCTURAL && node.piece.length === 0) {
@@ -79,18 +110,37 @@ export class PieceTable {
 
     return null
   }
-}
 
-function splitTextNode(node: PieceNode, offset: number) {
-  const { bufferIndex, start, meta, pieceType } = node.piece
+  /**
+   * Get All Text Content
+   */
+  public getFullText(): string {
+    return ''
+  }
 
-  const leftPiece: Piece = { bufferIndex, start, length: offset, lineFeedCnt: 0, meta: cloneDeep(meta), pieceType: pieceType }
+  /**
+   * Get Text Content In a Range
+   *
+   * @param start
+   * @param end
+   */
+  public getText(start: number, end: number): string {
+    return ''
+  }
 
-  node.piece.start += offset
-  node.piece.length -= offset
-  node.piece.lineFeedCnt -= 0
+  /**
+   * Get Text In Buffer
+   *
+   * @param bufferIndex
+   * @param start
+   * @param length
+   */
+  private getTextInBuffer(bufferIndex: number, start: number, length: number) {
+    if (bufferIndex < 0) return ''
+    const buffer = this.buffers[bufferIndex]
+    const value = buffer.buffer.substring(start, start + length)
+    return value
+  }
 
-  const leftNode = new PieceNode(leftPiece)
-
-  return []
+  private
 }

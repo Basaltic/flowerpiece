@@ -1,4 +1,5 @@
-import { PieceNode, createTextPiece, createPieceNode, createStructuralPiece, createRootPiece } from '../src/pieceNode'
+import { PieceNode } from '../src/pieceNode'
+import { PieceNodeFactory } from '../src/pieceNode.factory'
 
 export class NodeFactory {
   /**
@@ -7,8 +8,8 @@ export class NodeFactory {
   public static createTextNode(text: string, lineFeedCnt: number = 0): PieceNode {
     const length = text.length
 
-    const tPiece = createTextPiece(1, 0, length, lineFeedCnt)
-    const node = createPieceNode(tPiece)
+    const tPiece = PieceNodeFactory.createTextPiece(1, 0, length, lineFeedCnt)
+    const node = PieceNodeFactory.createPieceNode(tPiece)
     return node
   }
 
@@ -16,8 +17,8 @@ export class NodeFactory {
    * Create A Paragraph Node
    */
   public static createParagraphNode(): PieceNode {
-    const piece = createStructuralPiece(0, { type: 'p' })
-    const node = createPieceNode(piece)
+    const piece = PieceNodeFactory.createParagraphPiece({ type: 'p' })
+    const node = PieceNodeFactory.createPieceNode(piece)
 
     return node
   }
@@ -26,6 +27,6 @@ export class NodeFactory {
    * Create Root Node
    */
   public static createRootNode(): PieceNode {
-    return createPieceNode(createRootPiece())
+    return PieceNodeFactory.createPieceNode(PieceNodeFactory.createRootPiece())
   }
 }

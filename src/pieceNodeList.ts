@@ -1,6 +1,7 @@
 import { NodeColor, NodePosition } from './common'
-import { SENTINEL, PieceNode, Piece, PieceType, createPieceNode, createStructuralPiece } from './pieceNode'
+import { PieceNode, Piece } from './pieceNode'
 import cloneDeep from 'lodash.clonedeep'
+import { SENTINEL } from 'pieceNode.factory'
 
 /**
  *
@@ -21,6 +22,7 @@ export class PieceNodeList {
    * How many nodes in this list
    */
   public get nodeCnt(): number {
+    if (this.root === SENTINEL) return 0
     return this.root.leftNodeCnt + this.root.rightNodeCnt + 1
   }
 
@@ -45,68 +47,6 @@ export class PieceNodeList {
     return this.get(this.nodeCnt)
   }
 
-  constructor() {}
-
-  // ------------------------------------------------------------
-
-  /**
-   * Split a node into to two new node
-   * 1. split into two text piece node
-   * 2. split into two structural piece node(paragraph)
-   *
-   * @param {PieceNode} nodeToSplit Node To Split
-   * @param {number} offset Where To Split
-   */
-  public static splitTextNode(nodeToSplit: PieceNode, offset: number): PieceNode[] {
-    const { bufferIndex, start, meta, pieceType } = nodeToSplit.piece
-
-    const leftPiece: Piece = { bufferIndex, start, length: offset, lineFeedCnt: 0, meta: cloneDeep(meta), pieceType: pieceType }
-
-    const leftNode = createPieceNode(leftPiece)
-
-    nodeToSplit.piece.start += offset
-    nodeToSplit.piece.length -= offset
-
-    nodeToSplit.before(leftNode)
-
-    return [leftNode, nodeToSplit]
-  }
-
-  /**
-   * Split Structural Node into two.
-   * Left New Node contains the nodes to anchorNode. Right Node contains the other nodes.
-   *
-   * LetNode
-   * [firstNode, ...., anchorNode - 1]
-   *
-   * rightNode
-   * [anchorNode, ...., lastNode]
-   *
-   * @param {PieceNode} nodeToSplit Must Be a structural node
-   * @param {PieceNode} anchorNode
-   */
-  public static splitStructuralNode(nodeToSplit: PieceNode, anchorNode: PieceNode): PieceNode[] {
-    const rightPiece: Piece = cloneDeep(nodeToSplit.piece)
-    const rightNode: PieceNode = createPieceNode(rightPiece)
-
-    nodeToSplit.after(rightNode)
-
-    while (anchorNode.isNotNil) {
-      const nextNode = anchorNode.successor()
-
-      nodeToSplit.removeChild(anchorNode)
-
-      anchorNode.parent = SENTINEL
-      anchorNode.left = SENTINEL
-      anchorNode.right = SENTINEL
-      rightNode.appendChild(anchorNode)
-
-      anchorNode = nextNode
-    }
-
-    return [nodeToSplit, rightNode]
-  }
-
   // --------------------------------------------------------------------------
 
   /**
@@ -117,18 +57,19 @@ export class PieceNodeList {
   public get(index: number): PieceNode {
     let node = this.root
 
-    if (index > 0 && index <= this.nodeCnt) {
-      while (node !== SENTINEL) {
-        if (node.leftNodeCnt > index) {
-          node = node.left
-        } else if (node.leftNodeCnt + 1 === index) {
-          // -- Found
-          break
-        } else {
-          index -= node.leftLineFeedCnt
-          index -= 1
-          node = node.right
-        }
+    if (index <= 0) index === 1
+    if (index > this.nodeCnt) index === this.nodeCnt
+
+    while (node !== SENTINEL) {
+      if (node.leftNodeCnt >= index) {
+        node = node.left
+      } else if (node.leftNodeCnt + 1 >= index) {
+        // -- Found
+        break
+      } else {
+        index -= node.leftNodeCnt
+        index -= 1
+        node = node.right
       }
     }
 
@@ -136,7 +77,9 @@ export class PieceNodeList {
   }
 
   /**
-   * Find Node Postion In Specific Offset
+   * Find Node Postion In Specific Offset In This List
+   *
+   * Always find the previous node if the offset is between two nodes
    *
    * @param offset
    */
@@ -148,19 +91,19 @@ export class PieceNodeList {
 
     if (offset <= 0) return { node: this.root.lefest(), reminder: 0, startOffset: startOffset, startLineFeedCnt }
     if (offset >= this.size) {
-      const lastNode = this.root.rightest()
+      const lastNode = this.lastNode
       return {
         node: lastNode,
-        reminder: lastNode.piece.length,
-        startOffset: this.size - lastNode.piece.length,
-        startLineFeedCnt: this.lineFeedCnt - lastNode.piece.lineFeedCnt,
+        reminder: lastNode.size,
+        startOffset: this.size - lastNode.size,
+        startLineFeedCnt: this.lineFeedCnt - lastNode.lineFeedCnt,
       }
     }
 
     while (node !== SENTINEL) {
-      if (node.leftSize > offset) {
+      if (node.leftSize >= offset) {
         node = node.left
-      } else if (node.leftSize + node.size > offset) {
+      } else if (node.leftSize + node.size >= offset) {
         reminder = offset - node.leftSize
         startOffset += node.leftSize
         startLineFeedCnt += node.leftLineFeedCnt
@@ -185,7 +128,7 @@ export class PieceNodeList {
    */
   public prepend(newNode: PieceNode) {
     const referenceNode = this.firstNode
-    this.insertBefore(newNode, referenceNode)
+    return this.insertBefore(newNode, referenceNode)
   }
 
   /**
@@ -195,7 +138,7 @@ export class PieceNodeList {
    */
   public append(newNode: PieceNode) {
     const referenceNode = this.lastNode
-    this.insertAfter(newNode, referenceNode)
+    return this.insertAfter(newNode, referenceNode)
   }
 
   /**
@@ -231,10 +174,10 @@ export class PieceNodeList {
    * @param {PieceNode} referenceNode
    */
   public insertAfter(newNode: PieceNode, referenceNode: PieceNode): PieceNode {
-    if (referenceNode === SENTINEL) {
+    if (referenceNode.isNil) {
       this.root = newNode
     } else {
-      if (referenceNode.right === SENTINEL) {
+      if (referenceNode.right.isNil) {
         referenceNode.right = newNode
         newNode.parent = referenceNode
       } else {
@@ -508,4 +451,62 @@ export class PieceNodeList {
     }
     y.parent = x.parent
   }
+}
+
+/**
+ * Split a node into to two new node
+ * 1. split into two text piece node
+ * 2. split into two structural piece node(paragraph)
+ *
+ * @param {PieceNode} nodeToSplit Node To Split
+ * @param {number} offset Where To Split
+ */
+export function splitTextNode(nodeToSplit: PieceNode, offset: number): PieceNode[] {
+  const { bufferIndex, start, meta, pieceType } = nodeToSplit.piece
+
+  const leftPiece: Piece = { bufferIndex, start, length: offset, lineFeedCnt: 0, meta: cloneDeep(meta), pieceType: pieceType }
+
+  const leftNode = createPieceNode(leftPiece)
+
+  nodeToSplit.piece.start += offset
+  nodeToSplit.piece.length -= offset
+
+  nodeToSplit.before(leftNode)
+
+  return [leftNode, nodeToSplit]
+}
+
+/**
+ * Split Structural Node into two.
+ * Left New Node contains the nodes to anchorNode. Right Node contains the other nodes.
+ *
+ * LetNode
+ * [firstNode, ...., anchorNode - 1]
+ *
+ * rightNode
+ * [anchorNode, ...., lastNode]
+ *
+ * @param {PieceNode} nodeToSplit Must Be a structural node
+ * @param {PieceNode} anchorNode
+ */
+export function splitStructuralNode(nodeToSplit: PieceNode, anchorNode: PieceNode): PieceNode[] {
+  const rightPiece: Piece = cloneDeep(nodeToSplit.piece)
+  const rightNode: PieceNode = createPieceNode(rightPiece)
+
+  nodeToSplit.after(rightNode)
+
+  while (anchorNode.isNotNil) {
+    const nextNode = anchorNode.successor()
+
+    nodeToSplit.removeChild(anchorNode)
+
+    anchorNode.parent = SENTINEL
+    anchorNode.left = SENTINEL
+    anchorNode.right = SENTINEL
+    rightNode.appendChild(anchorNode)
+
+    anchorNode = nextNode
+  }
+
+  return [nodeToSplit, rightNode]
 }

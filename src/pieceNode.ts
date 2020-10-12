@@ -1,9 +1,7 @@
-import { chdir } from 'process'
+import { SENTINEL } from 'pieceNode.factory'
 import { NodeColor } from './common'
 import { mergeMeta, PieceMeta } from './meta'
 import { PieceNodeList } from './pieceNodeList'
-
-// TODO: Selection Offset 修正
 
 /**
  * Types Of Piece
@@ -25,7 +23,7 @@ export enum PieceType {
   /**
    * A Container Piece. Can Have:
    * 1. Meta Style
-   * 2. Children Piece List
+   * 2. Children Piece List: PARAGRAPH, STRUCTURAL
    *
    * Empty Structural Piece Must have a one length text or object piece as its child leave node
    *
@@ -38,6 +36,13 @@ export enum PieceType {
    *
    */
   STRUCTURAL = 3,
+
+  /**
+   * A Specifical Structural. Can Have:
+   * 1. Text, Object Type Piece
+   * 2. Cannot be empty, must have at least one text or inline node
+   */
+  PARAGRAPH = 4,
 
   /**
    * A Root Piece, One Piece Table Can only have one root
@@ -441,11 +446,11 @@ export class PieceNode {
    * O(logn)
    *
    */
-  public updateMetaUpward(stopAnchor?: PieceNode): boolean {
+  public updateMetaUpward(): boolean {
     this.updateMeta()
 
     // Update Meta of This level
-    if (this.parent.isNotNil && this !== stopAnchor) {
+    if (this.parent.isNotNil) {
       this.parent.updateMetaUpward()
     }
 
@@ -467,65 +472,3 @@ export class PieceNode {
     this.above = null!
   }
 }
-
-/**
- * Create Text Piece
- *
- * @param bufferIndex
- * @param start
- * @param length
- * @param lineFeedCnt
- * @param meta
- */
-export function createTextPiece(
-  bufferIndex: number,
-  start: number,
-  length: number,
-  lineFeedCnt: number,
-  meta: PieceMeta | null = null,
-): Piece {
-  return { pieceType: PieceType.TEXT, bufferIndex, start, length, lineFeedCnt, meta }
-}
-
-/**
- * Create Object Piece
- * @param meta
- */
-export function createObjectPiece(meta: PieceMeta): Piece {
-  return { pieceType: PieceType.OBJECT, bufferIndex: -1, start: 0, length: 1, lineFeedCnt: 0, meta }
-}
-
-/**
- * Create Structural Piece
- * @param meta
- */
-export function createStructuralPiece(length: number = 0, meta: PieceMeta) {
-  return { pieceType: PieceType.STRUCTURAL, bufferIndex: -1, start: 0, length, lineFeedCnt: 0, meta }
-}
-
-/**
- * Create Root Piece
- * @param meta
- */
-export function createRootPiece(meta: PieceMeta = {}): Piece {
-  return { pieceType: PieceType.ROOT, bufferIndex: -1, start: 0, length: 0, lineFeedCnt: 0, meta }
-}
-
-/**
- * Create New Node
- * @param piece
- * @param color
- */
-export function createPieceNode(piece: Piece): PieceNode {
-  const node = new PieceNode(piece)
-  node.left = SENTINEL
-  node.right = SENTINEL
-  node.parent = SENTINEL
-  node.above = SENTINEL
-
-  node.children = new PieceNodeList()
-  return node
-}
-
-// Sentinel Node Which Refers to Black Nil Node
-export const SENTINEL = new PieceNode(createTextPiece(1, 0, 0, 0), NodeColor.BLACK)

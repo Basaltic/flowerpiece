@@ -1,6 +1,5 @@
-import { createPieceNode, createRootPiece, createTextPiece } from '../src/pieceNode'
-import PieceTreeTest from '../src/forTest/pieceTreeTestHelper'
-import { PieceNodeList } from '../src/pieceNodeList'
+import { createTextPiece } from '../src/pieceNode'
+import { splitStructuralNode, splitTextNode } from '../src/pieceNodeList'
 import { NodeFactory } from './util.factory'
 
 it('PieceNodeList: splitTextNode (static)', () => {
@@ -8,7 +7,7 @@ it('PieceNodeList: splitTextNode (static)', () => {
   const textNode = NodeFactory.createTextNode('abcd')
   pNode.appendChild(textNode)
 
-  const [leftNode, rightNode] = PieceNodeList.splitTextNode(textNode, 1)
+  const [leftNode, rightNode] = splitTextNode(textNode, 1)
 
   expect(leftNode.piece).toEqual(createTextPiece(1, 0, 1, 0, null))
   expect(rightNode.piece).toEqual(createTextPiece(1, 1, 3, 0, null))
@@ -30,7 +29,9 @@ it('PieceNodeList: splitStructuralNode (static)', () => {
   pNode.appendChild(textNode2)
   pNode.appendChild(textNode3)
 
-  const [leftNode, rightNode] = PieceNodeList.splitStructuralNode(pNode, textNode2)
+  console.log(root.size, root.childNodeCnt)
+
+  const [leftNode, rightNode] = splitStructuralNode(pNode, textNode2)
 
   expect(leftNode.size).toBe(4)
   expect(leftNode.childNodeCnt).toBe(1)
