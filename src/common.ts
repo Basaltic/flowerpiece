@@ -1,3 +1,5 @@
+import { Inline } from 'pieceNode.inline'
+import { Text } from 'pieceNode.text'
 import { PieceNode } from './pieceNode'
 
 /**
@@ -28,6 +30,10 @@ export interface NodePosition {
    * line Feed Count before this node
    */
   startLineFeedCnt: number
+}
+
+export interface LeafNodePosition extends NodePosition {
+  node: Text | Inline
 }
 
 /**

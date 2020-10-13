@@ -1,7 +1,7 @@
 import { Operations } from './operations'
 import { PieceTree } from './pieceTree'
 import { Queries } from './queries'
-import { ChangeStack, createResetChange } from './change'
+import { ChangeStack, createResetChange } from './history'
 import { Line } from './piece'
 import { DocumentChange } from 'flowerpiece'
 

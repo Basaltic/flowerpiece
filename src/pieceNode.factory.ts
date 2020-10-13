@@ -28,7 +28,7 @@ export class PieceNodeFactory {
    * @param meta
    */
   public static createObjectPiece(meta: PieceMeta): Piece {
-    return { pieceType: PieceType.OBJECT, bufferIndex: -1, start: 0, length: 1, lineFeedCnt: 0, meta }
+    return { pieceType: PieceType.Inline, bufferIndex: -1, start: 0, length: 1, lineFeedCnt: 0, meta }
   }
 
   /**

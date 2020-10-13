@@ -1,5 +1,6 @@
 import { PieceNode } from '../src/pieceNode'
 import { NodeFactory } from './util.factory'
+import { PieceTable } from '../src/pieceTable'
 
 it('PieceTable: findNode', () => {
   const root = NodeFactory.createRootNode()
@@ -15,4 +16,11 @@ it('PieceTable: findNode', () => {
     nodes.push(pNode)
     tNodes.push(tNode)
   }
+})
+
+/**
+ * Get Full Pure Text
+ */
+it('PieceTable: getFullText', () => {
+  const pieceTable = new PieceTable()
 })

@@ -1,7 +1,7 @@
 import { NodeColor, NodePosition } from './common'
 import { PieceNode, Piece } from './pieceNode'
 import cloneDeep from 'lodash.clonedeep'
-import { SENTINEL } from 'pieceNode.factory'
+import { PieceNodeFactory, SENTINEL } from 'pieceNode.factory'
 
 /**
  *
@@ -46,6 +46,8 @@ export class PieceNodeList {
   public get lastNode(): PieceNode {
     return this.get(this.nodeCnt)
   }
+
+  // --------------------------------------------------------------------------
 
   // --------------------------------------------------------------------------
 
@@ -101,9 +103,9 @@ export class PieceNodeList {
     }
 
     while (node !== SENTINEL) {
-      if (node.leftSize >= offset) {
+      if (node.leftSize > offset) {
         node = node.left
-      } else if (node.leftSize + node.size >= offset) {
+      } else if (node.leftSize + node.size > offset) {
         reminder = offset - node.leftSize
         startOffset += node.leftSize
         startLineFeedCnt += node.leftLineFeedCnt
@@ -466,7 +468,7 @@ export function splitTextNode(nodeToSplit: PieceNode, offset: number): PieceNode
 
   const leftPiece: Piece = { bufferIndex, start, length: offset, lineFeedCnt: 0, meta: cloneDeep(meta), pieceType: pieceType }
 
-  const leftNode = createPieceNode(leftPiece)
+  const leftNode = PieceNodeFactory.createPieceNode(leftPiece)
 
   nodeToSplit.piece.start += offset
   nodeToSplit.piece.length -= offset
@@ -481,19 +483,21 @@ export function splitTextNode(nodeToSplit: PieceNode, offset: number): PieceNode
  * Left New Node contains the nodes to anchorNode. Right Node contains the other nodes.
  *
  * LetNode
- * [firstNode, ...., anchorNode - 1]
+ * [firstNode, ...., anchorNode]
  *
  * rightNode
- * [anchorNode, ...., lastNode]
+ * [anchorNode + 1, ...., lastNode]
  *
  * @param {PieceNode} nodeToSplit Must Be a structural node
  * @param {PieceNode} anchorNode
  */
 export function splitStructuralNode(nodeToSplit: PieceNode, anchorNode: PieceNode): PieceNode[] {
   const rightPiece: Piece = cloneDeep(nodeToSplit.piece)
-  const rightNode: PieceNode = createPieceNode(rightPiece)
+  const rightNode: PieceNode = PieceNodeFactory.createPieceNode(rightPiece)
 
   nodeToSplit.after(rightNode)
+
+  anchorNode = anchorNode.successor()
 
   while (anchorNode.isNotNil) {
     const nextNode = anchorNode.successor()

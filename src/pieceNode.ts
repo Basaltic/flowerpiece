@@ -19,7 +19,7 @@ export enum PieceType {
    * 1. Meta, Style
    * 2. Length, Offset
    */
-  OBJECT = 2,
+  Inline = 2,
   /**
    * A Container Piece. Can Have:
    * 1. Meta Style
@@ -264,6 +264,10 @@ export class PieceNode {
     }
 
     return null
+  }
+
+  public extendLength(length: number) {
+    this.piece.length += length
   }
 
   // -------------------- Method to Change Structure ---------------- //
