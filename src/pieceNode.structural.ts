@@ -1,6 +1,5 @@
 import { PieceMeta } from 'flowerpiece'
-import { PieceNode, PieceType } from 'pieceNode'
-import { SENTINEL } from 'pieceNode.factory'
+import { PieceNode, PieceType, SENTINEL } from 'pieceNode'
 import { PieceNodeList } from 'pieceNodeList'
 
 /**

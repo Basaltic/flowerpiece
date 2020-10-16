@@ -1,4 +1,3 @@
-import { SENTINEL } from 'pieceNode.factory'
 import { NodeColor } from './common'
 import { mergeMeta, PieceMeta } from './meta'
 import { PieceNodeList } from './pieceNodeList'
@@ -19,7 +18,7 @@ export enum PieceType {
    * 1. Meta, Style
    * 2. Length, Offset
    */
-  Inline = 2,
+  INLINE = 2,
   /**
    * A Container Piece. Can Have:
    * 1. Meta Style
@@ -426,21 +425,21 @@ export class PieceNode {
     if (this.left.isNil) {
       this.leftSize = 0
       this.leftNodeCnt = 0
-      // this.leftLineFeedCnt = 0
+      this.leftLineFeedCnt = 0
     } else {
       this.leftSize = this.left.leftSize + this.left.rightSize + this.left.size
       this.leftNodeCnt = this.left.leftNodeCnt + this.left.rightNodeCnt + 1
-      // this.leftLineFeedCnt = this.left.leftLineFeedCnt + this.left.rightLineFeedCnt + this.left.lineFeedCnt
+      this.leftLineFeedCnt = this.left.leftLineFeedCnt + this.left.rightLineFeedCnt + this.left.lineFeedCnt
     }
 
     if (this.right.isNil) {
       this.rightSize = 0
       this.rightNodeCnt = 0
-      // this.rightLineFeedCnt = 0
+      this.rightLineFeedCnt = 0
     } else {
       this.rightSize = this.right.leftSize + this.right.rightSize + this.right.size
       this.rightNodeCnt = this.right.leftNodeCnt + this.right.rightNodeCnt + 1
-      // this.rightLineFeedCnt = this.right.leftLineFeedCnt + this.right.rightLineFeedCnt + this.right.lineFeedCnt
+      this.rightLineFeedCnt = this.right.leftLineFeedCnt + this.right.rightLineFeedCnt + this.right.lineFeedCnt
     }
   }
 
@@ -476,3 +475,8 @@ export class PieceNode {
     this.above = null!
   }
 }
+
+export const SENTINEL = new PieceNode(
+  { pieceType: PieceType.TEXT, bufferIndex: 0, start: 0, length, lineFeedCnt: 0, meta: null },
+  NodeColor.BLACK,
+)

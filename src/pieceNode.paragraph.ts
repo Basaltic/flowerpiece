@@ -1,6 +1,5 @@
 import { PieceMeta } from 'flowerpiece'
-import { PieceNode, PieceType } from 'pieceNode'
-import { SENTINEL } from 'pieceNode.factory'
+import { PieceNode, PieceType, SENTINEL } from 'pieceNode'
 import { PieceNodeList } from 'pieceNodeList'
 
 /**
@@ -10,7 +9,7 @@ import { PieceNodeList } from 'pieceNodeList'
  */
 export class Paragraph extends PieceNode {
   constructor(meta: PieceMeta | null = null, leafNodes?: PieceNode[]) {
-    super({ pieceType: PieceType.PARAGRAPH, bufferIndex: -1, start: 0, length: 1, lineFeedCnt: 0, meta })
+    super({ pieceType: PieceType.PARAGRAPH, bufferIndex: -1, start: 0, length: 1, lineFeedCnt: 1, meta })
     this.left = SENTINEL
     this.right = SENTINEL
     this.parent = SENTINEL

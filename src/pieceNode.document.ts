@@ -17,7 +17,7 @@ export class Document extends PieceNode {
    *
    * @param {number} offset
    */
-  public findNode(offset: number): LeafNodePosition | null {
+  public findLeafNode(offset: number): LeafNodePosition | null {
     let list = this.children
 
     while (list && list !== null) {

@@ -1,24 +1,23 @@
 import PieceTreeTest from '../src/forTest/pieceTreeTestHelper'
 import { NodeFactory } from './util.factory'
+import { PieceNodeList } from '../src/pieceNodeList'
+import { createPieceNode } from '../src/pieceNodeFactory'
 
 /**
  * Test: get node by specific index
  */
 it('PieceNodeList: get', () => {
-  const root = NodeFactory.createRootNode()
+  const list = new PieceNodeList()
 
   const nodes: any[] = []
   for (let i = 0; i < 10; i++) {
-    const pNode = NodeFactory.createParagraphNode()
-    root.appendChild(pNode)
-    nodes.push(pNode)
+    const pNode = createPieceNode({ pieceType: 1, bufferIndex: -1, start: 0, length: 1, lineFeedCnt: 0, meta: null })
+    list.append(pNode)
   }
 
-  if (root.children) {
-    for (let i = 0; i < 10; i++) {
-      const node = root.children.get(i + 1)
-      expect(node).toBe(nodes[i])
-    }
+  for (let i = 0; i < 10; i++) {
+    const node = list.get(i + 1)
+    expect(node).toBe(nodes[i])
   }
 })
 

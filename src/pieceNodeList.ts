@@ -1,7 +1,7 @@
 import { NodeColor, NodePosition } from './common'
-import { PieceNode, Piece } from './pieceNode'
+import { PieceNode, Piece, SENTINEL } from './pieceNode'
 import cloneDeep from 'lodash.clonedeep'
-import { PieceNodeFactory, SENTINEL } from 'pieceNode.factory'
+import { createPieceNode } from 'pieceNodeFactory'
 
 /**
  *
@@ -467,8 +467,7 @@ export function splitTextNode(nodeToSplit: PieceNode, offset: number): PieceNode
   const { bufferIndex, start, meta, pieceType } = nodeToSplit.piece
 
   const leftPiece: Piece = { bufferIndex, start, length: offset, lineFeedCnt: 0, meta: cloneDeep(meta), pieceType: pieceType }
-
-  const leftNode = PieceNodeFactory.createPieceNode(leftPiece)
+  const leftNode = createPieceNode(leftPiece)
 
   nodeToSplit.piece.start += offset
   nodeToSplit.piece.length -= offset
@@ -493,7 +492,7 @@ export function splitTextNode(nodeToSplit: PieceNode, offset: number): PieceNode
  */
 export function splitStructuralNode(nodeToSplit: PieceNode, anchorNode: PieceNode): PieceNode[] {
   const rightPiece: Piece = cloneDeep(nodeToSplit.piece)
-  const rightNode: PieceNode = PieceNodeFactory.createPieceNode(rightPiece)
+  const rightNode: PieceNode = createPieceNode(rightPiece)
 
   nodeToSplit.after(rightNode)
 

@@ -1,12 +1,11 @@
 import { PieceMeta } from 'meta'
-import { PieceNode, PieceType } from 'pieceNode'
-import { SENTINEL } from 'pieceNode.factory'
+import { PieceNode, PieceType, SENTINEL } from 'pieceNode'
 
 /**
  * Text Node.
  */
 export class Text extends PieceNode {
-  constructor(bufferIndex: number, start: number, length: number, meta: PieceMeta | null = null): Text {
+  constructor(bufferIndex: number, start: number, length: number, meta: PieceMeta | null = null) {
     const piece = { pieceType: PieceType.TEXT, bufferIndex, start, length, lineFeedCnt: 0, meta }
     super(piece)
     this.left = SENTINEL
