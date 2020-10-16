@@ -19,12 +19,8 @@
     "declaration": true,
     "emitDeclarationOnly": true,
     "baseUrl": "src/",
-    // "composite": true,
-    // "declaration": true,
-    // "declarationDir": "dist/types",
-    // "rootDir": "src",
     "outDir": "dist/lib",
     "typeRoots": ["node_modules/@types"]
   },
-  "include": ["src", "src/forTest/pieceTreeTestHelper.ts"]
+  "include": ["src", "src/forTest/pieceTreeTestHelper.ts", "test"]
 }

@@ -1,6 +1,6 @@
-import { PieceMeta } from 'flowerpiece'
-import { PieceNode, PieceType, SENTINEL } from 'pieceNode'
-import { PieceNodeList } from 'pieceNodeList'
+import { PieceMeta } from './flowerpiece'
+import { PieceNode, PieceType, SENTINEL } from './pieceNode'
+import { PieceNodeList } from './pieceNodeList'
 
 /**
  * Structural Node is a container

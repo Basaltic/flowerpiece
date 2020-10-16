@@ -14,7 +14,6 @@ export class PieceTable {
 
   constructor() {
     this.document = new Document()
-
     this.changeHistory = new ChangeStack()
   }
 

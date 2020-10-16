@@ -1,7 +1,7 @@
 import { NodeColor, NodePosition } from './common'
 import { PieceNode, Piece, SENTINEL } from './pieceNode'
 import cloneDeep from 'lodash.clonedeep'
-import { createPieceNode } from 'pieceNodeFactory'
+import { createPieceNode } from './pieceNodeFactory'
 
 /**
  *

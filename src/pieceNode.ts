@@ -477,6 +477,6 @@ export class PieceNode {
 }
 
 export const SENTINEL = new PieceNode(
-  { pieceType: PieceType.TEXT, bufferIndex: 0, start: 0, length, lineFeedCnt: 0, meta: null },
+  { pieceType: PieceType.TEXT, bufferIndex: 0, start: 0, length: 0, lineFeedCnt: 0, meta: null },
   NodeColor.BLACK,
 )

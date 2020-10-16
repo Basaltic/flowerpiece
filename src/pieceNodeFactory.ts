@@ -1,8 +1,8 @@
-import { Piece, PieceNode, PieceType } from 'pieceNode'
-import { Inline } from 'pieceNode.inline'
-import { Paragraph } from 'pieceNode.paragraph'
-import { Structural } from 'pieceNode.structural'
-import { Text } from 'pieceNode.text'
+import { Piece, PieceNode, PieceType } from './pieceNode'
+import { Inline } from './pieceNode.inline'
+import { Paragraph } from './pieceNode.paragraph'
+import { Structural } from './pieceNode.structural'
+import { Text } from './pieceNode.text'
 
 /**
  *

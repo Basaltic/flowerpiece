@@ -1,6 +1,6 @@
-import { LeafNodePosition } from 'common'
-import { PieceNode, PieceType } from 'pieceNode'
-import { PieceNodeList } from 'pieceNodeList'
+import { LeafNodePosition } from './common'
+import { PieceNode, PieceType } from './pieceNode'
+import { PieceNodeList } from './pieceNodeList'
 
 /**
  * Document
