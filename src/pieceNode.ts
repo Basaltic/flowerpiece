@@ -275,10 +275,12 @@ export class PieceNode {
    * Append Child To this node's child list
    * @param nodeNode
    */
-  public appendChild(nodeNode: PieceNode) {
-    if (this.children) {
-      nodeNode.above = this
-      this.children.append(nodeNode)
+  public appendChild(...nodes: PieceNode[]) {
+    if (this.children && nodes && nodes.length > 0) {
+      for (let node of nodes) {
+        node.above = this
+        this.children.append(node)
+      }
     }
   }
 

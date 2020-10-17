@@ -1,5 +1,5 @@
 import { LeafNodePosition } from './common'
-import { PieceNode, PieceType } from './pieceNode'
+import { PieceNode, PieceType, SENTINEL } from './pieceNode'
 import { PieceNodeList } from './pieceNodeList'
 
 /**
@@ -8,6 +8,10 @@ import { PieceNodeList } from './pieceNodeList'
 export class Document extends PieceNode {
   constructor() {
     super({ pieceType: PieceType.ROOT, bufferIndex: -1, start: 0, length: 0, lineFeedCnt: 0, meta: null })
+    this.left = SENTINEL
+    this.right = SENTINEL
+    this.parent = SENTINEL
+    this.above = SENTINEL
     this.children = new PieceNodeList()
   }
 
