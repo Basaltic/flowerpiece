@@ -1,20 +1,30 @@
-import { Piece, PieceNode } from 'pieceNode'
+import { Piece, PieceNode, PieceType } from 'pieceNode'
 import StringBuffer from 'stringBuffer'
 import { ChangeStack } from 'history'
 import { Document } from 'pieceNode.document'
+import { Inline } from 'pieceNode.inline'
+import { Paragraph } from 'pieceNode.paragraph'
+import { Structural } from 'pieceNode.structural'
+import { Text } from 'pieceNode.text'
 
 export const LINE_BREAK = '\n'
 
 export class PieceTable {
   public buffers: StringBuffer[] = [new StringBuffer(''), new StringBuffer('')]
 
-  private document: Document
+  public document: Document
 
-  private changeHistory: ChangeStack
+  public selection: Selection
+
+  public changeHistory: ChangeStack
+
+  public pendingRenderNodes: Set<number>
 
   constructor() {
     this.document = new Document()
+    this.selection = new Selection()
     this.changeHistory = new ChangeStack()
+    this.pendingRenderNodes = new Set()
   }
 
   /**
@@ -52,6 +62,29 @@ export class PieceTable {
   }
 
   // ----- Atomic Operation Methods ----- //
+
+  public change() {
+    // op1
+    // op2
+  }
+
+  /**
+   * Create New Piece Node
+   * @param piece
+   */
+  public createPieceNode(piece: Piece): PieceNode {
+    switch (piece.pieceType) {
+      case PieceType.INLINE:
+        return new Inline(piece.meta)
+      case PieceType.PARAGRAPH:
+        return new Paragraph(piece.meta)
+      case PieceType.STRUCTURAL:
+        return new Structural(piece.meta)
+      case PieceType.TEXT:
+      default:
+        return new Text(piece.bufferIndex, piece.start, piece.length, piece.meta)
+    }
+  }
 
   // ----- Util Methods ------ //
 

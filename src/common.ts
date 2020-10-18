@@ -40,3 +40,8 @@ export interface LeafNodePosition extends NodePosition {
  * Document Postion. Its just a offset number
  */
 export declare type DocPostion = number
+
+let id = 1
+export function getId() {
+  return id++
+}

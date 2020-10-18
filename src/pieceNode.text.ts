@@ -1,14 +1,41 @@
 import { PieceMeta } from './meta'
-import { PieceNode, PieceType, SENTINEL } from './pieceNode'
+import { PieceType, SENTINEL, Piece } from './pieceNode'
 import cloneDeep from 'lodash.clonedeep'
+import { Inline } from './pieceNode.inline'
+import { PieceTable } from './pieceTable'
+
+export interface TextParams {
+  // TEXT: Buffer Index
+  // OBJECT: -1
+  // STRUCTURAL: -1
+  bufferIndex: number
+  // TEXT: Raw Content Start in Current Buffer
+  // OBJECT: -1
+  // STRUCTURAL: -1
+  start: number
+  // TEXT: Content Length
+  // OBJECT: 1
+  // STRUCTURAL: -1
+  length: number
+
+  // Extra Meta Info
+  meta: PieceMeta | null
+}
 
 /**
  * Text Node.
  */
-export class Text extends PieceNode {
-  constructor(bufferIndex: number, start: number, length: number, meta: PieceMeta | null = null) {
-    const piece = { pieceType: PieceType.TEXT, bufferIndex, start, length, lineFeedCnt: 0, meta }
-    super(piece)
+export class Text extends Inline {
+  constructor(params: TextParams, pieceTable: PieceTable) {
+    const piece = {
+      pieceType: PieceType.TEXT,
+      bufferIndex: params.bufferIndex,
+      start: params.start,
+      length: params.length,
+      lineFeedCnt: 0,
+      meta: params.meta,
+    }
+    super(piece, pieceTable)
     this.left = SENTINEL
     this.right = SENTINEL
     this.parent = SENTINEL

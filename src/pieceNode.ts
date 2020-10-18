@@ -1,6 +1,8 @@
-import { NodeColor } from './common'
+import { NodeColor, getId } from './common'
 import { mergeMeta, PieceMeta } from './meta'
 import { PieceNodeList } from './pieceNodeList'
+import { PieceTable } from './pieceTable'
+import { Piece } from 'flowerpiece'
 
 /**
  * Types Of Piece
@@ -112,6 +114,11 @@ export class PieceNode {
   // If this is a structural piece, it can have innner piece list
   children?: PieceNodeList
 
+  // Identifizer
+  id: number
+
+  pieceTable: PieceTable
+
   /**
    * Content length of this node
    */
@@ -188,7 +195,7 @@ export class PieceNode {
     return null
   }
 
-  constructor(piece: Piece, color?: NodeColor) {
+  constructor(piece: Piece, pieceTable: PieceTable) {
     this.piece = piece
 
     this.leftSize = 0
@@ -202,12 +209,15 @@ export class PieceNode {
     this.leftTextSize = 0
     this.rightTextSize = 0
 
-    this.color = color || NodeColor.RED
+    this.color = NodeColor.RED
     this.parent = this
     this.left = this
     this.right = this
 
     this.above = this
+
+    this.id = getId()
+    this.pieceTable = pieceTable
   }
 
   get isRoot() {
@@ -478,7 +488,5 @@ export class PieceNode {
   }
 }
 
-export const SENTINEL = new PieceNode(
-  { pieceType: PieceType.TEXT, bufferIndex: 0, start: 0, length: 0, lineFeedCnt: 0, meta: null },
-  NodeColor.BLACK,
-)
+export const SENTINEL = new PieceNode({ pieceType: PieceType.TEXT, bufferIndex: 0, start: 0, length: 0, lineFeedCnt: 0, meta: null })
+SENTINEL.color = NodeColor.BLACK
