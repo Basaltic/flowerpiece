@@ -2,7 +2,6 @@ import { PieceMeta } from './flowerpiece'
 import { PieceNode, PieceType, SENTINEL } from './pieceNode'
 import { PieceNodeList } from './pieceNodeList'
 import { Structural } from './pieceNode.structural'
-import { PieceTable } from './pieceTable'
 
 /**
  * Paragraph Node is one of the basic block node.
@@ -10,8 +9,11 @@ import { PieceTable } from './pieceTable'
  * Paragraph has 1 length to represent a line break in content
  */
 export class Paragraph extends Structural {
-  constructor(meta: PieceMeta | null = null, pieceTable: PieceTable) {
-    super({ pieceType: PieceType.PARAGRAPH, bufferIndex: -1, start: 0, length: 1, lineFeedCnt: 1, meta }, pieceTable)
+  constructor(meta: PieceMeta | null = null) {
+    super(meta)
+    this.piece.pieceType = PieceType.PARAGRAPH
+    this.piece.length = 1
+
     this.left = SENTINEL
     this.right = SENTINEL
     this.parent = SENTINEL
@@ -47,6 +49,19 @@ export class Paragraph extends Structural {
       rightNode.appendChild(anchorNode)
 
       anchorNode = nextNode
+    }
+  }
+
+  /**
+   * Merge A Paragraph To This Paragraph
+   * @param node
+   */
+  public merge(paragraphToMerge: Paragraph) {
+    paragraphToMerge.remove()
+    if (paragraphToMerge.children) {
+      paragraphToMerge.children.forEach(node => {
+        this.appendChild(node)
+      })
     }
   }
 }

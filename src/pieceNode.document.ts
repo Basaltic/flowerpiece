@@ -2,14 +2,13 @@ import { LeafNodePosition } from './common'
 import { PieceType, SENTINEL } from './pieceNode'
 import { PieceNodeList } from './pieceNodeList'
 import { Structural } from './pieceNode.structural'
-import { PieceTable } from './pieceTable'
 
 /**
  * Document
  */
 export class Document extends Structural {
-  constructor(pieceTable: PieceTable) {
-    super({ pieceType: PieceType.ROOT, bufferIndex: -1, start: 0, length: 0, lineFeedCnt: 0, meta: null }, pieceTable)
+  constructor() {
+    super({ pieceType: PieceType.ROOT, bufferIndex: -1, start: 0, length: 0, lineFeedCnt: 0, meta: null })
     this.left = SENTINEL
     this.right = SENTINEL
     this.parent = SENTINEL

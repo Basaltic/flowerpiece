@@ -1,8 +1,7 @@
 import { NodeColor, getId } from './common'
 import { mergeMeta, PieceMeta } from './meta'
 import { PieceNodeList } from './pieceNodeList'
-import { PieceTable } from './pieceTable'
-import { Piece } from 'flowerpiece'
+import { Renderable } from './renderable'
 
 /**
  * Types Of Piece
@@ -78,7 +77,7 @@ export interface Piece {
 /**
  * A Node Refers a piece of content in the document
  */
-export class PieceNode {
+export class PieceNode extends Renderable {
   color: NodeColor
 
   parent: PieceNode
@@ -116,8 +115,6 @@ export class PieceNode {
 
   // Identifizer
   id: number
-
-  pieceTable: PieceTable
 
   /**
    * Content length of this node
@@ -195,7 +192,8 @@ export class PieceNode {
     return null
   }
 
-  constructor(piece: Piece, pieceTable: PieceTable) {
+  constructor(piece: Piece) {
+    super()
     this.piece = piece
 
     this.leftSize = 0
@@ -217,7 +215,6 @@ export class PieceNode {
     this.above = this
 
     this.id = getId()
-    this.pieceTable = pieceTable
   }
 
   get isRoot() {
@@ -342,6 +339,15 @@ export class PieceNode {
       this.children.deleteNode(childNode)
     }
     return childNode
+  }
+
+  /**
+   * Remove This Node
+   */
+  public remove() {
+    if (this.above && this.above.children) {
+      this.above.children.deleteNode(this)
+    }
   }
 
   /**

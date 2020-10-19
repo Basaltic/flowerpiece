@@ -18,6 +18,6 @@ export function createPieceNode(piece: Piece): PieceNode {
       return new Structural(piece.meta)
     case PieceType.TEXT:
     default:
-      return new Text(piece.bufferIndex, piece.start, piece.length, piece.meta)
+      return new Text({ ...piece })
   }
 }

@@ -26,7 +26,8 @@ export interface TextParams {
  * Text Node.
  */
 export class Text extends Inline {
-  constructor(params: TextParams, pieceTable: PieceTable) {
+  constructor(params: TextParams) {
+    super(params.meta)
     const piece = {
       pieceType: PieceType.TEXT,
       bufferIndex: params.bufferIndex,
@@ -35,7 +36,9 @@ export class Text extends Inline {
       lineFeedCnt: 0,
       meta: params.meta,
     }
-    super(piece, pieceTable)
+    this.piece.pieceType = PieceType.TEXT
+    this.piece = piece
+
     this.left = SENTINEL
     this.right = SENTINEL
     this.parent = SENTINEL
@@ -51,11 +54,17 @@ export class Text extends Inline {
    * @returns {boolean} split successfully or not
    */
   public split(offset: number): boolean {
+    console.log(offset, this.piece.length)
     if (offset <= 0 || offset >= this.piece.length) return false
 
     const { bufferIndex, start, length, meta } = this.piece
 
-    const successorNode = new Text(bufferIndex, start + offset, length - offset, cloneDeep(meta))
+    const successorNode = new Text({
+      bufferIndex,
+      start: start + offset,
+      length: length - offset,
+      meta: cloneDeep(meta),
+    })
 
     this.piece.length = offset
 

@@ -49,6 +49,19 @@ export class PieceNodeList {
 
   // --------------------------------------------------------------------------
 
+  /**
+   * Iterate This List
+   */
+  public forEach(callback: (node: PieceNode, index: number) => void) {
+    let index = 0
+    let node: PieceNode = this.firstNode
+    while (node.isNotNil) {
+      callback(node, index)
+      index++
+      node = node.successor()
+    }
+  }
+
   // --------------------------------------------------------------------------
 
   /**

@@ -20,9 +20,11 @@ export default class StringBuffer {
    */
   append(text: string) {
     const oldLength = this.buffer.length
-    const newLength = oldLength + text.length
     this.buffer = this.buffer.concat(text)
 
-    return [oldLength, newLength]
+    return {
+      start: oldLength,
+      length: text.length,
+    }
   }
 }

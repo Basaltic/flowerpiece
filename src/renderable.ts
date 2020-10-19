@@ -1,1 +1,5 @@
-export class Renderable {}
+import { PendingRenderNodes } from 'pendingRenderNodes'
+
+export class Renderable {
+  public render() {}
+}
