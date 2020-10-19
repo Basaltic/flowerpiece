@@ -1,18 +1,19 @@
 import PieceTreeTest from '../src/forTest/pieceTreeTestHelper'
-import { NodeFactory } from './util.factory'
 import { PieceNodeList } from '../src/pieceNodeList'
 import { createPieceNode } from '../src/pieceNodeFactory'
+import { Text } from '../src/pieceNode.text'
 
 /**
  * Test: get node by specific index
  */
-it('PieceNodeList: get', () => {
+it(' get', () => {
   const list = new PieceNodeList()
 
   const nodes: any[] = []
   for (let i = 0; i < 10; i++) {
     const pNode = createPieceNode({ pieceType: 1, bufferIndex: -1, start: 0, length: 1, lineFeedCnt: 0, meta: null })
     list.append(pNode)
+    nodes.push(pNode)
   }
 
   for (let i = 0; i < 10; i++) {
@@ -24,52 +25,50 @@ it('PieceNodeList: get', () => {
 /**
  * Test: Find node position by offset
  */
-it('PieceNodeList: find', () => {
-  const root = NodeFactory.createRootNode()
+it('find', () => {
+  const list = new PieceNodeList()
 
   const nodes: any[] = []
   for (let i = 0; i < 10; i++) {
-    const pNode = NodeFactory.createParagraphNode()
-    const tNode = NodeFactory.createTextNode(`${i}bc\n`)
-    root.appendChild(pNode)
-    pNode.appendChild(tNode)
+    const tNode = new Text({ bufferIndex: 0, start: i * 5, length: 5, meta: {} })
+    list.append(tNode)
 
-    nodes.push(pNode)
+    nodes.push(tNode)
   }
 
-  if (root.children) {
-    const list = root.children
+  let pos = list.find(0)
+  expect(pos.node).toBe(nodes[0])
+  expect(pos.reminder).toBe(0)
+  expect(pos.startOffset).toBe(0)
 
-    let position = list.find(0)
-    expect(position.reminder).toBe(0)
-    expect(position.startOffset).toBe(0)
-    expect(position.node).toBe(nodes[0])
-    expect(position.node.piece.meta).toEqual({ type: 'p' })
+  pos = list.find(50)
+  expect(pos.node).toBe(nodes[9])
+  expect(pos.reminder).toBe(5)
+  expect(pos.startOffset).toBe(45)
 
-    for (let i = 1; i < 10; i++) {
-      position = list.find(i * 4)
-      expect(position.reminder).toBe(4)
-      expect(position.startOffset).toBe((i - 1) * 4)
-      expect(position.node).toBe(nodes[i - 1])
-    }
+  for (let i = 0; i < 10; i++) {
+    let pos = list.find(i * 5)
+    expect(pos.node).toBe(nodes[i])
+    expect(pos.reminder).toBe(0)
+    expect(pos.startOffset).toBe(i * 5)
+  }
 
-    position = list.find(40)
-    expect(position.reminder).toBe(4)
-    expect(position.startOffset).toBe(36)
-    expect(position.node).toBe(nodes[9])
+  for (let i = 0; i < 10; i++) {
+    let pos = list.find(i * 5 + 1)
+    expect(pos.node).toBe(nodes[i])
+    expect(pos.reminder).toBe(1)
+    expect(pos.startOffset).toBe(i * 5)
+  }
 
-    for (let i = 0; i < 10; i++) {
-      position = list.find(i * 4 + 1)
-      expect(position.reminder).toBe(1)
-      expect(position.startOffset).toBe(i * 4)
-      expect(position.node).toBe(nodes[i])
-
-      position = list.find(i * 4 + 2)
-      expect(position.reminder).toBe(2)
-      expect(position.startOffset).toBe(i * 4)
-      expect(position.node).toBe(nodes[i])
-    }
-
-    PieceTreeTest.printTree(root.children)
+  for (let i = 0; i < 10; i++) {
+    let pos = list.find(i * 5 + 4)
+    expect(pos.node).toBe(nodes[i])
+    expect(pos.reminder).toBe(4)
+    expect(pos.startOffset).toBe(i * 5)
   }
 })
+
+/**
+ * DeleteNode Method Unit Test
+ */
+it('deleteNode', () => {})

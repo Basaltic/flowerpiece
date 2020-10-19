@@ -8,18 +8,15 @@ import { Structural } from 'pieceNode.structural'
 import { Text } from 'pieceNode.text'
 import { PendingRenderNodes } from 'pendingRenderNodes'
 import clonedeep from 'lodash.clonedeep'
+import { createInsertTextChangeRecord, InsertLineBreakChangeRecord, createInsertLineBreakChangeRecord } from 'history.changeRecord'
 
 export const LINE_BREAK = '\n'
 
 export class PieceTable {
   public buffers: StringBuffer[] = [new StringBuffer(''), new StringBuffer('')]
-
   public document: Document
-
   public selection: Selection
-
   public changeHistory: ChangeStack
-
   public pendingRenderNodes: PendingRenderNodes
 
   constructor() {
@@ -40,13 +37,13 @@ export class PieceTable {
     if (!text) return null
 
     const addBuffer = this.buffers[0]
+    const { start, length } = addBuffer.append(text)
 
     const pos = this.document.findLeafNode(docPosition)
 
     if (pos) {
       if (pos.reminder === 0) {
         const node = pos.node.previousSibling
-        const { start, length } = addBuffer.append(text)
 
         if (node) {
           const textNode = new Text({ bufferIndex: 0, start, length, meta: clonedeep(node.piece.meta) })
@@ -61,15 +58,12 @@ export class PieceTable {
         const isContinousInput = pos.node.piece.start + pos.reminder === addBuffer.length && pos.node.piece.bufferIndex === 0
 
         if (isContinousInput) {
-          const { length } = addBuffer.append(text)
-
           pos.node.piece.length += length
 
           this.pendingRenderNodes.add(pos.node)
         } else {
           const node = pos.node
 
-          const { start, length } = addBuffer.append(text)
           const meta = node.piece.pieceType === PieceType.TEXT ? clonedeep(node.piece.meta) : null
           const textNode = new Text({ bufferIndex: 0, start, length, meta })
           node.after(textNode)
@@ -80,13 +74,39 @@ export class PieceTable {
         const node = pos.node as Text
         node.split(pos.reminder)
 
-        const { start, length } = addBuffer.append(text)
         const textNode = new Text({ bufferIndex: 0, start, length, meta: clonedeep(node.piece.meta) })
         node.after(textNode)
 
         this.pendingRenderNodes.add(node.above)
       }
     }
+
+    const changeRecord = createInsertTextChangeRecord(docPosition, start, length)
+    this.changeHistory.push(changeRecord)
+  }
+
+  /**
+   * Split Into Two Paragraph
+   */
+  public insertLinkBreak(offset: number) {
+    const pos = this.document.findLeafNode(offset)
+
+    if (pos) {
+      if (pos.reminder === 0) {
+      } else if (pos.reminder >= pos.node.piece.length) {
+      } else {
+        const node = pos.node as Text
+        node.split(pos.reminder)
+
+        const aboveParagraph = node.above as Paragraph
+        aboveParagraph.split(node)
+
+        this.pendingRenderNodes.add(aboveParagraph.above)
+      }
+    }
+
+    const changeRecord: InsertLineBreakChangeRecord = createInsertLineBreakChangeRecord(offset)
+    this.changeHistory.push(changeRecord)
   }
 
   /**
