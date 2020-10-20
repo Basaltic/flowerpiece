@@ -20,6 +20,12 @@ it(' get', () => {
     const node = list.get(i + 1)
     expect(node).toBe(nodes[i])
   }
+
+  let node = list.get(-5)
+  expect(node).toBe(nodes[0])
+
+  node = list.get(100)
+  expect(node).toBe(nodes[9])
 })
 
 /**
@@ -71,4 +77,23 @@ it('find', () => {
 /**
  * DeleteNode Method Unit Test
  */
-it('deleteNode', () => {})
+it('deleteNode', () => {
+  const list = new PieceNodeList()
+
+  const nodes: any[] = []
+  for (let i = 0; i < 10; i++) {
+    const pNode = createPieceNode({ pieceType: 1, bufferIndex: -1, start: 0, length: 1, lineFeedCnt: 0, meta: null })
+    list.append(pNode)
+    nodes.push(pNode)
+  }
+
+  expect(list.nodeCnt).toBe(10)
+
+  list.deleteNode(nodes[0])
+  expect(list.nodeCnt).toBe(9)
+
+  for (let i = 1; i < 10; i++) {
+    const node = list.get(i)
+    expect(node).toBe(nodes[i])
+  }
+})

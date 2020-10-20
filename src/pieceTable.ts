@@ -9,6 +9,7 @@ import { Text } from 'pieceNode.text'
 import { PendingRenderNodes } from 'pendingRenderNodes'
 import clonedeep from 'lodash.clonedeep'
 import { createInsertTextChangeRecord, InsertLineBreakChangeRecord, createInsertLineBreakChangeRecord } from 'history.changeRecord'
+import { Selection } from './selection'
 
 export const LINE_BREAK = '\n'
 
@@ -30,16 +31,16 @@ export class PieceTable {
    * Insert Pure Text in specific postion of the doc.
    * Make sure there's no link break in text
    *
-   * @param docPosition
+   * @param offset
    * @param text
    */
-  public insertText(docPosition: number, text: string) {
+  public insertText(offset: number, text: string) {
     if (!text) return null
 
     const addBuffer = this.buffers[0]
     const { start, length } = addBuffer.append(text)
 
-    const pos = this.document.findLeafNode(docPosition)
+    const pos = this.document.findLeafNode(offset)
 
     if (pos) {
       if (pos.reminder === 0) {
@@ -81,8 +82,10 @@ export class PieceTable {
       }
     }
 
-    const changeRecord = createInsertTextChangeRecord(docPosition, start, length)
+    const changeRecord = createInsertTextChangeRecord(offset, start, length)
     this.changeHistory.push(changeRecord)
+
+    return changeRecord
   }
 
   /**
@@ -94,6 +97,11 @@ export class PieceTable {
     if (pos) {
       if (pos.reminder === 0) {
       } else if (pos.reminder >= pos.node.piece.length) {
+        const newParagraph = new Paragraph(null)
+        const aboveParagraph = pos.node.above as Paragraph
+        aboveParagraph.after(newParagraph)
+
+        this.pendingRenderNodes.add(aboveParagraph.above)
       } else {
         const node = pos.node as Text
         node.split(pos.reminder)
@@ -110,9 +118,27 @@ export class PieceTable {
   }
 
   /**
-   * Delete
+   * Delete Paragraph and it's children
    */
-  public delete() {}
+  public delete(start: number, end: number) {
+    if (start === end) return
+
+    const startPos = this.document.findLeafNode(start)
+    const endPos = this.document.findLeafNode(end)
+
+    if (startPos && endPos) {
+      const inSameNode = startPos.node === endPos.node
+      const inSameParagraph = startPos.node.above === endPos.node.above
+      if (inSameNode) {
+        if (startPos.reminder === 0 && startPos.reminder === startPos.node.piece.length) {
+          startPos.node.remove()
+
+          this.pendingRenderNodes.add(startPos.node.above)
+        }
+      } else if (inSameParagraph) {
+      }
+    }
+  }
 
   public format() {}
 

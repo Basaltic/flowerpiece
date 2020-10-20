@@ -72,8 +72,8 @@ export class PieceNodeList {
   public get(index: number): PieceNode {
     let node = this.root
 
-    if (index <= 0) index === 1
-    if (index > this.nodeCnt) index === this.nodeCnt
+    if (index <= 0) index = 1
+    else if (index > this.nodeCnt) index = this.nodeCnt
 
     while (node !== SENTINEL) {
       if (node.leftNodeCnt >= index) {

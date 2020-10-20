@@ -1,9 +1,9 @@
-export class Selection {
-  public focus: number
-  public anchor: number
+import { Range } from './selection.range'
 
-  constructor(focus: number, anchor: number) {
-    this.focus = focus
-    this.anchor = anchor
+export class Selection {
+  public range: Range
+
+  constructor(range: Range = new Range()) {
+    this.range = range
   }
 }
