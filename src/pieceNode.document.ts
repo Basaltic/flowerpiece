@@ -2,6 +2,8 @@ import { LeafNodePosition } from './common'
 import { PieceType, SENTINEL } from './pieceNode'
 import { PieceNodeList } from './pieceNodeList'
 import { Structural } from './pieceNode.structural'
+import { Paragraph } from './pieceNode.paragraph'
+import { Text } from './pieceNode.text'
 
 /**
  * Document
@@ -14,6 +16,12 @@ export class Document extends Structural {
     this.parent = SENTINEL
     this.above = SENTINEL
     this.children = new PieceNodeList()
+
+    // Empty Paragraph While initializing
+    // const paragraph = new Paragraph()
+    // const text = new Text({ bufferIndex: 0, start: 0, length: 0, meta: null })
+    // this.appendChild(paragraph)
+    // paragraph.appendChild(text)
   }
 
   /**
