@@ -1,7 +1,7 @@
 {
   "name": "flowerpiece",
   "version": "0.4.4",
-  "description": "A Rich Text Data Model",
+  "description": "A Rich Text Data Model & State",
   "keywords": [],
   "main": "dist/flowerpiece.umd.js",
   "module": "dist/flowerpiece.es5.js",
