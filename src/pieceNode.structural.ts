@@ -1,4 +1,4 @@
-import { PieceMeta } from './flowerpiece'
+import { PieceMeta } from '.'
 import { PieceNode, PieceType, SENTINEL } from './pieceNode'
 import { PieceNodeList } from './pieceNodeList'
 

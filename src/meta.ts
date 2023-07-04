@@ -1,12 +1,8 @@
 import merge from 'lodash.merge'
-import { enableES5, enablePatches, enableMapSet, produceWithPatches, Patch } from 'immer'
-
-enableES5()
-enablePatches()
-enableMapSet()
+import { produceWithPatches, Patch } from 'immer'
 
 export interface PieceMeta {
-  [key: string]: any
+    [key: string]: any
 }
 
 /**
@@ -15,15 +11,15 @@ export interface PieceMeta {
  * @param source
  */
 export function mergeMeta(target: PieceMeta | null, source: PieceMeta | null): [PieceMeta, Patch[]] | null {
-  if (source) {
-    if (target === null) target = {}
+    if (source) {
+        if (target === null) target = {}
 
-    const [nextState, , inversePatches] = produceWithPatches(target, draft => {
-      merge(draft, source)
-    })
+        const [nextState, , inversePatches] = produceWithPatches(target, draft => {
+            merge(draft, source)
+        })
 
-    return [nextState, inversePatches]
-  }
+        return [nextState, inversePatches]
+    }
 
-  return null
+    return null
 }

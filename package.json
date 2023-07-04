@@ -1,134 +1,58 @@
 {
-  "name": "flowerpiece",
-  "version": "0.5.0",
-  "description": "A Rich Text Data Model",
-  "keywords": [],
-  "main": "dist/flowerpiece.umd.js",
-  "module": "dist/flowerpiece.es5.js",
-  "typings": "dist/lib/flowerpiece.d.ts",
-  "files": [
-    "dist"
-  ],
-  "author": "ray <lei91122@gmail.com>",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/Basaltic/flowerpiece.git"
-  },
-  "license": "MIT",
-  "engines": {
-    "node": ">=6.0.0"
-  },
-  "scripts": {
-    "lint": "tslint  --project tsconfig.json -t codeFrame 'src/**/*.ts' 'test/**/*.ts'",
-    "prebuild": "rimraf dist",
-    "build": "tsc --module commonjs && rollup -c rollup.config.ts",
-    "start": "rollup -c rollup.config.ts -w",
-    "test": "jest --coverage",
-    "test:watch": "jest --coverage --watch",
-    "test:prod": "npm run lint && npm run test -- --no-cache",
-    "jest": "jest",
-    "deploy-docs": "ts-node tools/gh-pages-publish",
-    "report-coverage": "cat ./coverage/lcov.info | coveralls",
-    "commit": "git-cz",
-    "semantic-release": "semantic-release",
-    "semantic-release-prepare": "ts-node tools/semantic-release-prepare",
-    "precommit": "lint-staged",
-    "travis-deploy-once": "travis-deploy-once"
-  },
-  "lint-staged": {
-    "{src,test}/**/*.ts": [
-      "prettier --write",
-      "git add"
-    ]
-  },
-  "config": {
-    "commitizen": {
-      "path": "node_modules/cz-conventional-changelog"
+    "name": "flowerpiece",
+    "version": "0.5.0",
+    "description": "A Rich Text Data Model",
+    "license": "MIT",
+    "keywords": [],
+    "main": "./dist/index.js",
+    "module": "./dist/index.mjs",
+    "types": "./dist/index.d.ts",
+    "sideEffects": false,
+    "files": [
+        "dist/**"
+    ],
+    "author": "lei chen <lei91122@gmail.com>",
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/Basaltic/flowerpiece.git"
+    },
+    "engines": {
+        "node": ">=12.0.0"
+    },
+    "scripts": {
+        "build": "tsup src/index.ts",
+        "dev": "tsup src/index.ts --watch",
+        "lint": "eslint \"src/**/*.ts*\"",
+        "clean": "rm -rf .turbo && rm -rf node_modules && rm -rf dist",
+        "test": "vitest run --passWithNoTests"
+    },
+    "lint-staged": {
+        "{src,test}/**/*.ts": [
+            "prettier --write",
+            "git add"
+        ]
+    },
+    "devDependencies": {
+        "@changesets/cli": "^2.26.2",
+        "@types/node": "^20.3.3",
+        "eslint": "^8.44.0",
+        "eslint-config-prettier": "^8.8.0",
+        "jsdom": "^22.1.0",
+        "lint-staged": "^13.2.3",
+        "prettier": "^2.8.8",
+        "react": "^18.2.0",
+        "tsup": "^7.1.0",
+        "typescript": "^5.1.6",
+        "vitest": "^0.32.4"
+    },
+    "dependencies": {
+        "immer": "^10.0.2",
+        "lodash.clonedeep": "^4.5.0",
+        "lodash.isequal": "^4.5.0",
+        "lodash.merge": "^4.6.2"
+    },
+    "publishConfig": {
+        "access": "public",
+        "registry": "https://registry.npmjs.org/"
     }
-  },
-  "jest": {
-    "transform": {
-      ".(ts|tsx)": "ts-jest"
-    },
-    "testEnvironment": "node",
-    "testRegex": "(/__tests__/.*|\\.(test|spec))\\.(ts|tsx|js)$",
-    "moduleFileExtensions": [
-      "ts",
-      "tsx",
-      "js"
-    ],
-    "coveragePathIgnorePatterns": [
-      "/node_modules/",
-      "/test/"
-    ],
-    "coverageThreshold": {
-      "global": {
-        "branches": 70,
-        "functions": 80,
-        "lines": 80,
-        "statements": 80
-      }
-    },
-    "collectCoverageFrom": [
-      "src/*.{js,ts}"
-    ]
-  },
-  "prettier": {
-    "printWidth": 140,
-    "tabWidth": 2,
-    "useTabs": false,
-    "semi": false,
-    "singleQuote": true,
-    "trailingComma": "all"
-  },
-  "commitlint": {
-    "extends": [
-      "@commitlint/config-conventional"
-    ]
-  },
-  "devDependencies": {
-    "@commitlint/cli": "^8.3.5",
-    "@commitlint/config-conventional": "^8.3.4",
-    "@rollup/plugin-commonjs": "^11.0.2",
-    "@rollup/plugin-json": "^4.0.2",
-    "@rollup/plugin-node-resolve": "^7.1.1",
-    "@rollup/plugin-typescript": "^3.1.1",
-    "@types/jest": "^23.3.2",
-    "@types/node": "^10.11.0",
-    "colors": "^1.3.2",
-    "commitizen": "^3.0.0",
-    "coveralls": "^3.0.2",
-    "cross-env": "^5.2.0",
-    "cz-conventional-changelog": "^2.1.0",
-    "husky": "^1.0.1",
-    "jest": "^25.4.0",
-    "jest-config": "^25.4.0",
-    "lint-staged": "^8.0.0",
-    "lodash.camelcase": "^4.3.0",
-    "prettier": "^1.14.3",
-    "prompt": "^1.0.0",
-    "replace-in-file": "^3.4.2",
-    "rimraf": "^2.6.2",
-    "rollup": "^2.0.6",
-    "rollup-plugin-babel": "^4.4.0",
-    "semantic-release": "^15.9.16",
-    "shelljs": "^0.8.3",
-    "travis-deploy-once": "^5.0.9",
-    "ts-jest": "^25.4.0",
-    "ts-node": "^7.0.1",
-    "tslib": "^1.11.1",
-    "tslint": "^5.11.0",
-    "tslint-config-prettier": "^1.15.0",
-    "tslint-config-standard": "^8.0.1",
-    "typescript": "^3.8.3"
-  },
-  "dependencies": {
-    "immer": "^6.0.2",
-    "lodash.clonedeep": "^4.5.0",
-    "lodash.isequal": "^4.5.0",
-    "lodash.merge": "^4.6.2"
-  },
-  "peerDependencies": {
-    "immer": "^6.0.2"
-  }
 }
