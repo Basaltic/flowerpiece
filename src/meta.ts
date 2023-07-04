@@ -1,5 +1,7 @@
 import merge from 'lodash.merge'
-import { produceWithPatches, Patch } from 'immer'
+import { enablePatches, produceWithPatches, Patch } from 'immer'
+
+enablePatches()
 
 export interface PieceMeta {
     [key: string]: any

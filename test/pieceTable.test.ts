@@ -1,4 +1,4 @@
-import { PieceTable } from '../src/pieceTable'
+import { PieceTable } from '../src/piece-table'
 
 it('PieceTable: findNode', () => {})
 
@@ -8,5 +8,5 @@ it('PieceTable: findNode', () => {})
 it('PieceTable: getFullText', () => {})
 
 it('PieceTable: insertText', () => {
-  const pieceTable = new PieceTable()
+    const pieceTable = new PieceTable()
 })

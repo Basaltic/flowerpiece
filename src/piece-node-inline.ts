@@ -1,5 +1,5 @@
 import { PieceMeta } from '.'
-import { PieceNode, PieceType, SENTINEL } from './pieceNode'
+import { PieceNode, PieceType, SENTINEL } from './piece-node'
 
 /**
  * Inline Node is the leaf node. it must be as child of paragraph

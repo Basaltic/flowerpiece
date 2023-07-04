@@ -1,0 +1,17 @@
+import { PieceMeta } from '.'
+import { PieceNode, PieceType, SENTINEL } from './piece-node'
+import { PieceNodeList } from './piece-node-list'
+
+/**
+ * Structural Node is a container
+ */
+export class Structural extends PieceNode {
+    constructor(meta: PieceMeta | null) {
+        super({ pieceType: PieceType.STRUCTURAL, bufferIndex: -1, start: 0, length: 0, lineFeedCnt: 0, meta })
+        this.left = SENTINEL
+        this.right = SENTINEL
+        this.parent = SENTINEL
+        this.above = SENTINEL
+        this.children = new PieceNodeList()
+    }
+}

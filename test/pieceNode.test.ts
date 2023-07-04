@@ -1,4 +1,4 @@
-import { PieceNode } from '../src/pieceNode'
-import { Text } from '../src/pieceNode.text'
+import { PieceNode } from '../src/piece-node'
+import { Text } from '../src/piece-node-text'
 
 it('Text Piece Node Split', () => {})
