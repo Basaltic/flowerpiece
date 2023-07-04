@@ -1,4 +1,4 @@
-import PieceTreeTest from '../src/forTest/pieceTreeTestHelper'
+import PieceTreeTest from '../src/for-test/piece-tree-test-helper'
 import { PieceNodeList } from '../src/piece-node-list'
 import { createPieceNode } from '../src/piece-node-factory'
 import { Text } from '../src/piece-node-text'

@@ -1,26 +1,22 @@
 {
   "compilerOptions": {
-    "target": "es5",
-    "lib": ["dom", "dom.iterable", "es2015", "esnext", "esnext.intl", "ES2017.intl", "ES2018.intl"],
-    "experimentalDecorators": true,
-    "allowJs": true,
-    "skipLibCheck": true,
-    "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true,
-    "strict": true,
-    "noImplicitAny": false,
-    "forceConsistentCasingInFileNames": true,
-    "module": "esnext",
-    "moduleResolution": "node",
-    "resolveJsonModule": true,
-    "isolatedModules": false,
-    "jsx": "preserve",
-    "downlevelIteration": true,
+    "lib": ["dom", "ES2015"],
+    "module": "ESNext",
+    "target": "es6",
+    "composite": false,
     "declaration": true,
-    "emitDeclarationOnly": true,
-    "baseUrl": "src/",
-    "outDir": "dist/lib",
-    "typeRoots": ["node_modules/@types"]
+    "declarationMap": true,
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "inlineSources": false,
+    "isolatedModules": false,
+    "moduleResolution": "node",
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "preserveWatchOutput": true,
+    "skipLibCheck": true,
+    "strict": true,
+    "baseUrl": "src"
   },
-  "include": ["src", "src/forTest/pieceTreeTestHelper.ts", "test"]
+  "include": ["src", "test"]
 }

@@ -1,5 +1,5 @@
 import { createPieceNode, createRootPiece, createStructuralPiece, createTextPiece, PieceNode, SENTINEL } from '../src/piece-node'
-import PieceTreeTest from '../src/forTest/pieceTreeTestHelper'
+import PieceTreeTest from '../src/for-test/piece-tree-test-helper'
 
 /**
  * Create A Piece Node List Of Empty Paragraph

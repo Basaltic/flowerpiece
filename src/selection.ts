@@ -1,9 +1,9 @@
-import { Range } from './selection.range'
+import { Range } from './selection-range'
 
 export class Selection {
-  public range: Range
+    public range: Range
 
-  constructor(range: Range = new Range()) {
-    this.range = range
-  }
+    constructor(range: Range = new Range()) {
+        this.range = range
+    }
 }

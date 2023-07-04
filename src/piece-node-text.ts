@@ -2,7 +2,6 @@ import { PieceMeta } from './meta'
 import { PieceType, SENTINEL, Piece } from './piece-node'
 import cloneDeep from 'lodash.clonedeep'
 import { Inline } from './piece-node-inline'
-import { PieceTable } from './piece-table'
 
 export interface TextParams {
     // TEXT: Buffer Index
